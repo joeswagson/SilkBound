@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
+
+    <Reference Include="0Harmony">
+      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\MelonLoader\net6\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\Assembly-CSharp.dll" Publicize="true" />
+    <Reference Include="MelonLoader">
+      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\MelonLoader\net6\MelonLoader.dll</HintPath>
+    </Reference>
+    <Reference Include="F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\PlayMaker.dll" Publicize="true" />
+    <Reference Include="F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\TeamCherry.TK2D.dll" Publicize="true" />
+    <Reference Include="UnityEngine">
+      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /y /d  &quot;$(TargetPath)&quot; &quot;F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Mods&quot;" />
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0&#xA;" />
+  </Target>
+
+</Project>

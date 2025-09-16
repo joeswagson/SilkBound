@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SilkBound", "HeroColor\SilkBound.csproj", "{A801FEB0-A30E-4775-9F1F-222A67B41D53}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityLauncher", "UnityLauncher\UnityLauncher.csproj", "{6A9D939F-1992-4E58-8C99-422871CA8241}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A801FEB0-A30E-4775-9F1F-222A67B41D53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A801FEB0-A30E-4775-9F1F-222A67B41D53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A801FEB0-A30E-4775-9F1F-222A67B41D53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A801FEB0-A30E-4775-9F1F-222A67B41D53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A9D939F-1992-4E58-8C99-422871CA8241}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A9D939F-1992-4E58-8C99-422871CA8241}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A9D939F-1992-4E58-8C99-422871CA8241}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A9D939F-1992-4E58-8C99-422871CA8241}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9DD500BA-D290-4ECB-9047-8EEDB0F9665D}
+	EndGlobalSection
+EndGlobal
