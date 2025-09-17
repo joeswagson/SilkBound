@@ -1,18 +1,44 @@
 ﻿using HarmonyLib;
+using HutongGames.PlayMaker.Actions;
 using MelonLoader;
+using SharpDX;
+using SilkBound.Extensions;
 using SilkBound.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Device;
+using Logger = SilkBound.Utils.Logger;
 
-namespace SilkBound.Patches
+namespace SilkBound.Patches.Hero
 {
     [HarmonyPatch(typeof(HeroController))]
     public class HeroControllerPatches
     {
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(HeroController), nameof(HeroController.EnterScene))]
+        static IEnumerator EnterScene_Postfix(
+            IEnumerator __result,
+            TransitionPoint enterGate,
+            float delayBeforeEnter,
+            bool forceCustomFade,
+            Action onEnd,
+            bool enterSkip)
+        {
+            
+            
+            Logger.Debug($"EnterScene start: gate={enterGate.gameObject.transform.GetPath()}, delay={delayBeforeEnter}, forceFade={forceCustomFade}, skip={enterSkip}");
+
+            while (__result.MoveNext())
+                yield return __result.Current;
+
+            Logger.Debug("EnterScene end");
+        }
+
+
         //public static readonly Color capeShade = new Color(118, 45, 86);
         //public static readonly Color capeShade2 = new Color(80, 31, 59);
         public static readonly Color CAPE_PRIMARY = new Color(118f / 255f, 45f / 255f, 86f / 255f);
@@ -32,7 +58,7 @@ namespace SilkBound.Patches
             if (h < 0) h += 360;
 
             double c = v * s;
-            double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+            double x = c * (1 - Math.Abs(h / 60 % 2 - 1));
             double m = v - c;
 
             double rPrime = 0, gPrime = 0, bPrime = 0;
@@ -51,7 +77,7 @@ namespace SilkBound.Patches
 
         [HarmonyPostfix]
         [HarmonyPatch("Awake")]
-        public static void Postfix(HeroController __instance)
+        public static void Spawned(HeroController __instance)
         {
             if (NetworkUtils.LocalClient == null) return;
             Melon<ModMain>.Logger.Msg("hero spawned: " + __instance.name);

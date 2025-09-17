@@ -17,7 +17,7 @@ namespace SilkBound.Network
 
         public Guid ClientID;
         public string ClientName;
-        public Skin AppliedSkin;
+        public Skin AppliedSkin = SkinManager.Library["blue"];
         public NetworkConnection Connection;
         
         public void Disconnect()
