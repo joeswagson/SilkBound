@@ -37,7 +37,7 @@ namespace SilkBound.Managers
     }
     public class SkinManager
     {
-        public static Dictionary<string, Skin> Library { get; private set; } = new Dictionary<string, Skin>() {
+        public static Dictionary<string, Skin> Library { get; private set; } = new Dictionary<string, Skin>() { // TODO: make these embedded lol
             { "red",  Skin.LoadFromFolder("C:\\Users\\Joe\\OneDrive\\Desktop\\code\\silksong\\red")},
             { "blue",  Skin.LoadFromFolder("C:\\Users\\Joe\\OneDrive\\Desktop\\code\\silksong\\blue")}
         };

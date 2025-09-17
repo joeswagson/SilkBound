@@ -6,6 +6,7 @@ namespace SilkBound.Utils
 {
     public class SilkConstants
     {
-        public const short PACKET_BUFFER = 1024;
+        public const short PACKET_BUFFER = 512;
+        public const bool DEBUG = true;
     }
 }

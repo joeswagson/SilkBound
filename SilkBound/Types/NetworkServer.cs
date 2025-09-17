@@ -12,8 +12,6 @@ namespace SilkBound.Types
 {
     public abstract class NetworkServer : NetworkConnection
     {
-        public NamedPipeServerStream? Stream;
-
         public NetworkServer(PacketHandler packetHandler) : base(packetHandler)
         {
         }

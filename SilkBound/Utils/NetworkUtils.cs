@@ -19,9 +19,19 @@ namespace SilkBound.Utils
                 return Server.CurrentServer?.Host == LocalClient;
             }
         }
+        public static bool IsConnected
+        {
+            get
+            {
+                return Server.CurrentServer != null;
+            }
+        }
 
         public static void Connect(NetworkConnection connection, string name)
         {
+            if (LocalConnection != null)
+                LocalConnection.Disconnect();
+
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
             LocalClient = LocalClient ?? new Weaver(connection) { ClientName=name };

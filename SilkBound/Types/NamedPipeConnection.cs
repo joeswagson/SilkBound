@@ -17,29 +17,29 @@ namespace SilkBound.Types
             Connect(host, null);
         }
 
-        private NamedPipeClientStream? _clientStream;
+        public NamedPipeClientStream? Stream;
 
         public override void ConnectImpl(string host, int? port)
         {
-            _clientStream = new NamedPipeClientStream(".", host, PipeDirection.InOut, PipeOptions.Asynchronous);
+            Stream = new NamedPipeClientStream(".", host, PipeDirection.InOut, PipeOptions.Asynchronous);
             Logger.Msg("Connecting to NamedPipeServer...");
-            _clientStream.Connect();
+            Stream.Connect();
             Logger.Msg("Connected to server!");
 
             Task.Run(() => ReceiveLoop());
 
-            Logger.Msg("Sending Handshake...");
-            Send(new HandshakePacket(NetworkUtils.LocalClient?.ClientID.ToString() ?? Guid.NewGuid().ToString(), "C2SID123"));
-            Logger.Msg("Sent.");
+            //Logger.Msg("Sending Handshake...");
+            //Send(new HandshakePacket(NetworkUtils.LocalClient?.ClientID.ToString() ?? Guid.NewGuid().ToString(), "C2SID123"));
+            //Logger.Msg("Sent.");
         }
         private void ReceiveLoop()
         {
             try
             {
                 byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
-                while (_clientStream!.IsConnected)
+                while (Stream!.IsConnected)
                 {
-                    int read = _clientStream.Read(buffer, 0, buffer.Length);
+                    int read = Stream.Read(buffer, 0, buffer.Length);
                     if (read > 0)
                     {
                         byte[] data = new byte[read];
@@ -57,18 +57,18 @@ namespace SilkBound.Types
 
         public override void Disconnect()
         {
-            _clientStream?.Dispose();
-            _clientStream = null;
+            Stream?.Dispose();
+            Stream = null;
         }
 
         public override void Initialize()
         {
-            // Optional initialization logic
+            // Optional initialization logic // TODO: remove chatgpt comment because i made it write the recieve loop for me (i HATE named pipes <3 )
         }
 
         public override void Send(Packet packet)
         {
-            if (_clientStream == null || !_clientStream.IsConnected)
+            if (Stream == null || !Stream.IsConnected)
             {
                 Logger.Warn("Stream was null or not connected.");
                 return;
@@ -78,8 +78,8 @@ namespace SilkBound.Types
             if (data == null)
                 return;
 
-            _clientStream.Write(data, 0, data.Length);
-            _clientStream.Flush();
+            Stream.Write(data, 0, data.Length);
+            Stream.Flush();
         }
 
     }

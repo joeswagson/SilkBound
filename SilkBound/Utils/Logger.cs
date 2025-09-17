@@ -1,6 +1,9 @@
 ﻿using MelonLoader;
+using MelonLoader.Logging;
+using MelonLoader.Pastel;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 
@@ -12,6 +15,15 @@ namespace SilkBound.Utils
         public static void Msg(params object[] values)
         {
             MelonLogger.Msg(string.Join(", ", values));
+        }
+        public static void Debug(params object[] values)
+        {
+            if (!SilkConstants.DEBUG)
+#pragma warning disable CS0162 // Unreachable code detected
+                return;
+#pragma warning restore CS0162
+
+            MelonLogger.Msg($"{"[".Pastel(ColorARGB.HotPink)}{"DEBUG".Pastel(ColorARGB.LightPink)}{"]".Pastel(ColorARGB.HotPink)} " + string.Join(", ", values));
         }
         public static void Warn(params object[] values)
         {

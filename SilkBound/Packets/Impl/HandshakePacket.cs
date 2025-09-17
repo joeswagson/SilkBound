@@ -1,4 +1,5 @@
-﻿using SilkBound.Utils;
+﻿using SilkBound.Managers;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,14 +14,18 @@ namespace SilkBound.Packets.Impl
 
         public string ClientId;
         public string HandshakeId;
+        public bool Fulfilled = false;
 
-        public HandshakePacket()
-        {
+        public HandshakePacket() { 
+            ClientId = string.Empty; 
+            HandshakeId = string.Empty;
         }
-        public HandshakePacket(string ClientId, string HandshakeId)
+        public HandshakePacket(string ClientId)
         {
             this.ClientId = ClientId;
-            this.HandshakeId = HandshakeId;
+            this.HandshakeId = Guid.NewGuid().ToString();
+
+            TransactionManager.Promise(HandshakeId, this);
         }
 
         public override Packet Deserialize(byte[] data)
@@ -28,7 +33,10 @@ namespace SilkBound.Packets.Impl
             using (MemoryStream stream = new MemoryStream(data))
             using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
             {
-                return new HandshakePacket(reader.ReadString(), reader.ReadString());
+                string clientId = reader.ReadString();
+                string handshakeId = reader.ReadString();
+
+                return new HandshakePacket(clientId) { HandshakeId=handshakeId };
             }
 
         }
@@ -41,16 +49,8 @@ namespace SilkBound.Packets.Impl
                 writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
                 writer.Write(HandshakeId.Substring(0, Math.Min(100, HandshakeId.Length)));
 
-                Logger.Msg("wrote to writer");
                 return stream.ToArray();
             }
-        }
-
-        public override Packet? Create(params object[] values)
-        {
-            if (Assertions.EnsureLength(values, 2)) return null;
-
-            return new HandshakePacket(values[0].ToString(), values[1].ToString());
         }
     }
 }

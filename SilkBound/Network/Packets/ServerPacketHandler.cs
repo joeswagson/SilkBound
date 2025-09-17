@@ -1,9 +1,11 @@
-﻿using SilkBound.Packets.Impl;
+﻿using SilkBound.Managers;
+using SilkBound.Packets.Impl;
 using SilkBound.Types;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine.SceneManagement;
 
 namespace SilkBound.Network.Packets
 {
@@ -22,6 +24,20 @@ namespace SilkBound.Network.Packets
         public void OnHandshakePacket(HandshakePacket packet)
         {
             Logger.Msg("Handshake Recieved (Server):", packet.ClientId, packet.HandshakeId);
+            if (TransactionManager.Fetch<HandshakePacket>(packet.HandshakeId) is HandshakePacket original)
+            {
+                if (original.Fulfilled) return;
+                else
+                {
+                    original.Fulfilled = true;
+                    Logger.Msg("Handshake Fulfilled (Server):", packet.ClientId, packet.HandshakeId);
+                    TransactionManager.Revoke(packet.HandshakeId); // mark the original packet for garbage collection as we have completed this transaction
+                }
+            }
+            else
+            {
+                NetworkUtils.LocalConnection?.Send(new HandshakePacket(packet.ClientId) { HandshakeId = packet.HandshakeId }); // reply with same handshake id so the client can acknowledge handshake completion
+            }
         }
     }
 }

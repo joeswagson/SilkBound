@@ -17,6 +17,8 @@ namespace SilkBound.Types
             Connect(host, null);
         }
 
+        public NamedPipeServerStream? Stream;
+
         public override void ConnectImpl(string host, int? port)
         {
             Stream = new NamedPipeServerStream(host, PipeDirection.InOut);
@@ -30,7 +32,7 @@ namespace SilkBound.Types
 
         private void ReceiveLoop()
         {
-            byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
+            byte[] buffer = new byte[SilkConstants. PACKET_BUFFER];
 
             while (Stream!.IsConnected)
             {
