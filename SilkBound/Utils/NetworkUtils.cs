@@ -34,8 +34,8 @@ namespace SilkBound.Utils
 
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
-            LocalClient = LocalClient ?? new Weaver(connection) { ClientName=name };
-            LocalClient.Connection = connection;
+            LocalClient = LocalClient ?? new Weaver(name) { ClientName=name };
+            //LocalClient.Connection = connection;
             LocalClient.ClientName = name;
         }
     }

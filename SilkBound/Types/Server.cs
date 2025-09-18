@@ -1,5 +1,8 @@
 ﻿using SilkBound.Network;
+using SilkBound.Network.Packets;
+using SilkBound.Types.NetLayers;
 using SilkBound.Utils;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,7 +31,15 @@ namespace SilkBound.Types
         {
             if (NetworkUtils.IsServer)
             {
-                weaver.Disconnect();
+                CSteamID weaverId = ((SteamConnection)Connections[weaver]).RemoteId;
+                foreach (KeyValuePair<Weaver, NetworkConnection> pair in Connections)
+                {
+                    if (weaver != NetworkUtils.LocalClient)
+                    {
+                        pair.Value.Send(new SteamKickS2CPacket(weaverId.m_SteamID));
+                        break;
+                    }
+                }
 
                 Connections.Remove(weaver);
             }

@@ -34,13 +34,13 @@ namespace SilkBound.Utils
             // write data
             Array.Copy(serialized, 0, packetData, 1 + length, serialized.Length);
 
-            Logger.Debug("Raw Packet (send):", BitConverter.ToString(packetData).Replace("-", ""));
+            //Logger.Debug("Raw Packet (send):", BitConverter.ToString(packetData).Replace("-", ""));
             return packetData;
         }
 
         public static (string?, Packet?) UnpackPacket(byte[] data)
         {
-            Logger.Debug("Raw Packet (recieve):", BitConverter.ToString(data).Replace("-", ""));
+            //Logger.Debug("Raw Packet (recieve):", BitConverter.ToString(data).Replace("-", ""));
             try
             {
                 using (MemoryStream stream = new MemoryStream(data))

@@ -18,7 +18,7 @@ namespace UnityLauncher
             if (killed)
                 Thread.Sleep(100);
 
-            Process.Start("F:\\! GAMES\\silksong\\Hollow-Knight-Silksong-SteamRIP.com\\Hollow Knight Silksong\\Hollow Knight Silksong.exe");
+            Process.Start("F:\\SteamLibrary\\steamapps\\common\\Hollow Knight Silksong\\Hollow Knight Silksong.exe");
         }
     }
 }

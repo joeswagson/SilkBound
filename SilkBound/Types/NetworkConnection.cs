@@ -41,7 +41,7 @@ namespace SilkBound.Types
         public (string?, Packet?) HandlePacket(byte[] data)
         {
             (string?, Packet?) returned = PacketProtocol.UnpackPacket(data);
-            PacketHandler.Handle(returned.Item2);
+            PacketHandler.Handle(returned.Item2, this);
             return returned;
         }
         public abstract void Initialize();

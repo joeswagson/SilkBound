@@ -13,16 +13,19 @@ namespace SilkBound.Packets.Impl
         public override string PacketName => "HandshakePacket";
 
         public string ClientId;
+        public string ClientName;
         public string HandshakeId;
         public bool Fulfilled = false;
 
         public HandshakePacket() { 
             ClientId = string.Empty; 
+            ClientName = string.Empty; 
             HandshakeId = string.Empty;
         }
-        public HandshakePacket(string ClientId)
+        public HandshakePacket(string ClientId, string ClientName)
         {
             this.ClientId = ClientId;
+            this.ClientName = ClientName;
             this.HandshakeId = Guid.NewGuid().ToString();
 
             TransactionManager.Promise(HandshakeId, this);
@@ -34,9 +37,10 @@ namespace SilkBound.Packets.Impl
             using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
             {
                 string clientId = reader.ReadString();
+                string clientName = reader.ReadString();
                 string handshakeId = reader.ReadString();
 
-                return new HandshakePacket(clientId) { HandshakeId=handshakeId };
+                return new HandshakePacket(clientId, clientName) { HandshakeId=handshakeId };
             }
 
         }
@@ -47,6 +51,7 @@ namespace SilkBound.Packets.Impl
             using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8))
             {
                 writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
+                writer.Write(ClientName.Substring(0, Math.Min(100, ClientName.Length)));
                 writer.Write(HandshakeId.Substring(0, Math.Min(100, HandshakeId.Length)));
 
                 return stream.ToArray();

@@ -1,42 +1,44 @@
 ﻿using SilkBound.Network.Packets;
 using SilkBound.Packets;
+using SilkBound.Packets.Impl;
 using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types
+namespace SilkBound.Types.NetLayers
 {
-    public class NamedPipeServer : NetworkServer
+    public class NamedPipeConnection : NetworkConnection
     {
-        public NamedPipeServer(string host) : base(new ServerPacketHandler())
+        public NamedPipeConnection(string host) : base(new ClientPacketHandler())
         {
             Connect(host, null);
         }
 
-        public NamedPipeServerStream? Stream;
+        public NamedPipeClientStream? Stream;
 
         public override void ConnectImpl(string host, int? port)
         {
-            Stream = new NamedPipeServerStream(host, PipeDirection.InOut);
-            Logger.Msg("NamedPipeServerStream object created.");
-            Logger.Msg("Waiting for client connection...");
-            Stream.WaitForConnection();
-            Logger.Msg("Client connected!");
+            Stream = new NamedPipeClientStream(".", host, PipeDirection.InOut, PipeOptions.Asynchronous);
+            Logger.Msg("Connecting to NamedPipeServer...");
+            Stream.Connect();
+            Logger.Msg("Connected to server!");
 
             Task.Run(() => ReceiveLoop());
+
+            //Logger.Msg("Sending Handshake...");
+            //Send(new HandshakePacket(NetworkUtils.LocalClient?.ClientID.ToString() ?? Guid.NewGuid().ToString(), "C2SID123"));
+            //Logger.Msg("Sent.");
         }
 
         private void ReceiveLoop()
         {
-            byte[] buffer = new byte[SilkConstants. PACKET_BUFFER];
-
-            while (Stream!.IsConnected)
+            try
             {
-                try
+                byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
+                while (Stream!.IsConnected)
                 {
                     int read = Stream.Read(buffer, 0, buffer.Length);
                     if (read > 0)
@@ -46,11 +48,10 @@ namespace SilkBound.Types
                         HandlePacket(data);
                     }
                 }
-                catch (IOException e)
-                {
-                    Logger.Warn($"NamedPipeServer receive loop ended: {e.Message}");
-                    break;
-                }
+            }
+            catch (IOException e)
+            {
+                Logger.Warn($"NamedPipeConnection receive loop ended: {e.Message}");
             }
         }
 
@@ -58,12 +59,14 @@ namespace SilkBound.Types
         public override void Disconnect()
         {
             Stream?.Dispose();
+            Stream = null;
         }
 
         public override void Initialize()
         {
-
+            // Optional initialization logic // TODO: remove chatgpt comment because i made it write the recieve loop for me (i HATE named pipes <3 )
         }
+
         public override void Send(Packet packet)
         {
             if (Stream == null || !Stream.IsConnected)

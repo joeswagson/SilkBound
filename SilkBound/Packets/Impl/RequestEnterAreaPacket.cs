@@ -9,18 +9,21 @@ namespace SilkBound.Packets.Impl
     {
         public override string PacketName => "EnterAreaPacket";
 
+        public RequestEnterAreaPacket() { GateName = string.Empty; }
+        
+        public string GateName;
+        public RequestEnterAreaPacket(string gateName)
+        {
+            GateName = gateName;
+        }
 
         public override Packet Deserialize(byte[] data)
         {
             using (MemoryStream stream = new MemoryStream(data))
             using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
             {
-                string clientId = reader.ReadString();
-                string handshakeId = reader.ReadString();
-
-                return new HandshakePacket(clientId) { HandshakeId = handshakeId };
+                return new RequestEnterAreaPacket();
             }
-
         }
 
         public override byte[] Serialize()
@@ -28,9 +31,6 @@ namespace SilkBound.Packets.Impl
             using (MemoryStream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8))
             {
-                //writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
-                //writer.Write(HandshakeId.Substring(0, Math.Min(100, HandshakeId.Length)));
-
                 return stream.ToArray();
             }
         }
