@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SilkBound.Packets
+namespace SilkBound.Network.Packets
 {
     public enum Authority
     {

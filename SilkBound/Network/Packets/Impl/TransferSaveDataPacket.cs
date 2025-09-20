@@ -6,7 +6,7 @@ using System.Text;
 using Unity.Collections.LowLevel.Unsafe;
 using static UnityEngine.UI.SaveSlotButton;
 
-namespace SilkBound.Packets.Impl
+namespace SilkBound.Network.Packets.Impl
 {
     public class TransferSaveDataPacket : Packet
     {

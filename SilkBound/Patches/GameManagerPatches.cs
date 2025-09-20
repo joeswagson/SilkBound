@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using Newtonsoft.Json;
 using SilkBound.Managers;
-using SilkBound.Packets.Impl;
+using SilkBound.Network.Packets.Impl;
 using SilkBound.Types;
 using SilkBound.Types.Transfers;
 using SilkBound.Utils;

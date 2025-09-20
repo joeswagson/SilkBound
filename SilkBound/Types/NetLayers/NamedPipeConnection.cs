@@ -1,6 +1,5 @@
 ﻿using SilkBound.Network.Packets;
-using SilkBound.Packets;
-using SilkBound.Packets.Impl;
+using SilkBound.Network.Packets.Handlers;
 using SilkBound.Utils;
 using System;
 using System.IO;

@@ -1,5 +1,5 @@
 ﻿using SilkBound.Managers;
-using SilkBound.Packets.Impl;
+using SilkBound.Network.Packets.Impl;
 using SilkBound.Types;
 using SilkBound.Utils;
 using System;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine.SceneManagement;
 
-namespace SilkBound.Network.Packets
+namespace SilkBound.Network.Packets.Handlers
 {
     public class ServerPacketHandler : PacketHandler
     {

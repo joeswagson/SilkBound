@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json;
-using SilkBound.Packets.Impl;
+using SilkBound.Network.Packets.Impl;
 
 namespace SilkBound.Utils
 {

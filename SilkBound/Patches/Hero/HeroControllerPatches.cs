@@ -104,7 +104,6 @@ namespace SilkBound.Patches.Hero
                 RenderTexture.active = null;
                 RenderTexture.ReleaseTemporary(rt);
 
-                // Replace the material's main texture with the skin texture
                 __instance.GetComponent<tk2dSpriteAnimator>().Sprite.Collection.materialInsts[i].SetTexture("_MainTex", skinTex);
                 __instance.GetComponent<tk2dSpriteAnimator>().Sprite.Collection.materials[i].SetTexture("_MainTex", skinTex);
                 collection[i] = skinTex;

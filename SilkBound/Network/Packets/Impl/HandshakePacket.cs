@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
-namespace SilkBound.Packets.Impl
+namespace SilkBound.Network.Packets.Impl
 {
     public class HandshakePacket : Packet
     {
@@ -27,7 +27,7 @@ namespace SilkBound.Packets.Impl
         {
             this.ClientId = ClientId;
             this.ClientName = ClientName;
-            this.HandshakeId = Guid.NewGuid().ToString();
+            HandshakeId = Guid.NewGuid().ToString();
 
             TransactionManager.Promise(HandshakeId, this);
         }

@@ -1,5 +1,4 @@
-﻿using SilkBound.Packets;
-using SilkBound.Types;
+﻿using SilkBound.Types;
 using System;
 using System.Collections.Generic;
 using System.Reflection;

@@ -5,9 +5,10 @@ using UnityEngine;
 using SilkBound.Types;
 using SilkBound.Utils;
 using Logger = SilkBound.Utils.Logger;
-using SilkBound.Packets.Impl;
+using SilkBound.Network.Packets.Impl;
 using SilkBound.Types.NetLayers;
 using Steamworks;
+using SilkBound.Managers;
 
 
 [assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
@@ -21,6 +22,8 @@ namespace SilkBound
         }
         public override void OnUpdate()
         {
+            TickManager.Update();
+
             if (Input.GetKeyDown(KeyCode.Minus))
             {
                 Logger.Debug("sending handshake", Guid.NewGuid().ToString("N"));
@@ -36,12 +39,14 @@ namespace SilkBound
 
             if (Input.GetKeyDown(KeyCode.H))
             {
-                Server.ConnectPipe("sb_dbg", "host");
+                //Server.ConnectPipe("sb_dbg", "host");
+                Server.ConnectTCP("127.0.0.1", "host");
             }
 
             if (Input.GetKeyDown(KeyCode.J))
             {
-                NetworkUtils.ConnectPipe("sb_dbg", "client");
+                //NetworkUtils.ConnectPipe("sb_dbg", "client");
+                NetworkUtils.ConnectTCP("127.0.0.1", "client");
                 while (!NetworkUtils.IsConnected) ;
                 NetworkUtils.LocalConnection!.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID.ToString(), NetworkUtils.LocalClient!.ClientName));
             }

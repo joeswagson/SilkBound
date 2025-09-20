@@ -1,10 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using SilkBound.Network.Packets;
 using UnityEngine.SceneManagement;
 
-namespace SilkBound.Packets.Impl;
+namespace SilkBound.Network.Packets.Impl;
 
 public class LoadHostScenePacket : Packet
 {

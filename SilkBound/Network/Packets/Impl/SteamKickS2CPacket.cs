@@ -1,11 +1,10 @@
-﻿using SilkBound.Packets;
-using Steamworks;
+﻿using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SilkBound.Network.Packets
+namespace SilkBound.Network.Packets.Impl
 {
     public class SteamKickS2CPacket : Packet
     {

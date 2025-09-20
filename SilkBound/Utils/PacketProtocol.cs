@@ -1,4 +1,4 @@
-﻿using SilkBound.Packets;
+﻿using SilkBound.Network.Packets;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace SilkBound.Utils
 
         public static (string?, Packet?) UnpackPacket(byte[] data)
         {
-            Logger.Debug("Raw Packet (recieve):", BitConverter.ToString(data).Replace("-", ""));
+            Logger.Debug("Raw Packet (receive):", BitConverter.ToString(data).Replace("-", ""));
             try
             {
                 using (MemoryStream stream = new MemoryStream(data))
@@ -52,15 +52,17 @@ namespace SilkBound.Utils
 
                     byte[] payload = reader.ReadBytes((int)(stream.Length - stream.Position));
 
-                    string[] validNamespaces = // TODO: make this use sub namespaces. better for organizing the actual cs files for packets instead of one mega folder
+                    string[] validRoots =
                     {
-                        "SilkBound.Packets.Impl",
+                        "SilkBound.Network.Packets.Impl"
                     };
 
                     var asm = Assembly.GetExecutingAssembly();
                     var type = asm.GetTypes()
                         .FirstOrDefault(t =>
-                            validNamespaces.Contains(t.Namespace) &&
+                            t.Namespace != null &&
+                            validRoots.Any(root =>
+                                t.Namespace.StartsWith(root, StringComparison.Ordinal)) && // allow sub-namespaces
                             typeof(Packet).IsAssignableFrom(t) &&
                             string.Equals(
                                 ((Packet)Activator.CreateInstance(t)!).PacketName,

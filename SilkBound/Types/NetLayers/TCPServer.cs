@@ -1,5 +1,5 @@
 ﻿using SilkBound.Network.Packets;
-using SilkBound.Packets;
+using SilkBound.Network.Packets.Handlers;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ namespace SilkBound.Types.NetLayers
         private Task? _acceptTask;
 
         public override bool IsConnected => _connections.Count > 0;
-        public TCPServer(string host, int? port=null) : base(new ServerPacketHandler())
+        public TCPServer(string host, int? port = null) : base(new ServerPacketHandler())
         {
             Connect(host, port ?? SilkConstants.PORT);
         }

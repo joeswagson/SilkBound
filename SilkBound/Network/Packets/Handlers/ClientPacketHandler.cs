@@ -1,6 +1,6 @@
 ﻿using MelonLoader;
 using SilkBound.Managers;
-using SilkBound.Packets.Impl;
+using SilkBound.Network.Packets.Impl;
 using SilkBound.Types;
 using SilkBound.Types.NetLayers;
 using SilkBound.Types.Transfers;
@@ -13,7 +13,7 @@ using System.Text;
 using Unity.Burst.Intrinsics;
 using UnityEngine.SceneManagement;
 
-namespace SilkBound.Network.Packets
+namespace SilkBound.Network.Packets.Handlers
 {
     public class ClientPacketHandler : PacketHandler
     {

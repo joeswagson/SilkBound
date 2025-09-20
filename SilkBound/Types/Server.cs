@@ -1,5 +1,6 @@
 ﻿using SilkBound.Network;
 using SilkBound.Network.Packets;
+using SilkBound.Network.Packets.Impl;
 using SilkBound.Types.NetLayers;
 using SilkBound.Utils;
 using Steamworks;
@@ -58,9 +59,9 @@ namespace SilkBound.Types
         {
             return Connect(new SteamServer(), name);
         }
-        public static Server ConnectTCP(string host, string name)
+        public static Server ConnectTCP(string host, string name, int? port=null)
         {
-            return Connect(new TCPServer(host), name);
+            return Connect(new TCPServer(host, port), name);
         }
 
         public static Server Connect(NetworkServer connection, string name)

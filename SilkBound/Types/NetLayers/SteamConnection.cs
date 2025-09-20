@@ -1,5 +1,4 @@
 ﻿using SilkBound.Network.Packets;
-using SilkBound.Packets;
 using SilkBound.Utils;
 using Steamworks;
 using System;
@@ -8,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
+using SilkBound.Network.Packets.Handlers;
 
 namespace SilkBound.Types.NetLayers
 {
