@@ -7,6 +7,7 @@ using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using SilkBound.Addons.AddonLoading;
 
 namespace SilkBound.Types
 {
@@ -69,6 +70,7 @@ namespace SilkBound.Types
             NetworkUtils.Connect(connection, name);
             CurrentServer = new Server(connection);
             CurrentServer.Port = connection.Port ?? CurrentServer.Port ?? SilkConstants.PORT;
+            AddonManager.LoadAddons();
             return CurrentServer;
         }
     }

@@ -19,6 +19,7 @@ namespace SilkBound
         public override void OnInitializeMelon()
         {
             Logger.Debug("SilkBound is in Debug mode.");
+            ModFolder.RegisterFolders();
         }
         public override void OnUpdate()
         {
