@@ -3,11 +3,14 @@ using SilkBound.Managers;
 using SilkBound.Packets.Impl;
 using SilkBound.Types;
 using SilkBound.Types.NetLayers;
+using SilkBound.Types.Transfers;
 using SilkBound.Utils;
 using Steamworks;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Unity.Burst.Intrinsics;
 using UnityEngine.SceneManagement;
 
 namespace SilkBound.Network.Packets
@@ -34,7 +37,8 @@ namespace SilkBound.Network.Packets
                 {
                     original.Fulfilled = true;
 
-                    //do next step of client initialization here or fire an event etc
+                    Server.CurrentServer = new Server((connection as NetworkServer)!);
+                    Server.CurrentServer.Host = new Weaver(packet.ClientName, connection, Guid.Parse(packet.ClientId));
 
                     Logger.Msg("Handshake Fulfilled (Client):", packet.ClientId, packet.HandshakeId);
                     TransactionManager.Revoke(packet.HandshakeId); // mark the original packet for garbage collection as we have completed this transaction
@@ -43,7 +47,7 @@ namespace SilkBound.Network.Packets
             else
             {
                 Logger.Msg("Handshake Recieved (Client):", packet.ClientId, packet.HandshakeId);
-                NetworkUtils.LocalConnection?.Send(new HandshakePacket(packet.ClientId, packet.ClientName) { HandshakeId = packet.HandshakeId }); // reply with same handshake id so the client can acknowledge handshake completion
+                NetworkUtils.LocalConnection?.Send(new HandshakePacket() { ClientId = packet.ClientId, ClientName=packet.ClientName, HandshakeId = packet.HandshakeId }); // reply with same handshake id so the client can acknowledge handshake completion
             }
         }
 
@@ -61,19 +65,48 @@ namespace SilkBound.Network.Packets
             }
         }
 
+        [PacketHandler(typeof(TransferSaveDataPacket))]
+        public void OnTransferSaveDataPacket(TransferSaveDataPacket packet, NetworkConnection connection)
+        {
+            Logger.Msg($"Received TransferSaveDataPacket: TransferId={packet.TransferId}, ChunkIndex={packet.ChunkIndex}, TotalChunks={packet.TotalChunks}, DataLength={packet.Data.Length}");
+            TransferSaveDataPacket.TransferData? data = TransactionManager.Fetch<TransferSaveDataPacket.TransferData>(packet.TransferId.ToString("N"));
+
+            if (data != null)
+            {
+                data.Chunks[packet.ChunkIndex] = packet.Data;
+                Logger.Msg($"Received chunk {packet.ChunkIndex}/{data.TotalChunks} for transfer {packet.TransferId} ({data.Chunks.Count(a => a != null)}/{data.TotalChunks} complete)");
+            }
+            else
+            {
+                data = new TransferSaveDataPacket.TransferData
+                {
+                    Chunks = new byte[packet.TotalChunks][],
+                    TotalChunks = packet.TotalChunks
+                };
+                data.Chunks[packet.ChunkIndex] = packet.Data;
+                Logger.Msg($"Received chunk {packet.ChunkIndex}/{data.TotalChunks} for transfer {packet.TransferId} (1/{data.TotalChunks} complete)");
+                TransactionManager.Promise(packet.TransferId.ToString("N"), data);
+            }
+
+            if (data.Chunks.Count(a => a != null) >= data.TotalChunks && NetworkUtils.LocalClient != null)
+            {
+                SaveDataTransfer? transfer = ChunkedTransfer.Unpack<SaveDataTransfer>(new List<byte[]>(data.Chunks!));
+                if(transfer == null)
+                {
+                    Logger.Msg("Failed to unpack SaveDataTransfer");
+                    return;
+                }
+                NetworkUtils.LocalClient.SaveGame = transfer.Data;
+                TransactionManager.Promise(transfer.HostHash, transfer);
+                GameManager.instance.LoadGameFromUI(transfer.HostHash, NetworkUtils.LocalClient.SaveGame);
+            }
+        }
+
+
         [PacketHandler(typeof(LoadGameFromUIPacket))]
         public void OnRequestEnterAreaPacket(LoadGameFromUIPacket packet, NetworkConnection connection)
         {
-            Logger.Msg("Received request to enter area:", packet.GateName);
-            MelonCoroutines.Start(
-                HeroController.instance.EnterScene(
-                    GameManager.instance.FindTransitionPoint(packet.GateName, default, false),
-                    0,
-                    false,
-                    null,
-                    false
-                )
-            );
+
         }
     }
 }

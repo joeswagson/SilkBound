@@ -38,12 +38,12 @@ namespace SilkBound.Network.Packets
                 {
                     var parameters = method.GetParameters();
 
-                    if (parameters.Length == 1 && parameters[0].ParameterType == typeof(Packet)) // (Packet)
+                    if (parameters.Length == 1 && typeof(Packet).IsAssignableFrom(parameters[0].ParameterType))
                     {
                         method.Invoke(this, new object[] { packet });
                     }
-                    else if (parameters.Length == 2 && parameters[0].ParameterType == typeof(Packet) && 
-                        (parameters[1].ParameterType.BaseType == typeof(NetworkConnection) || parameters[1].ParameterType.BaseType == typeof(NetworkServer))) // (Packet, NetworkConnection | NetworkServer)
+                    else if (parameters.Length == 2 && typeof(Packet).IsAssignableFrom(parameters[0].ParameterType) &&
+                             typeof(NetworkConnection).IsAssignableFrom(parameters[1].ParameterType))
                     {
                         method.Invoke(this, new object[] { packet, conn });
                     }

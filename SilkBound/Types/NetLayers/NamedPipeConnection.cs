@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SilkBound.Types.NetLayers
@@ -18,57 +19,84 @@ namespace SilkBound.Types.NetLayers
         }
 
         public NamedPipeClientStream? Stream;
+        public override bool IsConnected => Stream != null && Stream.IsConnected;
+
+        private CancellationTokenSource? _recvCts;
+        private Task? _recvTask;
 
         public override void ConnectImpl(string host, int? port)
         {
-            Stream = new NamedPipeClientStream(".", host, PipeDirection.InOut, PipeOptions.Asynchronous);
+            Stream = new NamedPipeClientStream(
+                ".", host, PipeDirection.InOut,
+                PipeOptions.Asynchronous
+            );
             Logger.Msg("Connecting to NamedPipeServer...");
             Stream.Connect();
             Logger.Msg("Connected to server!");
 
-            Task.Run(() => ReceiveLoop());
-
-            //Logger.Msg("Sending Handshake...");
-            //Send(new HandshakePacket(NetworkUtils.LocalClient?.ClientID.ToString() ?? Guid.NewGuid().ToString(), "C2SID123"));
-            //Logger.Msg("Sent.");
+            _recvCts = new CancellationTokenSource();
+            _recvTask = Task.Run(() => ReceiveLoopAsync(_recvCts.Token), _recvCts.Token);
         }
 
-        private void ReceiveLoop()
+        private async Task ReceiveLoopAsync(CancellationToken ct)
         {
+            byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
+
             try
             {
-                byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
-                while (Stream!.IsConnected)
+                while (!ct.IsCancellationRequested && Stream!.IsConnected)
                 {
-                    int read = Stream.Read(buffer, 0, buffer.Length);
+                    int read = await Stream.ReadAsync(buffer, 0, buffer.Length, ct);
                     if (read > 0)
                     {
                         byte[] data = new byte[read];
                         Array.Copy(buffer, data, read);
-                        HandlePacket(data);
+                        try { HandlePacket(data); }
+                        catch (Exception ex)
+                        {
+                            Logger.Error($"NamedPipeConnection HandlePacket failed: {ex}");
+                        }
                     }
                 }
-                
             }
+            catch (OperationCanceledException) { }
             catch (IOException e)
             {
                 Logger.Warn($"NamedPipeConnection receive loop ended: {e.Message}");
             }
+            catch (Exception ex)
+            {
+                Logger.Error($"NamedPipeConnection receive loop fatal: {ex}");
+            }
         }
-
 
         public override void Disconnect()
         {
-            Stream?.Dispose();
-            Stream = null;
+            try
+            {
+                if (_recvCts != null)
+                {
+                    _recvCts.Cancel();
+                    try { _recvTask?.Wait(500); } catch { }
+                    _recvCts.Dispose();
+                    _recvCts = null;
+                }
+
+                Stream?.Dispose();
+                Stream = null;
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"NamedPipeConnection Disconnect error: {e}");
+            }
         }
 
         public override void Initialize()
         {
-            // Optional initialization logic // TODO: remove chatgpt comment because i made it write the recieve loop for me (i HATE named pipes <3 )
+
         }
 
-        public override void Send(Packet packet)
+        public override async void Send(Packet packet)
         {
             if (Stream == null || !Stream.IsConnected)
             {
@@ -77,12 +105,17 @@ namespace SilkBound.Types.NetLayers
             }
 
             byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null)
-                return;
+            if (data == null) return;
 
-            Stream.Write(data, 0, data.Length);
-            Stream.Flush();
+            try
+            {
+                await Stream.WriteAsync(data, 0, data.Length);
+                await Stream.FlushAsync();
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"NamedPipeConnection send error: {e.Message} {e.GetType().Name}");
+            }
         }
-
     }
 }

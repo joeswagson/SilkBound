@@ -11,6 +11,7 @@ namespace SilkBound.Types
     public abstract class NetworkConnection
     {
         public PacketHandler PacketHandler { get; private set; }
+        public abstract bool IsConnected { get; }
         public NetworkConnection(PacketHandler packetHandler)
         {
             PacketHandler = packetHandler;

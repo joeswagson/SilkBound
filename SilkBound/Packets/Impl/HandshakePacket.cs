@@ -15,6 +15,7 @@ namespace SilkBound.Packets.Impl
         public string ClientId;
         public string ClientName;
         public string HandshakeId;
+        public string? HostGUID;
         public bool Fulfilled = false;
 
         public HandshakePacket() { 
@@ -39,8 +40,11 @@ namespace SilkBound.Packets.Impl
                 string clientId = reader.ReadString();
                 string clientName = reader.ReadString();
                 string handshakeId = reader.ReadString();
+                string? hostGuid = null;
+                if (reader.ReadBoolean())
+                    hostGuid = reader.ReadString();
 
-                return new HandshakePacket(clientId, clientName) { HandshakeId=handshakeId };
+                return new HandshakePacket() { ClientId=clientId, ClientName=clientName, HandshakeId = handshakeId, HostGUID = hostGuid };
             }
 
         }
@@ -53,6 +57,10 @@ namespace SilkBound.Packets.Impl
                 writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
                 writer.Write(ClientName.Substring(0, Math.Min(100, ClientName.Length)));
                 writer.Write(HandshakeId.Substring(0, Math.Min(100, HandshakeId.Length)));
+                writer.Write(HostGUID != null);
+                if (HostGUID != null)
+                    writer.Write(HostGUID.Substring(0, Math.Min(100, HostGUID.Length)));
+
 
                 return stream.ToArray();
             }

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.IO;
 
 namespace SilkBound.Types.NetLayers
 {
@@ -20,6 +21,7 @@ namespace SilkBound.Types.NetLayers
 
         private CancellationTokenSource? _recvCts;
         private Task? _recvTask;
+        public override bool IsConnected => _connections.Count > 0;
 
         public SteamServer() : base(new ServerPacketHandler())
         {

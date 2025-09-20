@@ -18,10 +18,18 @@ namespace SilkBound.Types.NetLayers
         }
 
         public NamedPipeServerStream? Stream;
+        public override bool IsConnected => Stream != null && Stream.IsConnected;
 
         public override void ConnectImpl(string host, int? port)
         {
-            Stream = new NamedPipeServerStream(host, PipeDirection.InOut);
+            Stream = new NamedPipeServerStream(
+                host,
+                PipeDirection.InOut,
+                1,
+                PipeTransmissionMode.Message,
+                PipeOptions.Asynchronous
+            );
+
             Logger.Msg("NamedPipeServerStream object created.");
             Logger.Msg("Waiting for client connection...");
             Stream.WaitForConnection();
@@ -39,15 +47,15 @@ namespace SilkBound.Types.NetLayers
             }
         }
 
-        private void ReceiveLoop()
+        private async Task ReceiveLoop()
         {
-            byte[] buffer = new byte[SilkConstants. PACKET_BUFFER];
+            byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
 
             while (Stream!.IsConnected)
             {
                 try
                 {
-                    int read = Stream.Read(buffer, 0, buffer.Length);
+                    int read = await Stream.ReadAsync(buffer, 0, buffer.Length);
                     if (read > 0)
                     {
                         byte[] data = new byte[read];
@@ -60,8 +68,14 @@ namespace SilkBound.Types.NetLayers
                     Logger.Warn($"NamedPipeServer receive loop ended: {e.Message}");
                     break;
                 }
+                catch (Exception ex)
+                {
+                    Logger.Error($"NamedPipeServer receive loop fatal: {ex}");
+                    break;
+                }
             }
         }
+
 
 
         public override void Disconnect()
@@ -85,9 +99,18 @@ namespace SilkBound.Types.NetLayers
             if (data == null)
                 return;
 
-            Stream.Write(data, 0, data.Length);
+            Logger.Msg("presend"); 
+            try
+            {
+                Stream.Write(data, 0, data.Length);
+            } catch(Exception e)
+            {
+                Logger.Warn($"NamedPipeServer send error: {e.Message} {e.GetType().Name}");
+                return;
+            }
+            Logger.Msg("sent");
             Stream.Flush();
+            Logger.Msg("flushed");
         }
-
     }
 }

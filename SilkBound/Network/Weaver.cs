@@ -20,5 +20,6 @@ namespace SilkBound.Network
         public string ClientName;
         public NetworkConnection Connection;
         public Skin AppliedSkin = SkinManager.Library["blue"];
+        public SaveGameData? SaveGame;
     }
 }

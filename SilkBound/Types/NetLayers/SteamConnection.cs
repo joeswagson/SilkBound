@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.IO;
 
 namespace SilkBound.Types.NetLayers
 {
@@ -19,6 +20,7 @@ namespace SilkBound.Types.NetLayers
         internal Task? _receiveTask;
 
         public bool HasConnection { get; private set; } = false;
+        public override bool IsConnected => HasConnection;
 
         public SteamConnection(string host) : base(new ClientPacketHandler())
         {

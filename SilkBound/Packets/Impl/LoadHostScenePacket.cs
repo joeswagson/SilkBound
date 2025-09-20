@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using MelonLoader.TinyJSON;
 using SilkBound.Network.Packets;
 using UnityEngine.SceneManagement;
 
@@ -11,22 +10,26 @@ public class LoadHostScenePacket : Packet
 {
     public override string PacketName => "LoadHostScenePacket";
 
-    private string _sceneName;
-    public LoadHostScenePacket(string sceneName)
+    public string SceneName;
+    public string GateName;
+    public LoadHostScenePacket(string sceneName, string gateName)
     {
-        _sceneName = sceneName;
+        SceneName = sceneName;
+        GateName = gateName;
     }
 
     public LoadHostScenePacket()
     {
-        _sceneName = String.Empty;
+        SceneName = string.Empty;
+        GateName = string.Empty;
     }
     public override byte[] Serialize()
     {
         using (MemoryStream ms = new MemoryStream())
         using (BinaryWriter writer = new BinaryWriter(ms, Encoding.UTF8))
         {
-            writer.Write(_sceneName);
+            writer.Write(SceneName);
+            writer.Write(GateName);
             return ms.ToArray();
         }
     }
@@ -36,7 +39,7 @@ public class LoadHostScenePacket : Packet
         using(MemoryStream ms = new MemoryStream(data))
         using(BinaryReader reader = new BinaryReader(ms, Encoding.UTF8))
         {
-            return new LoadHostScenePacket(reader.ReadString());
+            return new LoadHostScenePacket(reader.ReadString(), reader.ReadString());
         }
     }
 }

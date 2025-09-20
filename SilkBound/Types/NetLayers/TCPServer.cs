@@ -3,6 +3,7 @@ using SilkBound.Packets;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -19,6 +20,7 @@ namespace SilkBound.Types.NetLayers
         private CancellationTokenSource? _cts;
         private Task? _acceptTask;
 
+        public override bool IsConnected => _connections.Count > 0;
         public TCPServer(string host, int? port=null) : base(new ServerPacketHandler())
         {
             Connect(host, port ?? SilkConstants.PORT);

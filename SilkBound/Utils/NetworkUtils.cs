@@ -17,14 +17,14 @@ namespace SilkBound.Utils
         {
             get
             {
-                return Server.CurrentServer?.Host == LocalClient;
+                return LocalConnection is NetworkServer;
             }
         }
         public static bool IsConnected
         {
             get
             {
-                return Server.CurrentServer != null;
+                return Server.CurrentServer != null || (LocalConnection?.IsConnected ?? false);
             }
         }
 
