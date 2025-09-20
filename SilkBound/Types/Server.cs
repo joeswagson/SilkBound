@@ -25,18 +25,19 @@ namespace SilkBound.Types
             }
         }
 
-        public Dictionary<Weaver, NetworkConnection> Connections = new Dictionary<Weaver, NetworkConnection>();
+        public List<Weaver> Connections = new List<Weaver>();
 
         public void Kick(Weaver weaver)
         {
-            if (NetworkUtils.IsServer)
+            if (NetworkUtils.IsServer && Connection is SteamServer)
             {
-                CSteamID weaverId = ((SteamConnection)Connections[weaver]).RemoteId;
-                foreach (KeyValuePair<Weaver, NetworkConnection> pair in Connections)
+                CSteamID weaverId = ((SteamConnection)weaver.Connection).RemoteId;
+
+                foreach (Weaver connection in Connections)
                 {
                     if (weaver != NetworkUtils.LocalClient)
                     {
-                        pair.Value.Send(new SteamKickS2CPacket(weaverId.m_SteamID));
+                        connection.Connection.Send(new SteamKickS2CPacket(weaverId.m_SteamID));
                         break;
                     }
                 }
@@ -47,13 +48,27 @@ namespace SilkBound.Types
 
         public Weaver? Host { get; internal set; }
         public string? Address { get; internal set; }
-        public int? Port { get; internal set; } = 30300; // default port
+        public int? Port { get; internal set; }
         public NetworkConnection? Connection { get; internal set; }
-        public static Server ConnectPiped(string host, string name)
+        public static Server ConnectPipe(string host, string name)
         {
-            NetworkServer connection = new NamedPipeServer(host);
+            return Connect(new NamedPipeServer(host), name);
+        }
+        public static Server ConnectP2P(string name)
+        {
+            return Connect(new SteamServer(), name);
+        }
+        public static Server ConnectTCP(string host, string name)
+        {
+            return Connect(new TCPServer(host), name);
+        }
+
+        public static Server Connect(NetworkServer connection, string name)
+        {
             NetworkUtils.Connect(connection, name);
-            return new Server(connection);
+            CurrentServer = new Server(connection);
+            CurrentServer.Port = connection.Port ?? CurrentServer.Port ?? SilkConstants.PORT;
+            return CurrentServer;
         }
     }
 }

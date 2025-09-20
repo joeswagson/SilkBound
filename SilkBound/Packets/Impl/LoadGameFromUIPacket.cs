@@ -5,16 +5,16 @@ using System.Text;
 
 namespace SilkBound.Packets.Impl
 {
-    public class RequestEnterAreaPacket : Packet
+    public class LoadGameFromUIPacket : Packet
     {
-        public override string PacketName => "EnterAreaPacket";
+        public override string PacketName => "LoadGameFromUIPacket";
 
-        public RequestEnterAreaPacket() { GateName = string.Empty; }
+        public LoadGameFromUIPacket() { SaveSlot = string.Empty; }
         
-        public string GateName;
-        public RequestEnterAreaPacket(string gateName)
+        public int SaveSlot;
+        public LoadGameFromUIPacket(int saveSlot)
         {
-            GateName = gateName;
+            SaveSlot = saveSlot;
         }
 
         public override Packet Deserialize(byte[] data)
@@ -22,7 +22,7 @@ namespace SilkBound.Packets.Impl
             using (MemoryStream stream = new MemoryStream(data))
             using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
             {
-                return new RequestEnterAreaPacket();
+                return new LoadGameFromUIPacket();
             }
         }
 

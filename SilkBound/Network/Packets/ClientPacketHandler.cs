@@ -61,8 +61,8 @@ namespace SilkBound.Network.Packets
             }
         }
 
-        [PacketHandler(typeof(RequestEnterAreaPacket))]
-        public void OnRequestEnterAreaPacket(RequestEnterAreaPacket packet, NetworkConnection connection)
+        [PacketHandler(typeof(LoadGameFromUIPacket))]
+        public void OnRequestEnterAreaPacket(LoadGameFromUIPacket packet, NetworkConnection connection)
         {
             Logger.Msg("Received request to enter area:", packet.GateName);
             MelonCoroutines.Start(

@@ -11,6 +11,7 @@ namespace SilkBound.Utils
         public const short MAX_CLIENTS = 100;
         public const short MAX_NAME_LENGTH = 20;
 
+        public const ushort PORT = 30300;
         public const short PACKET_BUFFER = 512;
     }
 }

@@ -9,14 +9,16 @@ namespace SilkBound.Network
 {
     public class Weaver
     {
-        public Weaver(string name, Guid? ClientID = null)
+        public Weaver(string name, NetworkConnection connection, Guid? ClientID = null)
         {
             ClientName = name;
-            ClientID = ClientID ?? Guid.NewGuid();
+            Connection = connection;
+            this.ClientID = ClientID ?? Guid.NewGuid();
         }
 
         public Guid ClientID;
         public string ClientName;
+        public NetworkConnection Connection;
         public Skin AppliedSkin = SkinManager.Library["blue"];
     }
 }

@@ -48,6 +48,7 @@ namespace SilkBound.Types.NetLayers
                         HandlePacket(data);
                     }
                 }
+                
             }
             catch (IOException e)
             {

@@ -13,7 +13,7 @@ namespace SilkBound.Network.Packets
     {
         public ServerPacketHandler()
         {
-            Subscribe(nameof(HandshakePacket), (packet, connection) => OnHandshakePacket((HandshakePacket)packet, connection));
+            //Subscribe(nameof(HandshakePacket), (packet, connection) => OnHandshakePacket((HandshakePacket)packet, connection));
         }
 
         public override void Initialize()
@@ -21,6 +21,7 @@ namespace SilkBound.Network.Packets
 
         }
 
+        [PacketHandler(typeof(HandshakePacket))]
         public void OnHandshakePacket(HandshakePacket packet, NetworkConnection connection)
         {
             if (TransactionManager.Fetch<HandshakePacket>(packet.HandshakeId) is HandshakePacket original)

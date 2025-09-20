@@ -94,12 +94,9 @@ namespace SilkBound.Types.NetLayers
                                     {
                                         lock (_connLock)
                                         {
-                                            if (!_connections.TryGetValue(sender, out conn))
-                                            {
-                                                conn = new SteamConnection(sender, true);
-                                                _connections[sender] = conn;
-                                                Logger.Msg($"[SteamServer] Auto-accepted and created connection for {sender}");
-                                            }
+                                            conn = new SteamConnection(sender, true);
+                                            _connections[sender] = conn;
+                                            Logger.Msg($"[SteamServer] Auto-accepted and created connection for {sender}");
                                         }
                                     }
                                     else

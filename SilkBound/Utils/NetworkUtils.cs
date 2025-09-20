@@ -1,6 +1,7 @@
 ﻿using SilkBound.Network;
 using SilkBound.Network.Packets;
 using SilkBound.Types;
+using SilkBound.Types.NetLayers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -27,16 +28,29 @@ namespace SilkBound.Utils
             }
         }
 
-        public static void Connect(NetworkConnection connection, string name)
+
+        public static Weaver ConnectPipe(string host, string name)
+        {
+            return Connect(new NamedPipeConnection(host), name);
+        }
+        public static Weaver ConnectP2P(ulong steamId, string name)
+        {
+            return Connect(new SteamConnection(steamId.ToString()), name);
+        }
+        public static Weaver ConnectTCP(string host, string name, int? port=null)
+        {
+            return Connect(new TCPConnection(host, port), name);
+        }
+        public static Weaver Connect(NetworkConnection connection, string name)
         {
             if (LocalConnection != null)
                 LocalConnection.Disconnect();
 
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
-            LocalClient = LocalClient ?? new Weaver(name) { ClientName=name };
-            //LocalClient.Connection = connection;
-            LocalClient.ClientName = name;
+            LocalClient = LocalClient ?? new Weaver(name, connection);
+
+            return LocalClient;
         }
     }
 }
