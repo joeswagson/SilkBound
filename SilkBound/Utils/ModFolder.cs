@@ -22,13 +22,8 @@ namespace SilkBound.Utils
 
         internal static void RegisterFolders()
         {
-            if (!Directory.Exists(_modFolderPath))
-            {
-                Instance = Directory.CreateDirectory(_modFolderPath);
-                Addons = Directory.CreateDirectory(_pluginsFolderPath);
-            }
-            Instance ??= new DirectoryInfo(_modFolderPath);
-            Addons ??= new DirectoryInfo(_pluginsFolderPath);
+            Instance = Directory.CreateDirectory(_modFolderPath);
+            Addons = Directory.CreateDirectory(_pluginsFolderPath);
         }
     }
 }

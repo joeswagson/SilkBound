@@ -22,21 +22,23 @@ namespace SilkBound.Addons.AddonLoading
             {
                 return;
             }
-
             foreach (var file in ModFolder.Addons.GetFiles("*.dll"))
             {
                 var assembly = Assembly.LoadFrom(file.FullName);
                 var types = assembly.GetTypes();
-                var plugin = types.FirstOrDefault(type => type.IsAssignableFrom(typeof(SilkboundAddon)));
-                if (plugin is null) continue;
-                var addon = (SilkboundAddon)Activator.CreateInstance(plugin);
-                var info = new AddonInfo(assembly, addon);
-                Addons[addon.Name] = info;
-                AddonLoaded.Invoke(null, info);
-                addon.OnEnable();
-                
-                foreach (var type in assembly.GetTypes())
+                SilkboundAddon? addon = null;
+                foreach (var type in types)
                 {
+                    if (type.IsSubclassOf(typeof(SilkboundAddon)))
+                    {
+                        Logger.Msg("Plugin class found: " + type.Name);
+                        addon = (SilkboundAddon)Activator.CreateInstance(type);
+                        var info = new AddonInfo(assembly, addon);
+                        Addons[addon.Name] = info;
+                        AddonLoaded.Invoke(null, info);
+                        addon.OnEnable();
+                    }
+                    
                     foreach (var method in type.GetMethods())
                     {
                         var eventAttribute = method.GetCustomAttribute<RegisterEventAttribute>();
@@ -62,6 +64,9 @@ namespace SilkBound.Addons.AddonLoading
                         EventManager.RegisterListener(paramType, method, eventAttribute.Priority);
                     }
                 }
+
+                if (addon is not null) 
+                    Logger.Msg($"Loaded addon {addon.Name}!");
             }
             FinishedAddonLoading.Invoke(null, Addons.Values.ToArray());
         }
@@ -72,6 +77,7 @@ namespace SilkBound.Addons.AddonLoading
             {
                 addon.Addon.OnDisable();
                 AddonUnloaded.Invoke(null, addon);
+                Logger.Msg($"Unloaded addon {addon.Addon.Name}!");
             }
             EventManager.Listeners.Clear();
             Addons.Clear();
