@@ -5,6 +5,6 @@
         protected AddonLogger Logger => new(Name);
         public abstract string Name { get; }
         public abstract void OnEnable();
-        public abstract void OnDisable();
+        public virtual void OnDisable(){}
     }
 }
