@@ -78,7 +78,6 @@ namespace SilkBound.Network.Packets
                 EventManager.CallEvent(new C2SPacketReceivedEvent(packet, connection));
             else if (Server.CurrentServer!.Host == Server.CurrentServer.Connections.First(a => a.Connection == connection))
                 EventManager.CallEvent(new S2CPacketReceivedEvent(packet, connection));
-            else EventManager.CallEvent(new C2CPacketReceivedEvent(packet, connection));
             
             if (Handlers.TryGetValue(packet.PacketName, out List<Action<Packet, NetworkConnection>> handlers))
                 foreach (var handler in handlers)
