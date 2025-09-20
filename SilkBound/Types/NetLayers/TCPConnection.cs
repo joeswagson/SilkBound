@@ -65,6 +65,7 @@ namespace SilkBound.Types.NetLayers
         private async Task ReceiveLoopAsync(CancellationToken ct)
         {
             byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
+            MemoryStream recvBuffer = new MemoryStream();
 
             try
             {
@@ -73,16 +74,47 @@ namespace SilkBound.Types.NetLayers
                     int read = await _stream.ReadAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false);
                     if (read <= 0) break;
 
-                    byte[] data = new byte[read];
-                    Array.Copy(buffer, data, read);
+                    recvBuffer.Write(buffer, 0, read);
 
-                    try
+                    while (true)
                     {
-                        HandleIncoming(data);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error($"[TCPConnection] Error handling packet from {_remoteId}: {ex}");
+                        recvBuffer.Position = 0;
+
+                        if (recvBuffer.Length < 4)
+                            break;
+
+                        using (BinaryReader reader = new BinaryReader(recvBuffer, System.Text.Encoding.UTF8, true))
+                        {
+                            int packetLength = reader.ReadInt32();
+                            if (recvBuffer.Length - 4 < packetLength)
+                            {
+                                break;
+                            }
+
+                            byte[] packetData = reader.ReadBytes(packetLength);
+                            try
+                            {
+                                HandleIncoming(packetData);
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Error($"[TCPConnection] Error handling packet from {_remoteId}: {ex}");
+                            }
+
+                            // compact leftover data
+                            long remaining = recvBuffer.Length - recvBuffer.Position;
+                            if (remaining > 0)
+                            {
+                                byte[] leftover = new byte[remaining];
+                                recvBuffer.Read(leftover, 0, leftover.Length);
+                                recvBuffer.SetLength(0);
+                                recvBuffer.Write(leftover, 0, leftover.Length);
+                            }
+                            else
+                            {
+                                recvBuffer.SetLength(0);
+                            }
+                        }
                     }
                 }
             }
@@ -96,6 +128,7 @@ namespace SilkBound.Types.NetLayers
                 Disconnect();
             }
         }
+
 
         public override void Disconnect()
         {

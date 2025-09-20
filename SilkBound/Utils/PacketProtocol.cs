@@ -25,17 +25,20 @@ namespace SilkBound.Utils
             }
 
             byte length = (byte)packetNameEncoded.Length;
-            byte[] packetData = new byte[Math.Min(1 + length + serialized.Length, SilkConstants.PACKET_BUFFER)];
 
-            // write name length
-            packetData[0] = length;
-            // write name
-            Array.Copy(packetNameEncoded, 0, packetData, 1, length);
-            // write data
-            Array.Copy(serialized, 0, packetData, 1 + length, serialized.Length);
+            // payload: [nameLen][name][payload]
+            byte[] inner = new byte[1 + length + serialized.Length];
+            inner[0] = length;
+            Array.Copy(packetNameEncoded, 0, inner, 1, length);
+            Array.Copy(serialized, 0, inner, 1 + length, serialized.Length);
 
-            Logger.Debug("Raw Packet (send):", BitConverter.ToString(packetData).Replace("-", ""), packetData.Length);
-            return packetData;
+            // packet frame size
+            byte[] framed = new byte[4 + inner.Length];
+            Array.Copy(BitConverter.GetBytes(inner.Length), 0, framed, 0, 4);
+            Array.Copy(inner, 0, framed, 4, inner.Length);
+
+            Logger.Debug("Framed Packet (send):", BitConverter.ToString(framed).Replace("-", ""), framed.Length);
+            return framed;
         }
 
         public static (string?, Packet?) UnpackPacket(byte[] data)
@@ -54,15 +57,15 @@ namespace SilkBound.Utils
 
                     string[] validRoots =
                     {
-                        "SilkBound.Network.Packets.Impl"
-                    };
+                    "SilkBound.Network.Packets.Impl"
+                };
 
                     var asm = Assembly.GetExecutingAssembly();
                     var type = asm.GetTypes()
                         .FirstOrDefault(t =>
                             t.Namespace != null &&
                             validRoots.Any(root =>
-                                t.Namespace.StartsWith(root, StringComparison.Ordinal)) && // allow sub-namespaces
+                                t.Namespace.StartsWith(root, StringComparison.Ordinal)) &&
                             typeof(Packet).IsAssignableFrom(t) &&
                             string.Equals(
                                 ((Packet)Activator.CreateInstance(t)!).PacketName,
@@ -86,4 +89,5 @@ namespace SilkBound.Utils
             }
         }
     }
+
 }

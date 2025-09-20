@@ -76,7 +76,7 @@ namespace SilkBound.Network.Packets
 
             if (connection is NetworkServer)
                 EventManager.CallEvent(new C2SPacketReceivedEvent(packet, connection));
-            else if (Server.CurrentServer.Host == Server.CurrentServer.Connections.First(a => a.Connection == connection))
+            else if (Server.CurrentServer!.Host == Server.CurrentServer.Connections.First(a => a.Connection == connection))
                 EventManager.CallEvent(new S2CPacketReceivedEvent(packet, connection));
             else EventManager.CallEvent(new C2CPacketReceivedEvent(packet, connection));
             
