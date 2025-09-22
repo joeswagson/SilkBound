@@ -110,7 +110,13 @@ namespace SilkBound.Types.NetLayers
 
                                 try
                                 {
-                                    HandlePacket(buffer);
+                                    using var ms = new MemoryStream(buffer);
+                                    using var br = new BinaryReader(ms);
+
+                                    int length = br.ReadInt32(); // strip prefix
+                                    byte[] payload = br.ReadBytes(length);
+
+                                    HandlePacket(payload);
                                 }
                                 catch (Exception ex)
                                 {
@@ -133,6 +139,7 @@ namespace SilkBound.Types.NetLayers
                 Logger.Error($"[SteamServer] ReceiveLoop fatal: {ex}");
             }
         }
+
 
         public override void Disconnect()
         {

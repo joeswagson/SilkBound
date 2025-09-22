@@ -10,7 +10,10 @@ internal static class EventManager
     internal static Dictionary<Type, List<ListenerInfo>> Listeners = new();
     internal static void CallEvent<T>(T @event) where T : SilkboundEvent
     {
-        foreach (var info in Listeners[typeof(T)])
+        if(!Listeners.TryGetValue(typeof(T), out List<ListenerInfo> listeners))
+            return;
+
+        foreach (var info in listeners)
         {
             info.Method.Invoke(null, [@event]);
         }

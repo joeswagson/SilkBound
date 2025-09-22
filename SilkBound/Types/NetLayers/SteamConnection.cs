@@ -70,7 +70,13 @@ namespace SilkBound.Types.NetLayers
                                 {
                                     try
                                     {
-                                        HandleIncoming(buffer);
+                                        using var ms = new MemoryStream(buffer);
+                                        using var br = new BinaryReader(ms);
+
+                                        int length = br.ReadInt32(); // strip length prefix
+                                        byte[] payload = br.ReadBytes(length);
+
+                                        HandleIncoming(payload);
                                     }
                                     catch (Exception ex)
                                     {
@@ -99,9 +105,10 @@ namespace SilkBound.Types.NetLayers
             }
         }
 
+
         public override void Disconnect()
         {
-            if(NetworkUtils.LocalConnection != this) // prevent morons (me later) desyncing other players locally
+            if (NetworkUtils.LocalConnection != this) // prevent morons (me later) desyncing other players locally
             {
                 Logger.Error("You do not have permission (or ability) to disconnect other players.");
                 return;

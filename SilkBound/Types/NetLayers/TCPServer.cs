@@ -25,7 +25,6 @@ namespace SilkBound.Types.NetLayers
         {
             Connect(host, port ?? SilkConstants.PORT);
         }
-
         public override void ConnectImpl(string host, int? port)
         {
             if (port == null)
@@ -68,6 +67,7 @@ namespace SilkBound.Types.NetLayers
                 Logger.Warn($"[TCPServer] AcceptLoop error: {ex}");
             }
         }
+
 
         public override void Disconnect()
         {

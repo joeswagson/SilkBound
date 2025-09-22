@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using SilkBound.Addons.Events;
 using SilkBound.Addons.Events.Handlers;
 using SilkBound.Utils;
+using UnityEngine;
+using Logger = SilkBound.Utils.Logger; // for UnityMainThreadDispatcher
 
 namespace SilkBound.Network.Packets
 {
@@ -26,15 +27,24 @@ namespace SilkBound.Network.Packets
         public PacketHandler()
         {
             var methods = GetType().GetMethods(
-        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             foreach (var method in methods)
             {
                 var attr = method.GetCustomAttribute<PacketHandlerAttribute>();
                 if (attr == null) continue;
 
-                var packetType = attr.PacketType;
-                var packetInstance = (Packet)Activator.CreateInstance(packetType)!;
+                Packet? packetInstance = null;
+                try
+                {
+                    packetInstance = (Packet)Activator.CreateInstance(attr.PacketType)!;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Failed to create packet instance for {attr.PacketType}: {ex}");
+                    continue;
+                }
+
                 var packetName = packetInstance.PacketName;
 
                 Subscribe(packetName, (packet, conn) =>
@@ -45,21 +55,23 @@ namespace SilkBound.Network.Packets
                     {
                         method.Invoke(this, new object[] { packet });
                     }
-                    else if (parameters.Length == 2 && typeof(Packet).IsAssignableFrom(parameters[0].ParameterType) &&
+                    else if (parameters.Length == 2 &&
+                             typeof(Packet).IsAssignableFrom(parameters[0].ParameterType) &&
                              typeof(NetworkConnection).IsAssignableFrom(parameters[1].ParameterType))
                     {
                         method.Invoke(this, new object[] { packet, conn });
                     }
                     else
                     {
-                        throw new InvalidOperationException(
-                            $"Packet handler {method.Name} must take (Packet) or (Packet, NetworkConnection | NetworkServer).");
+                        Logger.Error(
+                            $"Packet handler {method.Name} signature invalid. Must take (Packet) or (Packet, NetworkConnection).");
                     }
                 });
             }
         }
 
-        public readonly Dictionary<string, List<Action<Packet, NetworkConnection>>> Handlers = new Dictionary<string, List<Action<Packet, NetworkConnection>>>(); // PacketName: [PacketNameHandler1, PacketNameHandler2]
+        public readonly Dictionary<string, List<Action<Packet, NetworkConnection>>> Handlers
+            = new Dictionary<string, List<Action<Packet, NetworkConnection>>>(); // PacketName -> Handlers
 
         public void Subscribe(string packetName, Action<Packet, NetworkConnection> handler)
         {
@@ -70,19 +82,44 @@ namespace SilkBound.Network.Packets
 
             Handlers[packetName].Add(handler);
         }
+
         public void Handle(Packet? packet, NetworkConnection connection)
         {
             if (packet == null) return;
 
-            if (connection is NetworkServer)
-                EventManager.CallEvent(new C2SPacketReceivedEvent(packet, connection));
-            else if (Server.CurrentServer!.Host == Server.CurrentServer.Connections.First(a => a.Connection == connection))
-                EventManager.CallEvent(new S2CPacketReceivedEvent(packet, connection));
-            
-            if (Handlers.TryGetValue(packet.PacketName, out List<Action<Packet, NetworkConnection>> handlers))
-                foreach (var handler in handlers)
-                    handler(packet, connection);
+            Action process = () =>
+            {
+                try
+                {
+                    if (connection is NetworkServer)
+                        EventManager.CallEvent(new C2SPacketReceivedEvent(packet, connection));
+                    else
+                        EventManager.CallEvent(new S2CPacketReceivedEvent(packet, connection));
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Error firing events for {packet.PacketName}: {ex}");
+                }
+
+                if (Handlers.TryGetValue(packet.PacketName, out List<Action<Packet, NetworkConnection>> handlers))
+                {
+                    foreach (var handler in handlers.ToList())
+                    {
+                        try
+                        {
+                            handler(packet, connection);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Error($"Error in handler for {packet.PacketName}: {ex}");
+                        }
+                    }
+                }
+            };
+
+            ModMain.MainThreadDispatcher.Instance.Enqueue(process);
         }
+
         public abstract void Initialize();
     }
 }

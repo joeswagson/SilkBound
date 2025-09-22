@@ -28,7 +28,8 @@ namespace SilkBound.Managers
 
             while (_accumulator >= TICK_INTERVAL)
             {
-                _accumulator -= TICK_INTERVAL;
+                _accumulator = 0; // do not spam ticks to make up for lost time 
+                //_accumulator -= TICK_INTERVAL;
                 OnTick?.Invoke();
             }
         }

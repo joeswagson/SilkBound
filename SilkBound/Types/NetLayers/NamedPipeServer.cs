@@ -58,8 +58,8 @@ namespace SilkBound.Types.NetLayers
                     int read = await Stream.ReadAsync(buffer, 0, buffer.Length);
                     if (read > 0)
                     {
-                        byte[] data = new byte[read];
-                        Array.Copy(buffer, data, read);
+                        byte[] data = new byte[read - 4];
+                        Array.Copy(buffer, 4, data, 0, read - 4);
                         HandlePacket(data);
                     }
                 }

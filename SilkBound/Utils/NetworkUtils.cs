@@ -50,6 +50,8 @@ namespace SilkBound.Utils
             LocalPacketHandler = connection.PacketHandler;
             LocalClient = LocalClient ?? new Weaver(name, connection);
 
+            Server.CurrentServer = new Server(LocalConnection);
+
             return LocalClient;
         }
     }

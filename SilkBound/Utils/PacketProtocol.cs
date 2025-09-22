@@ -13,9 +13,9 @@ namespace SilkBound.Utils
     {
         public static byte[]? PackPacket(Packet packet)
         {
-            Logger.Msg("serializing");
+            //Logger.Msg("serializing");
             byte[] serialized = packet.Serialize();
-            Logger.Msg("serialized");
+            //Logger.Msg("serialized");
 
             byte[] packetNameEncoded = Encoding.UTF8.GetBytes(packet.PacketName);
             if (packetNameEncoded.Length > byte.MaxValue)
@@ -37,13 +37,13 @@ namespace SilkBound.Utils
             Array.Copy(BitConverter.GetBytes(inner.Length), 0, framed, 0, 4);
             Array.Copy(inner, 0, framed, 4, inner.Length);
 
-            Logger.Debug("Framed Packet (send):", BitConverter.ToString(framed).Replace("-", ""), framed.Length);
+            //Logger.Debug("Framed Packet (send):", BitConverter.ToString(framed).Replace("-", ""), framed.Length);
             return framed;
         }
 
         public static (string?, Packet?) UnpackPacket(byte[] data)
         {
-            Logger.Debug("Raw Packet (receive):", BitConverter.ToString(data).Replace("-", ""));
+            //Logger.Debug("Raw Packet (receive):", BitConverter.ToString(data).Replace("-", ""));
             try
             {
                 using (MemoryStream stream = new MemoryStream(data))

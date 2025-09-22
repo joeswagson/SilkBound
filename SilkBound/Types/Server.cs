@@ -17,6 +17,10 @@ namespace SilkBound.Types
         {
             Connection = connection;
         }
+        public Server(NetworkConnection connection)
+        {
+            Connection = connection;
+        }
 
         public static Server? CurrentServer;
         public static bool IsOnline
@@ -69,6 +73,7 @@ namespace SilkBound.Types
         {
             NetworkUtils.Connect(connection, name);
             CurrentServer = new Server(connection);
+            CurrentServer.Address = connection.Host;
             CurrentServer.Port = connection.Port ?? CurrentServer.Port ?? SilkConstants.PORT;
             AddonManager.LoadAddons();
             return CurrentServer;

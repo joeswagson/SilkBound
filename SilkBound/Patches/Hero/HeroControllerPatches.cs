@@ -2,7 +2,9 @@
 using HutongGames.PlayMaker.Actions;
 using MelonLoader;
 using SharpDX;
+using SilkBound.Behaviours;
 using SilkBound.Extensions;
+using SilkBound.Managers;
 using SilkBound.Utils;
 using System;
 using System.Collections;
@@ -82,6 +84,9 @@ namespace SilkBound.Patches.Hero
             if (NetworkUtils.LocalClient == null) return;
             Melon<ModMain>.Logger.Msg("hero spawned: " + __instance.name);
 
+            HornetMirror mirror = __instance.gameObject.AddComponent<HornetMirror>();
+            TickManager.OnTick += ()=> { mirror.HeroSyncTick(__instance); };
+
             MeshRenderer charRender = __instance.GetComponent<MeshRenderer>();
             if (!charRender) return;
 
@@ -111,6 +116,5 @@ namespace SilkBound.Patches.Hero
 
             MelonLogger.Msg("Skin applied from NetworkUtils.LocalClient.Skin.");
         }
-
     }
 }
