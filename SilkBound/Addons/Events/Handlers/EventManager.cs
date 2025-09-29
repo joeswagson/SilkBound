@@ -19,12 +19,30 @@ internal static class EventManager
         }
     }
 
-    internal static void RegisterListener(Type eventType, MethodInfo method, EventPriority priority)
+    internal static ListenerInfo RegisterListener(Type eventType, MethodInfo method, EventPriority priority)
     {
+        ListenerInfo info = new ListenerInfo(eventType, method, priority);
+
         List<ListenerInfo> infos = new(Listeners[eventType]);
-        infos.Add(new ListenerInfo(method, priority));
+        infos.Add(info);
         infos.Sort((x, y) => x.Priority.CompareTo(y.Priority));
         Listeners[eventType] = infos;
+
+        return info;
     }
-    
+    internal static void UnregisterListener(ListenerInfo info)
+    {
+        if (!Listeners.TryGetValue(info.EventType, out List<ListenerInfo> listeners))
+            return;
+
+        Listeners[info.EventType].Remove(info);
+    }
+
+    internal static void UnregisterListener(Type eventType, Guid guid)
+    {
+        if (!Listeners.TryGetValue(eventType, out List<ListenerInfo> listeners))
+            return;
+
+        Listeners[eventType].RemoveAll(x => x.Guid == guid);
+    }
 }

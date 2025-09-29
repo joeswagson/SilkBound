@@ -1,4 +1,5 @@
-﻿using SilkBound.Managers;
+﻿using SilkBound.Behaviours;
+using SilkBound.Managers;
 using SilkBound.Network.Packets;
 using SilkBound.Types;
 using System;
@@ -9,7 +10,7 @@ namespace SilkBound.Network
 {
     public class Weaver
     {
-        public Weaver(string name, NetworkConnection connection, Guid? ClientID = null)
+        public Weaver(string name, NetworkConnection? connection=null, Guid? ClientID = null)
         {
             ClientName = name;
             Connection = connection;
@@ -18,8 +19,10 @@ namespace SilkBound.Network
 
         public Guid ClientID;
         public string ClientName;
-        public NetworkConnection Connection;
-        public Skin AppliedSkin = SkinManager.Library["red"];
+        public Skin AppliedSkin = SkinManager.Default;
+
+        public NetworkConnection? Connection;
         public SaveGameData? SaveGame;
+        public HornetMirror? Mirror;
     }
 }

@@ -11,6 +11,7 @@ namespace SilkBound.Utils
     public class NetworkUtils
     {
         public static Weaver? LocalClient;
+        public static NetworkServer? LocalServer;
         public static PacketHandler? LocalPacketHandler;
         public static NetworkConnection? LocalConnection;
         public static bool IsServer
@@ -28,6 +29,12 @@ namespace SilkBound.Utils
             }
         }
 
+        public static bool SendPacket(Packet packet)
+        {
+            if (LocalConnection == null || !IsConnected) return false;
+            LocalConnection.Send(packet);
+            return true;
+        }
 
         public static Weaver ConnectPipe(string host, string name)
         {

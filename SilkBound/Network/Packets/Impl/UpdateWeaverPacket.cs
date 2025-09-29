@@ -10,7 +10,7 @@ namespace SilkBound.Network.Packets.Impl
         public override string PacketName => "UpdateWeaverPacket";
 
 
-        public string id = string.Empty;
+        public Guid id;
         public string scene = string.Empty;
         public float posX;
         public float posY;
@@ -19,7 +19,7 @@ namespace SilkBound.Network.Packets.Impl
         public float vY;
 
         public UpdateWeaverPacket() { }
-        public UpdateWeaverPacket(string id, string scene, float posX, float posY, float scaleX, float vX, float vY)
+        public UpdateWeaverPacket(Guid id, string scene, float posX, float posY, float scaleX, float vX, float vY)
         {
             this.id = id;
             this.scene = scene;
@@ -30,36 +30,27 @@ namespace SilkBound.Network.Packets.Impl
             this.vY = vY;
         }
 
-        public override byte[] Serialize()
+        public override void Serialize(BinaryWriter writer)
         {
-            using (MemoryStream stream = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8))
-            {
-                writer.Write(id);
-                writer.Write(scene);
-                writer.Write(posX);
-                writer.Write(posY);
-                writer.Write(scaleX);
-                writer.Write(vX);
-                writer.Write(vY);
-                return stream.ToArray();
-            }
+            writer.Write(id.ToString("N"));
+            writer.Write(scene);
+            writer.Write(posX);
+            writer.Write(posY);
+            writer.Write(scaleX);
+            writer.Write(vX);
+            writer.Write(vY);
         }
-        public override Packet Deserialize(byte[] bytes)
+        public override Packet Deserialize(BinaryReader reader)
         {
-            using (MemoryStream stream = new MemoryStream(bytes))
-            using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
-            {
-                string id = reader.ReadString();
-                string scene = reader.ReadString();
-                float posX = reader.ReadSingle();
-                float posY = reader.ReadSingle();
-                float scaleX = reader.ReadSingle();
-                float vX = reader.ReadSingle();
-                float vY = reader.ReadSingle();
+            string id = reader.ReadString();
+            string scene = reader.ReadString();
+            float posX = reader.ReadSingle();
+            float posY = reader.ReadSingle();
+            float scaleX = reader.ReadSingle();
+            float vX = reader.ReadSingle();
+            float vY = reader.ReadSingle();
 
-                return new UpdateWeaverPacket(id, scene, posX, posY, scaleX, vX, vY);
-            }
+            return new UpdateWeaverPacket(Guid.Parse(id), scene, posX, posY, scaleX, vX, vY);
         }
     }
 }

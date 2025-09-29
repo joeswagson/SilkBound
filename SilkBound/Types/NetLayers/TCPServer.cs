@@ -1,4 +1,5 @@
-﻿using SilkBound.Network.Packets;
+﻿using MelonLoader.TinyJSON;
+using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Utils;
 using System;
@@ -129,6 +130,38 @@ namespace SilkBound.Types.NetLayers
             lock (_connLock)
             {
                 return new List<TCPConnection>(_connections.Values).AsReadOnly();
+            }
+        }
+
+        public override void SendIncluding(Packet packet, List<NetworkConnection> include)
+        {
+            byte[]? data = PacketProtocol.PackPacket(packet);
+            if (data == null) return;
+
+            lock (_connLock)
+            {
+                foreach (var conn in _connections.Values)
+                {
+                    if (include.Contains(conn))
+                        try { conn.Send(packet); }
+                        catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                }
+            }
+        }
+
+        public override void SendExcluding(Packet packet, List<NetworkConnection> exclude)
+        {
+            byte[]? data = PacketProtocol.PackPacket(packet);
+            if (data == null) return;
+
+            lock (_connLock)
+            {
+                foreach (var conn in _connections.Values)
+                {
+                    if (!exclude.Contains(conn))
+                        try { conn.Send(packet); }
+                        catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                }
             }
         }
     }

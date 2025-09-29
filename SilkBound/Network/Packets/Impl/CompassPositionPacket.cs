@@ -24,30 +24,21 @@ namespace SilkBound.Network.Packets.Impl
             this.posX = posX;
             this.posY = posY;
         }
-        public override byte[] Serialize()
+        public override void Serialize(BinaryWriter writer)
         {
-            using (MemoryStream stream = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8))
-            {
-                writer.Write(id);
-                writer.Write(active);
-                writer.Write(posX);
-                writer.Write(posY);
-                return stream.ToArray();
-            }
+            writer.Write(id);
+            writer.Write(active);
+            writer.Write(posX);
+            writer.Write(posY);
         }
-        public override Packet Deserialize(byte[] bytes)
+        public override Packet Deserialize(BinaryReader reader)
         {
-            using (MemoryStream stream = new MemoryStream(bytes))
-            using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
-            {
-                string id = reader.ReadString();
-                bool active = reader.ReadBoolean();
-                float posX = reader.ReadSingle();
-                float posY = reader.ReadSingle();
+            string id = reader.ReadString();
+            bool active = reader.ReadBoolean();
+            float posX = reader.ReadSingle();
+            float posY = reader.ReadSingle();
 
-                return new CompassPositionPacket(id, active, posX, posY);
-            }
+            return new CompassPositionPacket(id, active, posX, posY);
         }
     }
 }

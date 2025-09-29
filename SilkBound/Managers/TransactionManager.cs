@@ -8,15 +8,16 @@ namespace SilkBound.Managers
     {
         public static Dictionary<object, object> Transactions = new Dictionary<object, object>();
 
-        public static void Promise(object transactionId, object transactionData)
+        public static T Promise<T>(object transactionId, T transactionData)
         {
-            Transactions[transactionId] = transactionData;
+            Transactions[transactionId] = transactionData!;
+            return transactionData;
         }
         public static T? Fetch<T>(object transactionId)
         {
             if (Transactions.TryGetValue(transactionId, out object? data))
             {
-                return (T) data;
+                return (T?) data;
             }
             return default;
         }

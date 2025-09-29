@@ -20,24 +20,15 @@ namespace SilkBound.Network.Packets.Impl
             SaveData = saveData;
         }
 
-        public override Packet Deserialize(byte[] data)
+        public override Packet Deserialize(BinaryReader reader)
         {
-            using (MemoryStream stream = new MemoryStream(data))
-            using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
-            {
-                return new LoadGameFromUIPacket(reader.ReadInt32(), Serialization.DeserializeDictionary(reader));
-            }
+            return new LoadGameFromUIPacket(reader.ReadInt32(), Serialization.DeserializeDictionary(reader));
         }
 
-        public override byte[] Serialize()
+        public override void Serialize(BinaryWriter writer)
         {
-            using (MemoryStream stream = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8))
-            {
-                writer.Write(SaveSlot);
-                Serialization.SerializeDictionary(writer, SaveData);
-                return stream.ToArray();
-            }
+            writer.Write(SaveSlot);
+            Serialization.SerializeDictionary(writer, SaveData);
         }
     }
 }

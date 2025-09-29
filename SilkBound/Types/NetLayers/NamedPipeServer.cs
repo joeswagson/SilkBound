@@ -112,5 +112,18 @@ namespace SilkBound.Types.NetLayers
             Stream.Flush();
             Logger.Msg("flushed");
         }
+
+
+        //we dont need these because pipe communication is bilateral
+        public override void SendIncluding(Packet packet, List<NetworkConnection> include)
+        {
+            Send(packet);
+        }
+        
+        // if the pipe server wants to exclude a client, itll be the only one it can
+        public override void SendExcluding(Packet packet, List<NetworkConnection> exclude)
+        {
+            return;
+        }
     }
 }

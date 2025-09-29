@@ -33,6 +33,10 @@ namespace SilkBound.Types
 
         public List<Weaver> Connections = new List<Weaver>();
 
+        public Weaver? GetWeaver(Guid clientId)
+        {
+            return Connections.Find(c => c.ClientID == clientId);
+        }
         public void Kick(Weaver weaver)
         {
             if (NetworkUtils.IsServer && Connection is SteamServer)
@@ -71,11 +75,15 @@ namespace SilkBound.Types
 
         public static Server Connect(NetworkServer connection, string name)
         {
+            NetworkUtils.LocalServer = connection;
             NetworkUtils.Connect(connection, name);
+
             CurrentServer = new Server(connection);
             CurrentServer.Address = connection.Host;
             CurrentServer.Port = connection.Port ?? CurrentServer.Port ?? SilkConstants.PORT;
+
             AddonManager.LoadAddons();
+
             return CurrentServer;
         }
     }

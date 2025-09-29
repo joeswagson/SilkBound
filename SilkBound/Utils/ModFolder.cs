@@ -6,24 +6,32 @@ namespace SilkBound.Utils
 {
     internal static class ModFolder
     {
-        private static readonly string _modFolderPath = MelonEnvironment.MelonBaseDirectory + "/Silkbound";
-        private static readonly string _pluginsFolderPath = _modFolderPath + "/Addons";
-        internal static DirectoryInfo? Instance
+        private static readonly string _rootFolderPath = MelonEnvironment.MelonBaseDirectory + "/Silkbound";
+        private static readonly string _pluginsFolderPath = _rootFolderPath + "/Addons";
+        private static readonly string _savesFolderPath = _rootFolderPath + "/Saves";
+        internal static DirectoryInfo Root
         {
             get;
             private set;
         }
 
-        internal static DirectoryInfo? Addons
+        internal static DirectoryInfo Addons
         {
             get;
             private set;
         }
 
-        internal static void RegisterFolders()
+        internal static DirectoryInfo Saves
         {
-            Instance = Directory.CreateDirectory(_modFolderPath);
+            get;
+            private set;
+        }
+
+        static ModFolder()
+        {
+            Root = Directory.CreateDirectory(_rootFolderPath);
             Addons = Directory.CreateDirectory(_pluginsFolderPath);
+            Saves = Directory.CreateDirectory(_savesFolderPath);
         }
     }
 }

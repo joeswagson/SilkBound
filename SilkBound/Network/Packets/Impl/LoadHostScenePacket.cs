@@ -22,23 +22,14 @@ public class LoadHostScenePacket : Packet
         SceneName = string.Empty;
         GateName = string.Empty;
     }
-    public override byte[] Serialize()
+    public override void Serialize(BinaryWriter writer)
     {
-        using (MemoryStream ms = new MemoryStream())
-        using (BinaryWriter writer = new BinaryWriter(ms, Encoding.UTF8))
-        {
-            writer.Write(SceneName);
-            writer.Write(GateName);
-            return ms.ToArray();
-        }
+        writer.Write(SceneName);
+        writer.Write(GateName);
     }
 
-    public override Packet Deserialize(byte[] data)
+    public override Packet Deserialize(BinaryReader reader)
     {
-        using(MemoryStream ms = new MemoryStream(data))
-        using(BinaryReader reader = new BinaryReader(ms, Encoding.UTF8))
-        {
-            return new LoadHostScenePacket(reader.ReadString(), reader.ReadString());
-        }
+        return new LoadHostScenePacket(reader.ReadString(), reader.ReadString());
     }
 }

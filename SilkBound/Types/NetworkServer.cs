@@ -12,11 +12,14 @@ namespace SilkBound.Types
 {
     public abstract class NetworkServer : NetworkConnection
     {
-        public NetworkServer() : base(new ShallowPacketHandler())
-        {
-        }
         public NetworkServer(PacketHandler packetHandler) : base(packetHandler)
         {
+        }
+        public abstract void SendIncluding(Packet packet, List<NetworkConnection> include);
+        public abstract void SendExcluding(Packet packet, List<NetworkConnection> exclude);
+        public void SendExcept(Packet packet, NetworkConnection exclude)
+        {
+            SendExcluding(packet, new List<NetworkConnection>() { exclude });
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using SilkBound.Types;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace SilkBound.Network.Packets
@@ -14,8 +15,8 @@ namespace SilkBound.Network.Packets
     public abstract class Packet
     {
         public abstract string PacketName { get; }
-        public abstract byte[] Serialize();
-        public abstract Packet Deserialize(byte[] data);
+        public abstract void Serialize(BinaryWriter writer);
+        public abstract Packet Deserialize(BinaryReader reader);
 
         public void Send(NetworkConnection connection)
         {

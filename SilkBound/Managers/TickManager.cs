@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace SilkBound.Managers
@@ -11,7 +12,7 @@ namespace SilkBound.Managers
         private static float _accumulator = 0f;
         private static float _lastTime;
 
-        public static event Action? OnTick;
+        public static event Action<float>? OnTick;
 
         private void Awake()
         {
@@ -30,7 +31,7 @@ namespace SilkBound.Managers
             {
                 _accumulator = 0; // do not spam ticks to make up for lost time 
                 //_accumulator -= TICK_INTERVAL;
-                OnTick?.Invoke();
+                OnTick?.Invoke(delta);
             }
         }
     }

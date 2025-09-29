@@ -14,7 +14,7 @@ namespace SilkBound.Utils
     {
         public static void Msg(params object[] values)
         {
-            MelonLogger.Msg(string.Join(", ", values));
+            MelonLogger.Msg(string.Join(" ", values));
         }
         public static void Debug(params object[] values)
         {
@@ -23,15 +23,15 @@ namespace SilkBound.Utils
                 return;
 #pragma warning restore CS0162
 
-            MelonLogger.Msg($"{"[".Pastel(ColorARGB.HotPink)}{"DEBUG".Pastel(ColorARGB.LightPink)}{"]".Pastel(ColorARGB.HotPink)} " + string.Join(", ", values));
+            MelonLogger.Msg($"{"[".Pastel(ColorARGB.HotPink)}{"DEBUG".Pastel(ColorARGB.LightPink)}{"]".Pastel(ColorARGB.HotPink)} " + string.Join(" ", values));
         }
         public static void Warn(params object[] values)
         {
-            MelonLogger.Warning(string.Join(", ", values));
+            MelonLogger.Warning(string.Join(" ", values));
         }
         public static void Error(params object[] values)
         {
-            MelonLogger.Error(string.Join(", ", values));
+            MelonLogger.Error(string.Join(" ", values));
         }
     }
 }

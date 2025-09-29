@@ -18,9 +18,10 @@ namespace SilkBound.Network.Packets.Impl
         public string? HostGUID;
         public bool Fulfilled = false;
 
-        public HandshakePacket() { 
-            ClientId = string.Empty; 
-            ClientName = string.Empty; 
+        public HandshakePacket()
+        {
+            ClientId = string.Empty;
+            ClientName = string.Empty;
             HandshakeId = string.Empty;
         }
         public HandshakePacket(string ClientId, string ClientName)
@@ -32,38 +33,26 @@ namespace SilkBound.Network.Packets.Impl
             TransactionManager.Promise(HandshakeId, this);
         }
 
-        public override Packet Deserialize(byte[] data)
+        public override Packet Deserialize(BinaryReader reader)
         {
-            using (MemoryStream stream = new MemoryStream(data))
-            using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
-            {
-                string clientId = reader.ReadString();
-                string clientName = reader.ReadString();
-                string handshakeId = reader.ReadString();
-                string? hostGuid = null;
-                if (reader.ReadBoolean())
-                    hostGuid = reader.ReadString();
+            string clientId = reader.ReadString();
+            string clientName = reader.ReadString();
+            string handshakeId = reader.ReadString();
+            string? hostGuid = null;
+            if (reader.ReadBoolean())
+                hostGuid = reader.ReadString();
 
-                return new HandshakePacket() { ClientId=clientId, ClientName=clientName, HandshakeId = handshakeId, HostGUID = hostGuid };
-            }
-
+            return new HandshakePacket() { ClientId = clientId, ClientName = clientName, HandshakeId = handshakeId, HostGUID = hostGuid };
         }
 
-        public override byte[] Serialize()
+        public override void Serialize(BinaryWriter writer)
         {
-            using (MemoryStream stream = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8))
-            {
-                writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
-                writer.Write(ClientName.Substring(0, Math.Min(100, ClientName.Length)));
-                writer.Write(HandshakeId.Substring(0, Math.Min(100, HandshakeId.Length)));
-                writer.Write(HostGUID != null);
-                if (HostGUID != null)
-                    writer.Write(HostGUID.Substring(0, Math.Min(100, HostGUID.Length)));
-
-
-                return stream.ToArray();
-            }
+            writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
+            writer.Write(ClientName.Substring(0, Math.Min(100, ClientName.Length)));
+            writer.Write(HandshakeId.Substring(0, Math.Min(100, HandshakeId.Length)));
+            writer.Write(HostGUID != null);
+            if (HostGUID != null)
+                writer.Write(HostGUID.Substring(0, Math.Min(100, HostGUID.Length)));
         }
     }
 }

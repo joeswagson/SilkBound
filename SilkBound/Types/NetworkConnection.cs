@@ -38,6 +38,8 @@ namespace SilkBound.Types
         public abstract void Disconnect();
 
         public abstract void Send(Packet packet);
+
+
         public (string?, Packet?) HandlePacket(byte[] data)
         {
             (string?, Packet?) returned = PacketProtocol.UnpackPacket(data);

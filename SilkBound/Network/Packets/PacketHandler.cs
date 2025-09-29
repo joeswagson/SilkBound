@@ -7,7 +7,8 @@ using SilkBound.Addons.Events;
 using SilkBound.Addons.Events.Handlers;
 using SilkBound.Utils;
 using UnityEngine;
-using Logger = SilkBound.Utils.Logger; // for UnityMainThreadDispatcher
+using Logger = SilkBound.Utils.Logger;
+using SilkBound.Managers; // for UnityMainThreadDispatcher
 
 namespace SilkBound.Network.Packets
 {
@@ -57,7 +58,7 @@ namespace SilkBound.Network.Packets
                     }
                     else if (parameters.Length == 2 &&
                              typeof(Packet).IsAssignableFrom(parameters[0].ParameterType) &&
-                             typeof(NetworkConnection).IsAssignableFrom(parameters[1].ParameterType))
+                             (typeof(NetworkConnection).IsAssignableFrom(parameters[1].ParameterType) || typeof(NetworkServer).IsAssignableFrom(parameters[1].ParameterType)))
                     {
                         method.Invoke(this, new object[] { packet, conn });
                     }
@@ -99,6 +100,12 @@ namespace SilkBound.Network.Packets
                 catch (Exception ex)
                 {
                     Logger.Error($"Error firing events for {packet.PacketName}: {ex}");
+                }
+
+                if (TransactionManager.Fetch<bool>(packet) == true)
+                {
+                    Logger.Debug("Packet was cancelled.");
+                    return;
                 }
 
                 if (Handlers.TryGetValue(packet.PacketName, out List<Action<Packet, NetworkConnection>> handlers))

@@ -14,7 +14,12 @@ namespace SilkBound.Utils
         public static byte[]? PackPacket(Packet packet)
         {
             //Logger.Msg("serializing");
-            byte[] serialized = packet.Serialize();
+            using MemoryStream ms = new MemoryStream();
+            using BinaryWriter writer = new BinaryWriter(ms, Encoding.UTF8);
+
+            packet.Serialize(writer);
+            byte[] serialized = ms.ToArray();
+
             //Logger.Msg("serialized");
 
             byte[] packetNameEncoded = Encoding.UTF8.GetBytes(packet.PacketName);
@@ -57,8 +62,8 @@ namespace SilkBound.Utils
 
                     string[] validRoots =
                     {
-                    "SilkBound.Network.Packets.Impl"
-                };
+                        "SilkBound.Network.Packets.Impl"
+                    };
 
                     var asm = Assembly.GetExecutingAssembly();
                     var type = asm.GetTypes()
@@ -79,7 +84,10 @@ namespace SilkBound.Utils
                     }
 
                     var tmp = (Packet)Activator.CreateInstance(type)!;
-                    return (packetName, tmp.Deserialize(payload));
+
+                    using (MemoryStream payloadStream = new MemoryStream(payload))
+                    using (BinaryReader payloadReader = new BinaryReader(payloadStream, Encoding.UTF8))
+                        return (packetName, tmp.Deserialize(payloadReader));
                 }
             }
             catch (Exception ex)

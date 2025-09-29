@@ -10,6 +10,9 @@ using SilkBound.Types.NetLayers;
 using Steamworks;
 using SilkBound.Managers;
 using System.Collections.Concurrent;
+using SilkBound.Types.Transfers;
+using System.Collections.Generic;
+using System.Linq;
 
 
 [assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
@@ -20,7 +23,11 @@ namespace SilkBound
         public override void OnInitializeMelon()
         {
             Logger.Debug("SilkBound is in Debug mode.");
-            ModFolder.RegisterFolders();
+
+            //foreach (var skin in SkinManager.Library)
+            //{
+            //    skin.Value.WriteToFile($"{skin.Key}.skin");
+            //}
             //TickManager.OnTick += () =>
             //{
             //    Logger.Msg("Tick");
@@ -71,15 +78,33 @@ namespace SilkBound
                 _instance = null;
             }
         }
-
+        private static System.Random random = new System.Random();
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
         public override void OnUpdate()
         {
             TickManager.Update();
 
+            if (Cursor.visible && HeroController.instance != null)
+                return;
+
             if (Input.GetKeyDown(KeyCode.Minus))
             {
-                Logger.Debug("sending handshake", Guid.NewGuid().ToString("N"));
-                NetworkUtils.LocalConnection?.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID.ToString(), NetworkUtils.LocalClient!.ClientName));
+                Logger.Msg("Sending test transfer");
+                TransferManager.Send(new TestTransfer(new Dictionary<string, string>
+                {
+                    { "Hello", "World" },
+                    { "Foo", "Bar" },
+                    { "Lorem", "Ipsum" },
+                    { "The quick brown fox", "jumps over the lazy dog" },
+                    { "5kchars", RandomString(5000) }
+                }));
+                //Logger.Debug("sending handshake", Guid.NewGuid().ToString("N"));
+                //NetworkUtils.LocalConnection?.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID.ToString(), NetworkUtils.LocalClient!.ClientName));
             }
             if (Input.GetKeyDown(KeyCode.RightBracket))
             {

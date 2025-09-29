@@ -1,31 +1,40 @@
-﻿using SilkBound.Utils;
+﻿using SilkBound.Managers;
+using SilkBound.Network.Packets.Impl;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
+using static UnityEngine.UI.SaveSlotButton;
 
 namespace SilkBound.Types.Transfers
 {
-    public class SaveDataTransfer
+    public class SaveDataTransfer : Transfer
     {
-        public class TransferData
+        public SaveDataTransfer()
         {
-            public byte[][] Chunks = new byte[SilkConstants.CHUNK_TRANSFER][];
-            public int TotalChunks;
+
         }
 
-        public int HostHash;
-        public string SceneName;
-        public string SceneMarker;
-        public SaveGameData Data;
-        public TransferData? ChunkData;
-
-        public SaveDataTransfer(Guid host, SaveGameData data, string sceneName, string sceneMarker)
+        public class OnlineSave
         {
-            HostHash = GetHostHash(host);
-            Data = data;
-            SceneName = sceneName;
-            SceneMarker = sceneMarker;
+            public int HostHash;
+            public string? SceneName;
+            public string? SceneMarker;
+            public SaveGameData? SaveGame;
         }
+
+        public SaveDataTransfer(Guid host, SaveGameData saveGame, string sceneName, string sceneMarker)
+        {
+            Data = new OnlineSave()
+            {
+                HostHash = GetHostHash(host),
+                SceneName = sceneName,
+                SceneMarker = sceneMarker,
+                SaveGame = saveGame
+            };
+        }
+        public OnlineSave? Data;
 
         public static int GetHostHash(Guid guid)
         {
@@ -35,6 +44,23 @@ namespace SilkBound.Types.Transfers
                  ^ BitConverter.ToInt32(bytes, 4)
                  ^ BitConverter.ToInt32(bytes, 8)
                  ^ BitConverter.ToInt32(bytes, 12);
+        }
+
+
+        public override object Fetch(params object[] args)
+        {
+            return Data!;
+        }
+
+        public override void Completed(List<byte[]> unpacked)
+        {
+            Data = ChunkedTransfer.Unpack<OnlineSave>(unpacked);
+            if (Data == null)
+                return;
+
+            NetworkUtils.LocalClient!.SaveGame = Data.SaveGame;
+            TransactionManager.Promise<bool>(Data.HostHash, true);
+            GameManager.instance.LoadGameFromUI(Data.HostHash, NetworkUtils.LocalClient.SaveGame);
         }
     }
 }
