@@ -24,7 +24,13 @@ namespace UnityLauncher
             if (killed)
                 Thread.Sleep(100);
 
-            Process.Start($"{(DEBUG ? "F:\\! GAMES\\silksong\\Hollow-Knight-Silksong-SteamRIP.com\\Hollow Knight Silksong" : "F:\\SteamLibrary\\steamapps\\common\\Hollow Knight Silksong")}\\Hollow Knight Silksong.exe");
+            string procPath = $"{(DEBUG ? "F:\\! GAMES\\silksong\\Hollow-Knight-Silksong-SteamRIP.com\\Hollow Knight Silksong" : "F:\\SteamLibrary\\steamapps\\common\\Hollow Knight Silksong")}\\Hollow Knight Silksong.exe";
+            Process.Start(procPath);
+            if (DEBUG)
+            {
+                Thread.Sleep(500);
+                Process.Start(procPath.Replace("Silksong.exe", "Silksong.Client2.exe"));
+            }
         }
     }
 }

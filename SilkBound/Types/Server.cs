@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using SilkBound.Addons.AddonLoading;
+using SilkBound.Network.Packets.Impl.Steam;
 
 namespace SilkBound.Types
 {

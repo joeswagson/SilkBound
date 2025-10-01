@@ -29,6 +29,7 @@ namespace SilkBound.Utils
             }
         }
 
+        public static Guid ClientID => LocalClient?.ClientID ?? Guid.Empty;
         public static bool SendPacket(Packet packet)
         {
             if (LocalConnection == null || !IsConnected) return false;
@@ -58,6 +59,8 @@ namespace SilkBound.Utils
             LocalClient = LocalClient ?? new Weaver(name, connection);
 
             Server.CurrentServer = new Server(LocalConnection);
+
+            Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
 
             return LocalClient;
         }

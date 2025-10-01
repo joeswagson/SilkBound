@@ -1,5 +1,6 @@
 ﻿using HutongGames.PlayMaker.Actions;
 using SilkBound.Network.Packets.Impl;
+using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types;
 using SilkBound.Types.Transfers;
 using SilkBound.Utils;

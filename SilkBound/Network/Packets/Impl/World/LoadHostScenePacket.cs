@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using UnityEngine.SceneManagement;
 
-namespace SilkBound.Network.Packets.Impl;
+namespace SilkBound.Network.Packets.Impl.World;
 
 public class LoadHostScenePacket : Packet
 {

@@ -31,19 +31,19 @@ namespace SilkBound.Types.Transfers
                 throw new Exception("Weaver mirror not found for HeroStateTransfer.");
             }
 
-            HeroControllerMirror mirrorController = weaverInstance.Mirror.MirrorController;
+            //HeroControllerMirror mirrorController = weaverInstance.Mirror.MirrorController;
 
-            foreach (var kvp in result.Value.Value)
-            {
-                if (mirrorController.IsMethod(kvp.Key))
-                {
-                    mirrorController.CallStateMember(kvp.Key, kvp.Value);
-                }
-                else
-                {
-                    mirrorController.SetStateProperty(kvp.Key, kvp.Value);
-                }
-            }
+            //foreach (var kvp in result.Value.Value)
+            //{
+            //    if (mirrorController.IsMethod(kvp.Key))
+            //    {
+            //        mirrorController.CallStateMember(kvp.Key, kvp.Value);
+            //    }
+            //    else
+            //    {
+            //        mirrorController.SetStateProperty(kvp.Key, kvp.Value);
+            //    }
+            //}
         }
         public override object Fetch(params object[] args) => new KeyValuePair<Guid, Dictionary<string, object>>(weaver, changes);
     }

@@ -13,6 +13,9 @@ using System.Collections.Concurrent;
 using SilkBound.Types.Transfers;
 using System.Collections.Generic;
 using System.Linq;
+using SilkBound.Patches.Overrides.Impl;
+using SilkBound.Patches.Overrides;
+using SilkBound.Network.Packets.Impl.Communication;
 
 
 [assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
@@ -20,9 +23,16 @@ namespace SilkBound
 {
     public class ModMain : MelonMod
     {
+        public override void OnEarlyInitializeMelon()
+        {
+        }
+
         public override void OnInitializeMelon()
         {
             Logger.Debug("SilkBound is in Debug mode.");
+
+            var overrideInstance = new HeroAnimationControllerOverrides();
+
 
             //foreach (var skin in SkinManager.Library)
             //{
@@ -32,6 +42,8 @@ namespace SilkBound
             //{
             //    Logger.Msg("Tick");
             //};
+            //Screen.SetResolution(1200, 600, false);
+
         }
         public class MainThreadDispatcher : MonoBehaviour
         {

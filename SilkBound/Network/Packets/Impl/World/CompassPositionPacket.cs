@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SilkBound.Network.Packets.Impl
+namespace SilkBound.Network.Packets.Impl.World
 {
     public class CompassPositionPacket : Packet
     {
@@ -15,7 +15,7 @@ namespace SilkBound.Network.Packets.Impl
         public float posY;
         public CompassPositionPacket()
         {
-            this.id = string.Empty;
+            id = string.Empty;
         }
         public CompassPositionPacket(string id, bool active, float posX, float posY)
         {

@@ -30,6 +30,23 @@ internal static class EventManager
 
         return info;
     }
+    internal static ListenerInfo Once(Type eventType, MethodInfo method, EventPriority priority)
+    {
+        ListenerInfo? info = null;
+
+        void Wrapper(object @event)
+        {
+            method.Invoke(null, new object[] { @event });
+            UnregisterListener(info!);
+        }
+
+        var wrapperDelegate = (Action<object>)Wrapper;
+        var wrapperMethod = wrapperDelegate.Method;
+
+        info = RegisterListener(eventType, wrapperMethod, priority);
+        return info;
+    }
+
     internal static void UnregisterListener(ListenerInfo info)
     {
         if (!Listeners.TryGetValue(info.EventType, out List<ListenerInfo> listeners))

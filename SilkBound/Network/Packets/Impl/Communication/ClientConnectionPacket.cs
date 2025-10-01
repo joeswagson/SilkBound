@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SilkBound.Network.Packets.Impl
+namespace SilkBound.Network.Packets.Impl.Communication
 {
     public class ClientConnectionPacket : Packet
     {

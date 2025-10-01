@@ -10,7 +10,13 @@ namespace SilkBound.Types.Mirrors
 {
     public class HeroControllerMirror : HeroController
     {
-        public new HeroControllerStates cState = null!;
+        private new void Awake()
+        {
+            cState = new HeroControllerStates();
+        }
+        private new void Start() { }
+        private new void Update() { }
+
         public bool IsMethod(string key)
         {
             return cState.GetType().GetMethod(key) != null;

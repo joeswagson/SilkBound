@@ -29,7 +29,7 @@
   </Target>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0" />
+    <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; /IM &quot;Hollow Knight Silksong.Client2.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0&#xA;" />
   </Target>
 
 </Project>

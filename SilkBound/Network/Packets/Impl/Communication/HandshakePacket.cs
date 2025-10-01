@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
-namespace SilkBound.Network.Packets.Impl
+namespace SilkBound.Network.Packets.Impl.Communication
 {
     public class HandshakePacket : Packet
     {

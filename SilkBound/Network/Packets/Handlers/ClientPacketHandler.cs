@@ -1,7 +1,10 @@
 ﻿using MelonLoader;
 using SilkBound.Behaviours;
 using SilkBound.Managers;
-using SilkBound.Network.Packets.Impl;
+using SilkBound.Network.Packets.Impl.Communication;
+using SilkBound.Network.Packets.Impl.Mirror;
+using SilkBound.Network.Packets.Impl.Steam;
+using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Types;
 using SilkBound.Types.NetLayers;
 using SilkBound.Types.Transfers;
@@ -39,8 +42,8 @@ namespace SilkBound.Network.Packets.Handlers
 
                 original.Fulfilled = true;
 
-                Server.CurrentServer = new Server((connection as NetworkServer)!);
-                Server.CurrentServer.Host = new Weaver(packet.ClientName, connection, Guid.Parse(packet.ClientId));
+                //Server.CurrentServer = new Server((connection as NetworkServer)!);
+                Server.CurrentServer!.Host = new Weaver(packet.ClientName, connection, Guid.Parse(packet.HostGUID));
                 Server.CurrentServer.Connections.Add(Server.CurrentServer.Host);
 
                 Logger.Msg("Handshake Fulfilled (Client):", packet.ClientId, packet.HandshakeId);
@@ -123,7 +126,11 @@ namespace SilkBound.Network.Packets.Handlers
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
             var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.id.ToString("N"));
-            Logger.Msg("found client? ", client == null);
+            //foreach(Weaver w in Server.CurrentServer.Connections)
+            //{
+            //    Logger.Msg("client:", w.ClientName, w.ClientID.ToString("N"));
+            //}
+            //Logger.Msg("clientid:", packet.id.ToString("N"));
             if (client != null)
             {
                 if (client.Mirror == null)
@@ -132,5 +139,31 @@ namespace SilkBound.Network.Packets.Handlers
                     client.Mirror.UpdateMirror(packet);
             }
         }
+        [PacketHandler(typeof(PlayClipPacket))]
+        public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
+        {
+            var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.id.ToString("N"));
+            if (client != null && client.Mirror != null)
+            {
+                client.Mirror.PlayClip(packet);
+            }
+        }
+
+
+        #region Attacks
+
+        [PacketHandler(typeof(NailSlashPacket))]
+        public void OnNailSlashPacket(NailSlashPacket packet, NetworkConnection connection)
+        {
+            packet.slash.StartSlash();
+        }
+
+        [PacketHandler(typeof(DownspikePacket))]
+        public void OnDownspikePacket(DownspikePacket packet, NetworkConnection connection)
+        {
+            packet.slash.StartSlash();
+        }
+
+        #endregion
     }
 }

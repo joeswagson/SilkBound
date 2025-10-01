@@ -1,6 +1,8 @@
 ﻿using SilkBound.Behaviours;
 using SilkBound.Managers;
-using SilkBound.Network.Packets.Impl;
+using SilkBound.Network.Packets.Impl.Communication;
+using SilkBound.Network.Packets.Impl.Mirror;
+using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Types;
 using SilkBound.Types.Transfers;
 using SilkBound.Utils;
@@ -39,7 +41,7 @@ namespace SilkBound.Network.Packets.Handlers
             else
             {
                 Logger.Msg("Handshake Recieved (Server):", packet.ClientId, packet.ClientName, packet.HandshakeId);
-                NetworkUtils.LocalConnection?.Send(new HandshakePacket() { ClientId = packet.ClientId, ClientName = packet.ClientName, HandshakeId = packet.HandshakeId, HostGUID=NetworkUtils.LocalClient!.ClientID.ToString() }); // reply with same handshake id so the client can acknowledge handshake completion
+                NetworkUtils.LocalConnection?.Send(new HandshakePacket() { ClientId = packet.ClientId, ClientName = NetworkUtils.LocalClient!.ClientName, HandshakeId = packet.HandshakeId, HostGUID=NetworkUtils.LocalClient!.ClientID.ToString() }); // reply with same handshake id so the client can acknowledge handshake completion
 
                 //now that we have the client id, we can create a client object for them
                 Weaver client = new Weaver(packet.ClientName, connection, Guid.Parse(packet.ClientId));
@@ -99,7 +101,11 @@ namespace SilkBound.Network.Packets.Handlers
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
             var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.id.ToString("N"));
-            Logger.Msg("found client? ", client == null, client?.Connection == connection);
+            //foreach (Weaver w in Server.CurrentServer.Connections)
+            //{
+            //    Logger.Msg("client:", w.ClientName, w.ClientID.ToString("N"));
+            //}
+            //Logger.Msg("clientid:", packet.id.ToString("N"));
             if (client != null)
             {
                 if (client.Mirror == null)
@@ -123,5 +129,23 @@ namespace SilkBound.Network.Packets.Handlers
             //send to all clients except sender
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
+
+        #region Attacks
+
+        [PacketHandler(typeof(NailSlashPacket))]
+        public void OnNailSlashPacket(NailSlashPacket packet, NetworkConnection connection)
+        {
+            packet.slash.StartSlash();
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
+
+        [PacketHandler(typeof(DownspikePacket))]
+        public void OnDownspikePacket(DownspikePacket packet, NetworkConnection connection)
+        {
+            packet.slash.StartSlash();
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
+
+        #endregion
     }
 }

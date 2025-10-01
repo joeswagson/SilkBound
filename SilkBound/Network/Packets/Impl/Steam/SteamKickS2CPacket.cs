@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SilkBound.Network.Packets.Impl
+namespace SilkBound.Network.Packets.Impl.Steam
 {
     public class SteamKickS2CPacket : Packet
     {

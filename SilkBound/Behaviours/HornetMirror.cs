@@ -1,7 +1,7 @@
 ﻿using SilkBound.Managers;
 using SilkBound.Network;
 using SilkBound.Network.Packets;
-using SilkBound.Network.Packets.Impl;
+using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Sync;
 using SilkBound.Types;
 using SilkBound.Types.Mirrors;
@@ -26,23 +26,23 @@ namespace SilkBound.Behaviours
         public GameObject Root = null!;
         public SimpleInterpolator Interpolator = null!;
         public tk2dSprite MirrorSprite = null!;
-        public HeroAnimationController MirrorAnimator = null!;
+        public tk2dSpriteAnimator MirrorAnimator = null!;
         public HeroControllerMirror MirrorController = null!;
         public float Layer = 0.004f;
 
-        private static HeroAnimationController? _cachedLocal;
-        public static HeroAnimationController ReferenceAnimator
+        private static tk2dSpriteAnimator? _cachedLocal;
+        public static tk2dSpriteAnimator ReferenceAnimator
         {
             get
             {
                 if (_cachedLocal == null)
-                    _cachedLocal = HeroController.instance.GetComponent<HeroAnimationController>();
+                    _cachedLocal = HeroController.instance.GetComponent<tk2dSpriteAnimator>();
 
                 return _cachedLocal;
             }
         }
 
-        public static HornetMirror AddComponent(GameObject go, tk2dSprite mirrorSprite, HeroAnimationController mirrorAnimator, HeroControllerMirror mirrorController, SimpleInterpolator interpolator, float layer, bool local)
+        public static HornetMirror AddComponent(GameObject go, HeroControllerMirror mirrorController, tk2dSprite mirrorSprite, tk2dSpriteAnimator mirrorAnimator, SimpleInterpolator interpolator, float layer, bool local)
         {
             HornetMirror mirror = go.AddComponent<HornetMirror>();
             mirror.IsLocal = local;
@@ -52,6 +52,8 @@ namespace SilkBound.Behaviours
             mirror.MirrorController = mirrorController;
             mirror.Interpolator = interpolator;
             mirror.Layer = layer;
+            mirror.Init();
+            TransactionManager.Revoke(go);
             return mirror;
         }
         // is a MIRROR and not a SYNC
@@ -59,10 +61,15 @@ namespace SilkBound.Behaviours
         {
             if (obj.TryGetComponent<HornetMirror>(out mirror))
             {
+                Logger.Msg("found mirror (islocal):", mirror.IsLocal);
                 return !mirror.IsLocal;
             }
 
             return false;
+        }
+        public static bool IsMirror(GameObject obj)
+        {
+            return TransactionManager.Fetch<bool>(obj);
         }
         public static HornetMirror CreateLocal()
         {
@@ -72,6 +79,32 @@ namespace SilkBound.Behaviours
 
             return mirrorObj.AddComponent<HornetMirror>();
         }
+        public GameObject Attacks = null!;
+        public void Init()
+        {
+            if (IsLocal) return;
+
+            MirrorController.NailImbuement = Root.AddComponent<HeroNailImbuement>();
+
+            Attacks = Instantiate(HeroController.instance.transform.Find("Attacks").gameObject, Root.transform);
+            Attacks.GetComponentsInChildren<DamageEnemies>(true).ToList().ForEach(c => c.enabled = false); // position misalignments could cause damage inbalances. we will sync this from direct calls instead
+        }
+
+        public T? GetNailAttack<T>(string path) where T : NailAttackBase
+        {
+            if (IsLocal) return null;
+            return Attacks.transform.Find(path).GetComponent<T>();
+        }
+        //public NailSlash? GetNailSlash(string path)
+        //{
+        //    if (IsLocal) return null;
+        //    return Attacks.transform.Find(path).GetComponent<NailSlash>();
+        //}
+        //public Downspike? GetDownspike(string path)
+        //{
+        //    if (IsLocal) return null;
+        //    return Attacks.transform.Find(path).GetComponent<Downspike>();
+        //}
 
         public static HornetMirror CreateMirror(UpdateWeaverPacket packet)
         {
@@ -90,19 +123,19 @@ namespace SilkBound.Behaviours
 
             mirrorSprite.color = new Color(1, 1, 1, 1);
 
-            //tk2dSpriteAnimator reference = HeroController.instance.GetComponent<tk2dSpriteAnimator>();
+            tk2dSpriteAnimator reference = HeroController.instance.GetComponent<tk2dSpriteAnimator>();
+            //tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, reference.Library.GetClipIdByName(reference.CurrentClip.name));
 
             HeroControllerMirror mirrorController = mirrorObj.AddComponent<HeroControllerMirror>();
 
-            HeroAnimationController reference = ReferenceAnimator;
-            tk2dSpriteAnimator.Instantiate(mirrorObj.GetComponent<tk2dSpriteAnimator>());
-            HeroAnimationController mirrorAnimator = mirrorObj.AddComponent<HeroAnimationController>(); //tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, reference.Library.GetClipIdByName(reference.CurrentClip.name));
+            //HeroAnimationController reference = ReferenceAnimator;
+            TransactionManager.Promise<bool>(mirrorObj, true);
+            tk2dSpriteAnimator mirrorAnimator = tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, reference.Library.GetClipIdByName(reference.CurrentClip.name));// mirrorObj.AddComponent<HeroAnimationController>(); //tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, reference.Library.GetClipIdByName(reference.CurrentClip.name));
             //mirrorAnimator.SetSprite(mirrorSprite.Collection, mirrorSprite.GetSpriteIdByName("Hornet_sit_breath_look0010"));
 
             SimpleInterpolator interpolator = mirrorObj.AddComponent<SimpleInterpolator>();
             interpolator.velocity = new Vector3(0, 0, 0);
-
-            return HornetMirror.AddComponent(mirrorObj, mirrorSprite, mirrorAnimator, mirrorController, interpolator, mirrorObj.transform.position.z, false);
+            return HornetMirror.AddComponent(mirrorObj, mirrorController, mirrorSprite, mirrorAnimator, interpolator, mirrorObj.transform.position.z, false);
         }
 
         public void UpdateMirror(UpdateWeaverPacket packet)
@@ -119,8 +152,9 @@ namespace SilkBound.Behaviours
         public void PlayClip(PlayClipPacket packet)
         {
             if (IsLocal) return;
-            
-            //MirrorAnimator.Play(packet.clipName, packet.speedMultiplier);
+
+            MirrorAnimator.Play(MirrorAnimator.Library.GetClipByName(packet.clipName), packet.clipStartTime, packet.overrideFps);
+            //Mirror
         }
 
         protected override void Start()
