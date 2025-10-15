@@ -18,28 +18,25 @@ namespace SilkBound.Patches
         [HarmonyPatch(nameof(GameManager.LoadGameFromUI), new Type[] { typeof(int), typeof(SaveGameData) })]
         public static bool LoadGameFromUI(GameManager __instance, int saveSlot, SaveGameData saveGameData)
         {
-            if (NetworkUtils.IsConnected && NetworkUtils.LocalConnection != null && TransactionManager.Fetch<bool>(saveSlot) == false)
-            {
-                TransferManager.Send(new SaveDataTransfer(
-                    NetworkUtils.IsServer ? NetworkUtils.LocalClient!.ClientID : Server.CurrentServer!.Host!.ClientID,
-                    saveGameData,
-                    !string.IsNullOrEmpty(saveGameData.playerData.tempRespawnScene) ? saveGameData.playerData.tempRespawnScene : saveGameData.playerData.respawnScene,
-                    !string.IsNullOrEmpty(saveGameData.playerData.tempRespawnMarker) ? saveGameData.playerData.tempRespawnMarker : saveGameData.playerData.respawnMarkerName
-                ));
+            if (!NetworkUtils.IsConnected || NetworkUtils.LocalConnection == null || NetworkUtils.IsPacketThread()) return true;
 
-                //Guid transferId = Guid.NewGuid();
-                //List<byte[]> chunks = ChunkedTransfer.Pack<SaveDataTransfer>(transfer);
-                //for (int i = 0; i < chunks.Count; i++)
-                //{
-                //    byte[] chunk = chunks[i];
-                //    Logger.Msg("sending chunk", i + 1, "of", chunks.Count);
-                //    NetworkUtils.LocalConnection!.Send(new TransferDataPacket(chunk, i, chunks.Count, transferId));
-                //}
+            TransferManager.Send(new SaveDataTransfer(
+                NetworkUtils.IsServer ? NetworkUtils.LocalClient!.ClientID : Server.CurrentServer!.Host!.ClientID,
+                saveGameData,
+                !string.IsNullOrEmpty(saveGameData.playerData.tempRespawnScene) ? saveGameData.playerData.tempRespawnScene : saveGameData.playerData.respawnScene,
+                !string.IsNullOrEmpty(saveGameData.playerData.tempRespawnMarker) ? saveGameData.playerData.tempRespawnMarker : saveGameData.playerData.respawnMarkerName
+            ));
 
-                return NetworkUtils.IsServer;
-            }
+            //Guid transferId = Guid.NewGuid();
+            //List<byte[]> chunks = ChunkedTransfer.Pack<SaveDataTransfer>(transfer);
+            //for (int i = 0; i < chunks.Count; i++)
+            //{
+            //    byte[] chunk = chunks[i];
+            //    Logger.Msg("sending chunk", i + 1, "of", chunks.Count);
+            //    NetworkUtils.LocalConnection!.Send(new TransferDataPacket(chunk, i, chunks.Count, transferId));
+            //}
 
-            return true;
+            return NetworkUtils.IsServer;
         }
     }
 }

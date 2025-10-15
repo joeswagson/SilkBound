@@ -1,21 +1,42 @@
-﻿using SilkBound.Utils;
+﻿using GlobalEnums;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using UnityEngine;
+using Logger = SilkBound.Utils.Logger;
 
 namespace SilkBound.Types.Mirrors
 {
     public class HeroControllerMirror : HeroController
     {
-        private new void Awake()
+        #region Message Overrides
+        new void Awake()
         {
             cState = new HeroControllerStates();
         }
-        private new void Start() { }
-        private new void Update() { }
+        new void FixedUpdate() { }
+        new void LateUpdate() { }
+        new void OnDestroy() { }
+        new void OnDisable() { }
+        new void OnValidate() { }
+        new void Start() { }
+        new void Update() { }
+        #endregion
+
+        //downspike fx
+        public void HandleCollisionTouching(Collision2D collision, Vector3? downspikeEffectPrefabSpawnPoint)
+        {
+            if (FindCollisionDirection(collision) == CollisionSide.bottom)
+            {
+                Vector3 vector = downspikeEffectPrefabSpawnPoint.HasValue ? downspikeEffectPrefabSpawnPoint.Value : transform.position;
+                HeroController.instance.nailTerrainImpactEffectPrefabDownSpike.Spawn(vector, Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0f, 360f)));
+                NailSlashTerrainThunk.ReportDownspikeHitGround(vector);
+            }
+        }
 
         public bool IsMethod(string key)
         {
@@ -27,7 +48,7 @@ namespace SilkBound.Types.Mirrors
         }
         public T? CallStateMember<T>(string key, params object[] args)
         {
-            return (T?) cState.GetType().GetMethod(key)?.Invoke(cState, args);
+            return (T?)cState.GetType().GetMethod(key)?.Invoke(cState, args);
         }
         public void SetStateProperty(string key, object value)
         {

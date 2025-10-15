@@ -51,7 +51,7 @@ namespace SilkBound.Types.NetLayers
                 _stream = _client.GetStream();
 
                 _cts = new CancellationTokenSource();
-                _recvTask = Task.Run(() => ReceiveLoopAsync(_cts.Token), _cts.Token);
+                _recvTask = ReceiveLoopAsync(_cts.Token);
 
                 HasConnection = true;
                 Logger.Msg($"[TCPConnection] Connected to {_remoteId}");

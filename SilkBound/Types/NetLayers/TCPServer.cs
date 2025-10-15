@@ -1,10 +1,10 @@
-﻿using MelonLoader.TinyJSON;
-using SilkBound.Network.Packets;
+﻿using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -39,7 +39,7 @@ namespace SilkBound.Types.NetLayers
             Logger.Msg($"[TCPServer] Listening on port {port.Value}...");
 
             _cts = new CancellationTokenSource();
-            _acceptTask = Task.Run(() => AcceptLoopAsync(_cts.Token), _cts.Token);
+            _acceptTask = AcceptLoopAsync(_cts.Token);
         }
 
         private async Task AcceptLoopAsync(CancellationToken ct)
@@ -104,11 +104,13 @@ namespace SilkBound.Types.NetLayers
 
         public override void Send(Packet packet)
         {
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
-
             lock (_connLock)
             {
+                if (_connections.Values.Count == 0) return; // dont pack if no targets
+
+                byte[]? data = PacketProtocol.PackPacket(packet);
+                if (data == null) return;
+
                 foreach (var conn in _connections.Values)
                 {
                     try { conn.Send(packet); }
@@ -135,32 +137,36 @@ namespace SilkBound.Types.NetLayers
 
         public override void SendIncluding(Packet packet, List<NetworkConnection> include)
         {
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
-
             lock (_connLock)
             {
-                foreach (var conn in _connections.Values)
+                NetworkConnection[] targets = _connections.Values.Where(c => include.Contains(c)).ToArray();
+                if (targets.Length == 0) return; // dont pack if no targets
+
+                byte[]? data = PacketProtocol.PackPacket(packet);
+                if (data == null) return;
+
+                foreach (TCPConnection conn in targets)
                 {
-                    if (include.Contains(conn))
-                        try { conn.Send(packet); }
-                        catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                    try { conn.Send(packet); }
+                    catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
         }
 
         public override void SendExcluding(Packet packet, List<NetworkConnection> exclude)
         {
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
-
             lock (_connLock)
             {
-                foreach (var conn in _connections.Values)
+                NetworkConnection[] targets = _connections.Values.Where(c => !exclude.Contains(c)).ToArray();
+                if(targets.Length == 0) return; // dont pack if no targets
+
+                byte[]? data = PacketProtocol.PackPacket(packet);
+                if (data == null) return;
+
+                foreach (TCPConnection conn in targets)
                 {
-                    if (!exclude.Contains(conn))
-                        try { conn.Send(packet); }
-                        catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                    try { conn.Send(packet); }
+                    catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
         }

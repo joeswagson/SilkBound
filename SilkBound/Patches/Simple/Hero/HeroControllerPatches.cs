@@ -1,7 +1,11 @@
-﻿using HarmonyLib;
+﻿using GlobalEnums;
+using HarmonyLib;
 using SilkBound.Behaviours;
+using SilkBound.Managers;
+using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Types.Mirrors;
 using SilkBound.Utils;
+using UnityEngine;
 using Logger = SilkBound.Utils.Logger;
 
 namespace SilkBound.Patches.Simple.Hero
@@ -38,6 +42,19 @@ namespace SilkBound.Patches.Simple.Hero
             Logger.Debug("hero spawned: " + __instance.name);
 
             NetworkUtils.LocalClient.Mirror = HornetMirror.CreateLocal();
+            NetworkUtils.LocalClient.ChangeSkin(NetworkUtils.LocalClient.AppliedSkin);
         }
+
+        //[HarmonyPrefix]
+        //[HarmonyPatch(nameof(HeroController.HandleCollisionTouching))]
+        //public static bool HandleCollisionTouching_Prefix(HeroController __instance, Collision2D collision)
+        //{
+        //    if (NetworkUtils.LocalClient == null || __instance.GetComponent<HornetMirror>()) return true;
+
+        //    if (__instance.cState.downSpiking && __instance.FindCollisionDirection(collision) == CollisionSide.bottom)
+        //        NetworkUtils.SendPacket(new DownspikeVFXPacket(collision, __instance.downspikeEffectPrefabSpawnPoint?.position));
+
+        //    return true;
+        //}
     }
 }

@@ -10,8 +10,6 @@ namespace SilkBound.Network.Packets.Impl.Communication
 {
     public class TransferDataPacket : Packet
     {
-        public override string PacketName => "TransferSaveDataPacket";
-
         public byte[] Data;
         public int ChunkIndex;
         public int TotalChunks;

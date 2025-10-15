@@ -6,9 +6,9 @@ using System.Reflection;
 using SilkBound.Addons.Events;
 using SilkBound.Addons.Events.Handlers;
 using SilkBound.Utils;
-using UnityEngine;
 using Logger = SilkBound.Utils.Logger;
-using SilkBound.Managers; // for UnityMainThreadDispatcher
+using SilkBound.Managers;
+using System.Runtime.Serialization; // for UnityMainThreadDispatcher
 
 namespace SilkBound.Network.Packets
 {
@@ -35,18 +35,9 @@ namespace SilkBound.Network.Packets
                 var attr = method.GetCustomAttribute<PacketHandlerAttribute>();
                 if (attr == null) continue;
 
-                Packet? packetInstance = null;
-                try
-                {
-                    packetInstance = (Packet)Activator.CreateInstance(attr.PacketType)!;
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error($"Failed to create packet instance for {attr.PacketType}: {ex}");
-                    continue;
-                }
 
-                var packetName = packetInstance.PacketName;
+                //var tmp = (Packet)FormatterServices.GetUninitializedObject(attr.PacketType);
+                var packetName = attr.PacketType.Name;
 
                 Subscribe(packetName, (packet, conn) =>
                 {
@@ -90,6 +81,7 @@ namespace SilkBound.Network.Packets
 
             Action process = () =>
             {
+                string packetName = packet.GetType().Name;
                 try
                 {
                     if (connection is NetworkServer)
@@ -99,7 +91,7 @@ namespace SilkBound.Network.Packets
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error($"Error firing events for {packet.PacketName}: {ex}");
+                    Logger.Error($"Error firing events for {packetName}: {ex}");
                 }
 
                 if (TransactionManager.Fetch<bool>(packet) == true)
@@ -108,7 +100,7 @@ namespace SilkBound.Network.Packets
                     return;
                 }
 
-                if (Handlers.TryGetValue(packet.PacketName, out List<Action<Packet, NetworkConnection>> handlers))
+                if (Handlers.TryGetValue(packetName, out List<Action<Packet, NetworkConnection>> handlers))
                 {
                     foreach (var handler in handlers.ToList())
                     {
@@ -118,13 +110,14 @@ namespace SilkBound.Network.Packets
                         }
                         catch (Exception ex)
                         {
-                            Logger.Error($"Error in handler for {packet.PacketName}: {ex}");
+                            Logger.Error($"Error in handler for {packetName}: {ex}");
                         }
                     }
                 }
             };
 
-            ModMain.MainThreadDispatcher.Instance.Enqueue(process);
+            CoreLoop.InvokeOnGameThread(process);
+            //ModMain.MainThreadDispatcher.Instance.Enqueue(process);
         }
 
         public abstract void Initialize();

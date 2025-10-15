@@ -8,9 +8,6 @@ namespace SilkBound.Network.Packets.Impl.Sync.Attacks
 {
     public class DownspikePacket(Guid weaver, Downspike slash) : Packet
     {
-        public DownspikePacket() : this(default, default!) { }
-        public override string PacketName => "DownspikePacket";
-
         public Guid weaver = weaver;
         public Downspike slash = slash;
         public override Packet Deserialize(BinaryReader reader)

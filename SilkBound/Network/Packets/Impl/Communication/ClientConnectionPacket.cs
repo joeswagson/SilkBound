@@ -1,40 +1,28 @@
-﻿using System;
+﻿using SilkBound.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Communication
 {
-    public class ClientConnectionPacket : Packet
+    public class ClientConnectionPacket(Guid clientId, string clientName) : Packet
     {
-        public override string PacketName => "ClientConnectionPacket";
-
-        public string ClientId;
-        public string ClientName;
-
-        public ClientConnectionPacket()
-        {
-            ClientId = string.Empty;
-            ClientName = string.Empty;
-        }
-        public ClientConnectionPacket(string ClientId, string ClientName)
-        {
-            this.ClientId = ClientId;
-            this.ClientName = ClientName;
-        }
+        public Guid ClientId => clientId;
+        public string ClientName => clientName;
 
         public override Packet Deserialize(BinaryReader reader)
         {
-            string clientId = reader.ReadString();
+            Guid clientId = new Guid(reader.ReadBytes(16));
             string clientName = reader.ReadString();
 
-            return new ClientConnectionPacket() { ClientId = clientId, ClientName = clientName };
+            return new ClientConnectionPacket((clientId), clientName);
         }
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
-            writer.Write(ClientName.Substring(0, Math.Min(100, ClientName.Length)));
+            writer.Write(clientId.ToByteArray());
+            writer.Write(clientName.Substring(0, Math.Min(SilkConstants.MAX_NAME_LENGTH, clientName.Length)));
         }
     }
 }

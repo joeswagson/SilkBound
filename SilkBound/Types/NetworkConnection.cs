@@ -40,10 +40,10 @@ namespace SilkBound.Types
         public abstract void Send(Packet packet);
 
 
-        public (string?, Packet?) HandlePacket(byte[] data)
+        public (string?, Guid?, Packet?) HandlePacket(byte[] data)
         {
-            (string?, Packet?) returned = PacketProtocol.UnpackPacket(data);
-            PacketHandler.Handle(returned.Item2, this);
+            (string?, Guid?, Packet?) returned = PacketProtocol.UnpackPacket(data);
+            PacketHandler.Handle(returned.Item3, this);
             return returned;
         }
         public abstract void Initialize();

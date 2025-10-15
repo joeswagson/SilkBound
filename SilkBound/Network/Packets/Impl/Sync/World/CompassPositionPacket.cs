@@ -8,7 +8,6 @@ namespace SilkBound.Network.Packets.Impl.World
 {
     public class CompassPositionPacket : Packet
     {
-        public override string PacketName => "CompassPositionPacket";
         public string id;
         public bool active;
         public float posX;

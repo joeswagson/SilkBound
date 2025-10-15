@@ -5,6 +5,9 @@ using System.IO;
 using System.Text;
 using Newtonsoft.Json;
 using SilkBound.Network.Packets.Impl;
+using System.Linq;
+using XGamingRuntime.Interop;
+using SilkBound.Types.JsonConverters;
 
 namespace SilkBound.Utils
 {
@@ -12,10 +15,41 @@ namespace SilkBound.Utils
     {
         public const int CHUNK_SIZE = SilkConstants.CHUNK_TRANSFER;
 
-        public static List<byte[]> Pack(object data)
+        public static byte[] Serialize(object? data, params JsonConverter[] converters)
         {
-            string json = JsonConvert.SerializeObject(data);
-            byte[] rawData = CompressString(json);
+            JsonSerializerSettings settings = new()
+            {
+                Converters = converters,
+                NullValueHandling = NullValueHandling.Include,
+                MissingMemberHandling = MissingMemberHandling.Ignore,
+                //ObjectCreationHandling = ObjectCreationHandling.Replace,
+                //DefaultValueHandling = DefaultValueHandling.Populate
+            };
+
+            string json = JsonConvert.SerializeObject(data, settings);
+            Logger.Msg("Serialized JSON:", json);
+            return CompressString(json);
+        }
+
+        public static T Deserialize<T>(byte[] rawData, params JsonConverter[] converters)
+        {
+            JsonSerializerSettings settings = new()
+            {
+                Converters = converters,
+                NullValueHandling = NullValueHandling.Include,
+                MissingMemberHandling = MissingMemberHandling.Ignore,
+                //ObjectCreationHandling = ObjectCreationHandling.Replace,
+                //DefaultValueHandling = DefaultValueHandling.Populate
+            };
+
+            string json = DecompressString(rawData);
+            Logger.Msg("Deserialized JSON:", json);
+            return JsonConvert.DeserializeObject<T>(json, settings)!;
+        }
+
+        public static List<byte[]> Pack(object data, params JsonConverter[] converters)
+        {
+            byte[] rawData = Serialize(data, converters);
 
             var chunks = new List<byte[]>();
             int totalChunks = (rawData.Length + CHUNK_SIZE - 1) / CHUNK_SIZE;
@@ -39,10 +73,10 @@ namespace SilkBound.Utils
 
             return chunks;
         }
-        public static List<byte[]> Pack<T>(T data)
+
+        public static List<byte[]> Pack<T>(T data, params JsonConverter[] converters)
         {
-            string json = JsonConvert.SerializeObject(data);
-            byte[] rawData = CompressString(json);
+            byte[] rawData = Serialize(data, converters);
 
             var chunks = new List<byte[]>();
             int totalChunks = (rawData.Length + CHUNK_SIZE - 1) / CHUNK_SIZE;
@@ -67,7 +101,7 @@ namespace SilkBound.Utils
             return chunks;
         }
 
-        public static object? Unpack(List<byte[]> chunks)
+        public static object? Unpack(List<byte[]> chunks, params JsonConverter[] converters)
         {
             if (chunks.Count == 0)
                 throw new ArgumentException("No chunks to unpack.");
@@ -90,10 +124,9 @@ namespace SilkBound.Utils
                 ms.Write(data, 0, data.Length);
             }
 
-            string json = DecompressString(ms.ToArray());
-            return JsonConvert.DeserializeObject(json);
+            return Deserialize<object>(ms.ToArray(), converters);
         }
-        public static T? Unpack<T>(List<byte[]> chunks)
+        public static T? Unpack<T>(List<byte[]> chunks, params JsonConverter[] converters)
         {
             if (chunks.Count == 0)
                 throw new ArgumentException("No chunks to unpack.");
@@ -116,11 +149,10 @@ namespace SilkBound.Utils
                 ms.Write(data, 0, data.Length);
             }
 
-            string json = DecompressString(ms.ToArray());
-            return JsonConvert.DeserializeObject<T>(json);
+            return Deserialize<T>(ms.ToArray(), converters);
         }
 
-        private static byte[] CompressString(string str)
+        public static byte[] CompressString(string str)
         {
             byte[] input = Encoding.UTF8.GetBytes(str);
             using var output = new MemoryStream();
@@ -129,7 +161,7 @@ namespace SilkBound.Utils
             return output.ToArray();
         }
 
-        private static string DecompressString(byte[] data)
+        public static string DecompressString(byte[] data)
         {
             using var input = new MemoryStream(data);
             using var gzip = new GZipStream(input, CompressionMode.Decompress);

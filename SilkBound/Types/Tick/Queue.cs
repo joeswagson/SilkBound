@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SilkBound.Managers;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -21,6 +22,7 @@ namespace SilkBound.Types.Tick
         }
         public void Completed(float dt)
         {
+            TickManager.OnTick -= Completed;
             CompletedImpl(dt);
             items.Clear();
         }

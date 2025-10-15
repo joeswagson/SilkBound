@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using UnityEngine;
+using Logger = SilkBound.Utils.Logger;
 
 namespace SilkBound.Managers
 {
@@ -27,6 +29,45 @@ namespace SilkBound.Managers
             }
 
             return ms.ToArray();
+        }
+
+        public class Resources
+        {
+            #region Helpers
+            public class Casters
+            {
+                public static Sprite CastSprite(byte[] data)
+                {
+                    Texture2D tex = new Texture2D(2, 2);
+                    tex.LoadImage(data);
+                    return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                }
+            }
+            public class EmbeddedResource<T>(string key, Func<byte[], T> cast, Assembly? target = null)
+            {
+                private T? _resource = default;
+                public T Resource
+                {
+                    get
+                    {
+                        return _resource ??= cast.Invoke(LoadEmbedded(key, target));
+                    }
+                }
+
+                public bool TryGetResource(out T resource)
+                {
+                    resource = Resource;
+                    return resource != null;
+                }
+            }
+            #endregion
+            #region Key Shortcuts
+            public const string SKINLIBRARY = "SkinLibrary";
+            public const string SOUNDS = "Sounds";
+            public const string TEXTURES = "Textures";
+            #endregion
+
+            public static EmbeddedResource<Sprite> CustomTitle = new EmbeddedResource<Sprite>(SilkResolve(TEXTURES, "silkbound_logo.png"), Casters.CastSprite);
         }
     }
 }

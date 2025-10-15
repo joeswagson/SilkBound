@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SilkBound.Patches.Simple.FSM
+namespace SilkBound.Patches.Simple.Game
 {
     [HarmonyPatch(typeof(ExitFromTransitionGate))]
     public class ExitFromTransitionGatePatches

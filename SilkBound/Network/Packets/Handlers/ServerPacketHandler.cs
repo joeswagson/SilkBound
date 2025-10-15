@@ -1,8 +1,12 @@
-﻿using SilkBound.Behaviours;
+﻿using GlobalSettings;
+using SilkBound.Behaviours;
 using SilkBound.Managers;
+using SilkBound.Network.Packets.Impl;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
+using SilkBound.Network.Packets.Impl.Sync.World;
+using SilkBound.Network.Packets.Impl.World;
 using SilkBound.Types;
 using SilkBound.Types.Transfers;
 using SilkBound.Utils;
@@ -11,6 +15,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
+using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
+using UnityEngine;
+using Logger = SilkBound.Utils.Logger;
+using HutongGames.PlayMaker.Actions;
 
 namespace SilkBound.Network.Packets.Handlers
 {
@@ -29,7 +38,6 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(HandshakePacket))]
         public void OnHandshakePacket(HandshakePacket packet, NetworkConnection connection)
         {
-            Logger.Msg("recieved");
             if (TransactionManager.Fetch<HandshakePacket>(packet.HandshakeId) is HandshakePacket original)
             {
                 if (original.Fulfilled) return; 
@@ -41,11 +49,13 @@ namespace SilkBound.Network.Packets.Handlers
             else
             {
                 Logger.Msg("Handshake Recieved (Server):", packet.ClientId, packet.ClientName, packet.HandshakeId);
-                NetworkUtils.LocalConnection?.Send(new HandshakePacket() { ClientId = packet.ClientId, ClientName = NetworkUtils.LocalClient!.ClientName, HandshakeId = packet.HandshakeId, HostGUID=NetworkUtils.LocalClient!.ClientID.ToString() }); // reply with same handshake id so the client can acknowledge handshake completion
+                connection.Send(new HandshakePacket(packet.ClientId, NetworkUtils.LocalClient!.ClientName, packet.HandshakeId, NetworkUtils.LocalClient.ClientID)); // reply with same handshake id so the client can acknowledge handshake completion
 
                 //now that we have the client id, we can create a client object for them
-                Weaver client = new Weaver(packet.ClientName, connection, Guid.Parse(packet.ClientId));
+                Weaver client = new Weaver(packet.ClientName, connection, packet.ClientId);
                 Server.CurrentServer!.Connections.Add(client);
+
+                NetworkUtils.LocalServer!.SendExcept(new ClientConnectionPacket(client.ClientID, client.ClientName), connection);
             }
         }
 
@@ -84,49 +94,55 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(SkinUpdatePacket))]
         public void OnSkinUpdatePacket(SkinUpdatePacket packet, NetworkConnection connection)
         {
-            var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.ClientId.ToString("N"));
-            if (client != null)
-            {
-                Skin skin = SkinManager.GetOrDefault(packet.SkinName);
-                client.AppliedSkin = skin;
-                if(client.Mirror != null)
-                    SkinManager.ApplySkin(client.Mirror.MirrorSprite, skin);
-            }
+            Skin skin = SkinManager.GetOrDefault(packet.SkinName);
+            packet.Sender.AppliedSkin = skin;
+            if (packet.Sender.Mirror != null)
+                SkinManager.ApplySkin(packet.Sender.Mirror.MirrorSpriteCollection, skin);
 
-            //send to all clients
+            //send to all clients except sender
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
         [PacketHandler(typeof(UpdateWeaverPacket))]
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
-            var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.id.ToString("N"));
-            //foreach (Weaver w in Server.CurrentServer.Connections)
-            //{
-            //    Logger.Msg("client:", w.ClientName, w.ClientID.ToString("N"));
-            //}
-            //Logger.Msg("clientid:", packet.id.ToString("N"));
-            if (client != null)
-            {
-                if (client.Mirror == null)
-                    client.Mirror = HornetMirror.CreateMirror(packet);
-                else
-                    client.Mirror.UpdateMirror(packet);
-            }
+            (packet.Sender.Mirror ??= HornetMirror.CreateMirror(packet))?.UpdateMirror(packet);
 
-            //send to all clients except sender
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
         {
-            var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.id.ToString("N"));
-            if (client != null && client.Mirror != null)
+            packet.Sender.Mirror?.PlayClip(packet);
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
+
+        [PacketHandler(typeof(PlaySoundPacket))]
+        public void OnPlaySoundPacket(PlaySoundPacket packet, NetworkConnection connection)
+        {
+            Logger.Msg(packet.Sender.Mirror?.IsInScene ?? false);
+            if (packet.Sender.Mirror?.IsInScene ?? false)
+                if (!SoundManager.Play(packet))
+                    Logger.Warn("Sound failed to play");
+
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
+
+        [PacketHandler(typeof(PrefabSpawnPacket))]
+        public void OnPrefabSpawnPacket(PrefabSpawnPacket packet, NetworkConnection connection)
+        {
+            if (CachedEffects.GetEffect(packet.PrefabName, out CachedEffects.CachedEffect effect))
             {
-                client.Mirror.PlayClip(packet);
+                if (effect.Prefab == null)
+                {
+                    Logger.Warn($"Effect {packet.PrefabName} has null prefab, cannot instantiate");
+                    return;
+                }
+
+                TransactionManager.Promise<bool>(effect.Prefab, true);
+                ObjectPool.Spawn(effect.Prefab as GameObject, packet.Parent, packet.Position, packet.Rotation, packet.Steal);
             }
-            //send to all clients except sender
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
@@ -145,6 +161,26 @@ namespace SilkBound.Network.Packets.Handlers
             packet.slash.StartSlash();
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
+
+        [PacketHandler(typeof(SyncHitPacket))]
+        public void OnSyncHitPacket(SyncHitPacket packet, NetworkConnection connection)
+        {
+            Logger.Msg("Sender:", packet.Sender);
+            Logger.Msg("Component:", packet.Component?.GetType().FullName);
+            Logger.Msg("Recieved SyncHitPacket (Server):", packet.Hit, packet.Responder != null, packet.Component != null, packet.Hit.Source);
+            // i could replace false with packet.Responder != null, but this is safer. if the mirror doesnt exist for some reason either its a bug or someone sending packets without sending UpdateWeaverPacket. hence, this is why damaging is disabled with this packet
+            if (packet.Sender.Mirror?.IsInScene ?? false)
+                packet.Responder?.Hit(packet.Hit);
+
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
+
+        //[PacketHandler(typeof(DownspikeVFXPacket))]
+        //public void OnDownspikeVFXPacket(DownspikeVFXPacket packet, NetworkConnection connection)
+        //{
+        //    packet.Sender.Mirror?.MirrorController?.HandleCollisionTouching(packet.Collision, packet.Position);
+        //    NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        //}
 
         #endregion
     }

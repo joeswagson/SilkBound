@@ -1,18 +1,25 @@
 ﻿using SilkBound.Network;
 using SilkBound.Network.Packets;
+using SilkBound.Network.Packets.Handlers;
+using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types;
 using SilkBound.Types.NetLayers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 
 namespace SilkBound.Utils
 {
     public class NetworkUtils
     {
-        public static Weaver? LocalClient;
+        public static LocalWeaver? LocalClient;
         public static NetworkServer? LocalServer;
         public static PacketHandler? LocalPacketHandler;
+        public static ClientPacketHandler? ClientPacketHandler => LocalPacketHandler as ClientPacketHandler;
+        public static ServerPacketHandler? ServerPacketHandler => LocalPacketHandler as ServerPacketHandler;
+        public static Authority LocalAuthority => IsServer ? Authority.Server : Authority.Client; // ts so miniscule im not even putting it in the commit notes
         public static NetworkConnection? LocalConnection;
         public static bool IsServer
         {
@@ -25,9 +32,11 @@ namespace SilkBound.Utils
         {
             get
             {
-                return Server.CurrentServer != null || (LocalConnection?.IsConnected ?? false);
+                return (LocalConnection?.IsConnected ?? false) || Server.CurrentServer != null;
             }
         }
+
+        public static event Action? Connected;
 
         public static Guid ClientID => LocalClient?.ClientID ?? Guid.Empty;
         public static bool SendPacket(Packet packet)
@@ -56,13 +65,50 @@ namespace SilkBound.Utils
 
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
-            LocalClient = LocalClient ?? new Weaver(name, connection);
+            LocalClient = LocalClient ?? new LocalWeaver(name, connection);
 
             Server.CurrentServer = new Server(LocalConnection);
+            NetworkUtils.LocalConnection!.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID, NetworkUtils.LocalClient!.ClientName));
 
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
 
+            Connected?.Invoke();
+
             return LocalClient;
+        }
+        public static void Disconnect(string reason="Unspecified")
+        {
+            //if (IsConnected)
+                //SendPacket(new ClientDisconnectionPacket());
+        }
+
+        public static bool IsPacketThread()
+        {
+            StackTrace trace = new StackTrace(true);
+            StackFrame[] frames = trace.GetFrames() ?? Array.Empty<StackFrame>();
+
+            foreach (var frame in frames)
+            {
+                MethodBase method = frame.GetMethod();
+                if (method?.DeclaringType == null) continue;
+
+                string fullName = $"{method.DeclaringType.FullName}.{method.Name}";
+                if (fullName.Contains("PacketHandler"))
+                {
+                    Logger.Msg("PacketHandler detected in stack trace:");
+                    foreach (var f in frames)
+                    {
+                        MethodBase m = f.GetMethod();
+                        string methodInfo = m?.DeclaringType != null
+                            ? $"{m.DeclaringType.FullName}.{m.Name}"
+                            : "<unknown>";
+                        string fileInfo = f.GetFileName() != null ? $" at {f.GetFileName()}:{f.GetFileLineNumber()}" : "";
+                        Logger.Msg(methodInfo + fileInfo);
+                    }
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

@@ -8,9 +8,6 @@ namespace SilkBound.Network.Packets.Impl.Sync.Attacks
 {
     public class NailSlashPacket(Guid weaver, NailSlash slash) : Packet
     {
-        public NailSlashPacket() : this(default, default!) { }
-        public override string PacketName => "NailSlashPacket";
-
         public Guid weaver = weaver;
         public NailSlash slash = slash;
         public override Packet Deserialize(BinaryReader reader)

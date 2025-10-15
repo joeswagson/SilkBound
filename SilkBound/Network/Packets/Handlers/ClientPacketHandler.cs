@@ -1,10 +1,15 @@
-﻿using MelonLoader;
+﻿using GlobalSettings;
+using MelonLoader;
+using Mono.Unix.Native;
 using SilkBound.Behaviours;
 using SilkBound.Managers;
+using SilkBound.Network.Packets.Impl;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Network.Packets.Impl.Steam;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
+using SilkBound.Network.Packets.Impl.Sync.World;
+using SilkBound.Network.Packets.Impl.World;
 using SilkBound.Types;
 using SilkBound.Types.NetLayers;
 using SilkBound.Types.Transfers;
@@ -17,7 +22,10 @@ using System.Text;
 using Unity.Burst.Intrinsics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
+using static UnityEngine.UI.Image;
 using Logger = SilkBound.Utils.Logger;
+using Object = UnityEngine.Object;
 
 namespace SilkBound.Network.Packets.Handlers
 {
@@ -33,6 +41,8 @@ namespace SilkBound.Network.Packets.Handlers
 
         }
 
+        public event Action? HandshakeFulfilled;
+
         [PacketHandler(typeof(HandshakePacket))]
         public void OnHandshakePacket(HandshakePacket packet, NetworkConnection connection)
         {
@@ -43,16 +53,18 @@ namespace SilkBound.Network.Packets.Handlers
                 original.Fulfilled = true;
 
                 //Server.CurrentServer = new Server((connection as NetworkServer)!);
-                Server.CurrentServer!.Host = new Weaver(packet.ClientName, connection, Guid.Parse(packet.HostGUID));
+                Server.CurrentServer!.Host = new Weaver(packet.ClientName, connection, packet.HostGUID);
                 Server.CurrentServer.Connections.Add(Server.CurrentServer.Host);
 
                 Logger.Msg("Handshake Fulfilled (Client):", packet.ClientId, packet.HandshakeId);
                 TransactionManager.Revoke(packet.HandshakeId); // original packet now eligible for garbage collection as we have completed this transaction
+
+                HandshakeFulfilled?.Invoke();
             }
             else
             {
                 Logger.Msg("Handshake Recieved (Client):", packet.ClientId, packet.HandshakeId);
-                NetworkUtils.LocalConnection?.Send(new HandshakePacket() { ClientId = packet.ClientId, ClientName=packet.ClientName, HandshakeId = packet.HandshakeId }); // reply with same handshake id so the client can acknowledge handshake completion
+                NetworkUtils.LocalConnection?.Send(new HandshakePacket(packet.ClientId, packet.ClientName, packet.HandshakeId)); // reply with same handshake id so the client can acknowledge handshake completion
             }
         }
 
@@ -105,39 +117,23 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(SkinUpdatePacket))]
         public void OnSkinUpdatePacket(SkinUpdatePacket packet, NetworkConnection connection)
         {
-            var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.ClientId.ToString("N"));
-            if (client != null)
-            {
-                Skin skin = SkinManager.GetOrDefault(packet.SkinName);
-                client.AppliedSkin = skin;
-                if (client.Mirror != null)
-                    SkinManager.ApplySkin(client.Mirror.MirrorSprite, skin);
-            }
+            Skin skin = SkinManager.GetOrDefault(packet.SkinName);
+            packet.Sender.AppliedSkin = skin;
+            if (packet.Sender.Mirror != null)
+                SkinManager.ApplySkin(packet.Sender.Mirror.MirrorSpriteCollection, skin);
         }
 
         [PacketHandler(typeof(ClientConnectionPacket))]
         public void OnClientConnectionPacket(ClientConnectionPacket packet, NetworkConnection connection)
         {
-            Weaver client = new Weaver(packet.ClientName, null, Guid.Parse(packet.ClientId));
+            Weaver client = new Weaver(packet.ClientName, null, packet.ClientId);
             Server.CurrentServer?.Connections.Add(client);
         }
 
         [PacketHandler(typeof(UpdateWeaverPacket))]
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
-            var client = Server.CurrentServer!.Connections.Find(c => c.ClientID.ToString("N") == packet.id.ToString("N"));
-            //foreach(Weaver w in Server.CurrentServer.Connections)
-            //{
-            //    Logger.Msg("client:", w.ClientName, w.ClientID.ToString("N"));
-            //}
-            //Logger.Msg("clientid:", packet.id.ToString("N"));
-            if (client != null)
-            {
-                if (client.Mirror == null)
-                    client.Mirror = HornetMirror.CreateMirror(packet);
-                else
-                    client.Mirror.UpdateMirror(packet);
-            }
+            (packet.Sender.Mirror ??= HornetMirror.CreateMirror(packet))?.UpdateMirror(packet);
         }
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
@@ -149,6 +145,31 @@ namespace SilkBound.Network.Packets.Handlers
             }
         }
 
+        [PacketHandler(typeof(PlaySoundPacket))]
+        public void OnPlaySoundPacket(PlaySoundPacket packet, NetworkConnection connection)
+        {
+            if (packet.Sender.Mirror?.IsInScene ?? false)
+                if (!SoundManager.Play(packet, packet.Position.MultiplyElements(new Vector3(1, 1, 0)) + new Vector3(0, 0, GameCameras.instance.tk2dCam.transform.position.z)))
+                    Logger.Warn("Sound failed to play");
+        }
+
+        [PacketHandler(typeof(PrefabSpawnPacket))]
+        public void OnPrefabSpawnPacket(PrefabSpawnPacket packet, NetworkConnection connection)
+        {
+            if (CachedEffects.GetEffect(packet.PrefabName, out CachedEffects.CachedEffect effect))
+            {
+                if(effect.Prefab == null)
+                {
+                    Logger.Warn($"Effect {packet.PrefabName} has null prefab, cannot instantiate");
+                    return;
+                }
+
+
+                Logger.Msg("SPAWNMING!!!!!");
+                TransactionManager.Promise<bool>(effect.Prefab, true);
+                ObjectPool.Spawn(effect.Prefab as GameObject, packet.Parent, packet.Position, packet.Rotation, packet.Steal);
+            }
+        }
 
         #region Attacks
 
@@ -163,6 +184,18 @@ namespace SilkBound.Network.Packets.Handlers
         {
             packet.slash.StartSlash();
         }
+
+        [PacketHandler(typeof(SyncHitPacket))]
+        public void OnSyncHitPacket(SyncHitPacket packet, NetworkConnection connection)
+        {
+            if (packet.Sender.Mirror?.IsInScene ?? false)
+                packet.Responder?.Hit(packet.Hit);
+        }
+        //[PacketHandler(typeof(DownspikeVFXPacket))]
+        //public void OnDownspikeVFXPacket(DownspikeVFXPacket packet, NetworkConnection connection)
+        //{
+        //    packet.Sender.Mirror?.MirrorController?.HandleCollisionTouching(packet.Collision, packet.Position);
+        //}
 
         #endregion
     }

@@ -8,14 +8,14 @@ namespace SilkBound.Utils
     {
         public const bool DEBUG = true;
 
-        public const bool SYNC_COMPASS = true;
+        public const bool CUSTOM_TITLE = true;
         
         public const short MAX_CLIENTS = 100;
         public const short MAX_NAME_LENGTH = 20;
 
-        public const ushort PORT = 30300;
+        public const ushort PORT = 5000;
         public const short PACKET_BUFFER = 512;
         public const uint CONNECTION_TIMEOUT = 60;
-        public const short CHUNK_TRANSFER = PACKET_BUFFER - byte.MaxValue - 1;
+        public const short CHUNK_TRANSFER = PACKET_BUFFER - byte.MaxValue - 16 - 1;
     }
 }

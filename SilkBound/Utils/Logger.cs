@@ -12,11 +12,11 @@ namespace SilkBound.Utils
     // for when i port to bepin etc
     public class Logger
     {
-        public static void Msg(params object[] values)
+        public static void Msg(params object?[] values)
         {
             MelonLogger.Msg(string.Join(" ", values));
         }
-        public static void Debug(params object[] values)
+        public static void Debug(params object?[] values)
         {
             if (!SilkConstants.DEBUG)
 #pragma warning disable CS0162 // Unreachable code detected
@@ -25,11 +25,11 @@ namespace SilkBound.Utils
 
             MelonLogger.Msg($"{"[".Pastel(ColorARGB.HotPink)}{"DEBUG".Pastel(ColorARGB.LightPink)}{"]".Pastel(ColorARGB.HotPink)} " + string.Join(" ", values));
         }
-        public static void Warn(params object[] values)
+        public static void Warn(params object?[] values)
         {
             MelonLogger.Warning(string.Join(" ", values));
         }
-        public static void Error(params object[] values)
+        public static void Error(params object?[] values)
         {
             MelonLogger.Error(string.Join(" ", values));
         }

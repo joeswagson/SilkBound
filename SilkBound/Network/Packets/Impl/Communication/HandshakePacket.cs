@@ -8,51 +8,45 @@ using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Communication
 {
-    public class HandshakePacket : Packet
+    public class HandshakePacket(Guid clientId, string clientName, Guid? handshakeId = null, Guid? hostGuid = null) : Packet
     {
-        public override string PacketName => "HandshakePacket";
-
-        public string ClientId;
-        public string ClientName;
-        public string HandshakeId;
-        public string? HostGUID;
+        public Guid ClientId => clientId;
+        //public AuthToken Token => token;
+        private Guid? _handshakeId;
+        public Guid HandshakeId {
+            get
+            {
+                return _handshakeId ??= (handshakeId.HasValue ? handshakeId.Value : Guid.NewGuid());
+            }
+        }
+        public Guid HostGUID => hostGuid.HasValue ? hostGuid.Value : Guid.NewGuid();
+        public string ClientName => clientName;
         public bool Fulfilled = false;
-
-        public HandshakePacket()
-        {
-            ClientId = string.Empty;
-            ClientName = string.Empty;
-            HandshakeId = string.Empty;
-        }
-        public HandshakePacket(string ClientId, string ClientName)
-        {
-            this.ClientId = ClientId;
-            this.ClientName = ClientName;
-            HandshakeId = Guid.NewGuid().ToString();
-
-            TransactionManager.Promise(HandshakeId, this);
-        }
 
         public override Packet Deserialize(BinaryReader reader)
         {
-            string clientId = reader.ReadString();
+            Guid clientId = new Guid(reader.ReadBytes(16));
             string clientName = reader.ReadString();
-            string handshakeId = reader.ReadString();
-            string? hostGuid = null;
+            //DateTime expiry = new DateTime(reader.ReadInt64());
+            //AuthToken token = AuthToken.Deserialize(reader.ReadBytes(16));
+            Guid handshakeId = new Guid(reader.ReadBytes(16));
+            Guid? hostGuid = null;
             if (reader.ReadBoolean())
-                hostGuid = reader.ReadString();
+                hostGuid = new Guid(reader.ReadBytes(16));
 
-            return new HandshakePacket() { ClientId = clientId, ClientName = clientName, HandshakeId = handshakeId, HostGUID = hostGuid };
+            return new HandshakePacket(clientId, clientName, handshakeId, hostGuid);
         }
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(ClientId.Substring(0, Math.Min(100, ClientId.Length)));
+            TransactionManager.Promise(HandshakeId, this);
+
+            writer.Write(ClientId.ToByteArray());
             writer.Write(ClientName.Substring(0, Math.Min(100, ClientName.Length)));
-            writer.Write(HandshakeId.Substring(0, Math.Min(100, HandshakeId.Length)));
+            writer.Write(HandshakeId.ToByteArray());
             writer.Write(HostGUID != null);
             if (HostGUID != null)
-                writer.Write(HostGUID.Substring(0, Math.Min(100, HostGUID.Length)));
+                writer.Write(HostGUID.ToByteArray());
         }
     }
 }

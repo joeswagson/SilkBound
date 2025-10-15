@@ -34,6 +34,9 @@ namespace SilkBound.Managers
 
         public static bool SaveExists(int id)
         {
+            if (!ModMain.Config.UseMultiplayerSaving)
+                return false;
+
             return File.Exists(GetSavePath(id));
         }
 

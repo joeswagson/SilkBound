@@ -8,10 +8,6 @@ namespace SilkBound.Network.Packets.Impl.World
 {
     public class LoadGameFromUIPacket : Packet
     {
-        public override string PacketName => "LoadGameFromUIPacket";
-
-        public LoadGameFromUIPacket() { SaveData = new Dictionary<string, string>(); }
-
         public int SaveSlot;
         public Dictionary<string, string> SaveData;
         public LoadGameFromUIPacket(int saveSlot, Dictionary<string, string> saveData)

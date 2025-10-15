@@ -58,8 +58,8 @@ namespace SilkBound.Types.Transfers
             if (Data == null)
                 return;
 
-            NetworkUtils.LocalClient!.SaveGame = Data.SaveGame;
-            TransactionManager.Promise<bool>(Data.HostHash, true);
+            NetworkUtils.LocalClient!.SaveGame = LocalSaveManager.SaveExists(Data.HostHash) ? LocalSaveManager.ReadFromFile(LocalSaveManager.GetSavePath(Data.HostHash)) : Data.SaveGame;
+            //TransactionManager.Promise<bool>(Data.HostHash, true);
             GameManager.instance.LoadGameFromUI(Data.HostHash, NetworkUtils.LocalClient.SaveGame);
         }
     }

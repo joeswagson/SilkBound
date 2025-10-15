@@ -8,8 +8,6 @@ namespace SilkBound.Network.Packets.Impl.Steam
 {
     public class SteamKickS2CPacket : Packet
     {
-        public override string PacketName => "SteamKickS2CPacket";
-
         public ulong? TargetSteamId;
         public string Reason = "No reason specified.";
 

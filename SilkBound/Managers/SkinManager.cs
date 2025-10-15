@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using static MelonLoader.MelonLogger;
+using Logger = SilkBound.Utils.Logger;
 
 namespace SilkBound.Managers
 {
@@ -125,18 +126,16 @@ namespace SilkBound.Managers
             return Library.TryGetValue(name, out Skin skin) ? skin : Default;
         }
 
-        public static void ApplySkin(tk2dBaseSprite sprite, Skin skin)
+        public static void ApplySkin(tk2dSpriteCollectionData collection, Skin skin)
         {
-            var collection = sprite.Collection.textures;
-
-            for (int i = 0; i < collection.Length; i++)
+            for (int i = 0; i < collection.textures.Length; i++)
             {
                 string key = $"atlas{i}";
 
                 if (!skin.Textures.TryGetValue(key, out Texture2D skinTex))
                     continue;
 
-                Texture atlas = collection[i];
+                Texture atlas = collection.textures[i];
                 Texture2D readableAtlas = new Texture2D(atlas.width, atlas.height, TextureFormat.RGBA32, false);
 
                 RenderTexture rt = RenderTexture.GetTemporary(atlas.width, atlas.height, 0);
@@ -146,10 +145,13 @@ namespace SilkBound.Managers
                 RenderTexture.active = null;
                 RenderTexture.ReleaseTemporary(rt);
 
-                sprite.Collection.materialInsts[i].SetTexture("_MainTex", skinTex);
-                sprite.Collection.materials[i].SetTexture("_MainTex", skinTex);
-                collection[i] = skinTex;
+                collection.materials[i].SetTexture("_MainTex", skinTex);
+                if(collection.materialInsts != null && collection.materialInsts.Length >= i)
+                    collection.materialInsts[i].SetTexture("_MainTex", skinTex);
+                collection.textures[i] = skinTex;
+                Logger.Msg("Applied texture", key);
             }
+            Logger.Msg("Applied skin:", collection.name, skin.SkinName);
         }
 
         #region Legacy Hue Shifting Methods

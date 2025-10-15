@@ -21,6 +21,11 @@ namespace UnityLauncher
                 p.Kill();
                 killed = true;
             }
+            foreach (Process p in Process.GetProcessesByName("Hollow Knight Silksong.Client2"))
+            {
+                p.Kill();
+                killed = true;
+            }
             if (killed)
                 Thread.Sleep(100);
 

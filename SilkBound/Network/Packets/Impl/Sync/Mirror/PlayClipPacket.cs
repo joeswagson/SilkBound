@@ -7,10 +7,6 @@ namespace SilkBound.Network.Packets.Impl.Mirror
 {
     public class PlayClipPacket(Guid id, string clipName, float clipStartTime, float overrideFps) : Packet
     {
-        // deserialization structure
-        public PlayClipPacket() : this(default, string.Empty, default, default) { }
-        public override string PacketName => "PlayClipPacket";
-
         // accessors
         public Guid id = id;
         public string clipName = clipName;

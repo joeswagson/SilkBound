@@ -5,34 +5,17 @@ using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Mirror
 {
-    public class UpdateWeaverPacket : Packet
+    public class UpdateWeaverPacket(string scene, float posX, float posY, float scaleX, float vX, float vY) : Packet
     {
-        public override string PacketName => "UpdateWeaverPacket";
-
-
-        public Guid id;
-        public string scene = string.Empty;
-        public float posX;
-        public float posY;
-        public float scaleX;
-        public float vX;
-        public float vY;
-
-        public UpdateWeaverPacket() { }
-        public UpdateWeaverPacket(Guid id, string scene, float posX, float posY, float scaleX, float vX, float vY)
-        {
-            this.id = id;
-            this.scene = scene;
-            this.posX = posX;
-            this.posY = posY;
-            this.scaleX = scaleX;
-            this.vX = vX;
-            this.vY = vY;
-        }
+        public string Scene => scene;
+        public float PosX => posX;
+        public float PosY => posY;
+        public float ScaleX => scaleX;
+        public float VelocityX => vX;
+        public float VelocityY => vY;
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(id.ToString("N"));
             writer.Write(scene);
             writer.Write(posX);
             writer.Write(posY);
@@ -42,7 +25,6 @@ namespace SilkBound.Network.Packets.Impl.Mirror
         }
         public override Packet Deserialize(BinaryReader reader)
         {
-            string id = reader.ReadString();
             string scene = reader.ReadString();
             float posX = reader.ReadSingle();
             float posY = reader.ReadSingle();
@@ -50,7 +32,7 @@ namespace SilkBound.Network.Packets.Impl.Mirror
             float vX = reader.ReadSingle();
             float vY = reader.ReadSingle();
 
-            return new UpdateWeaverPacket(Guid.Parse(id), scene, posX, posY, scaleX, vX, vY);
+            return new UpdateWeaverPacket(scene, posX, posY, scaleX, vX, vY);
         }
     }
 }

@@ -7,8 +7,6 @@ namespace SilkBound.Network.Packets.Impl.World;
 
 public class LoadHostScenePacket : Packet
 {
-    public override string PacketName => "LoadHostScenePacket";
-
     public string SceneName;
     public string GateName;
     public LoadHostScenePacket(string sceneName, string gateName)
