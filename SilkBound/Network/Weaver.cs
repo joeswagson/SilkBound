@@ -38,6 +38,7 @@ namespace SilkBound.Network
 
         public void ChangeSkin(Skin skin)
         {
+            Logger.Msg("skin:", skin.SkinName);
             if (IsLocal)
                 NetworkUtils.SendPacket(new SkinUpdatePacket(skin.SkinName));
 

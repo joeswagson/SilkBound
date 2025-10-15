@@ -2,6 +2,7 @@
 using SilkBound.Extensions;
 using SilkBound.Network.Packets.Impl;
 using SilkBound.Network.Packets.Impl.Mirror;
+using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
@@ -16,8 +17,10 @@ namespace SilkBound.Patches.Simple.Hero
         [HarmonyPatch("Play", new Type[] { typeof(tk2dSpriteAnimationClip), typeof(float), typeof(float) })]
         public static bool Play_Prefix(tk2dSpriteAnimator __instance, tk2dSpriteAnimationClip clip, float clipStartTime, float overrideFps)
         {
-            //Logger.Msg(NetworkUtils.IsPacketThread(), __instance.gameObject.name);
-            if (NetworkUtils.LocalClient != null && __instance == HeroController.instance?.GetComponent<tk2dSpriteAnimator>())
+            if (NetworkUtils.IsConnected && __instance.gameObject.transform.parent.parent.name == "Attacks" && !NetworkUtils.IsPacketThread())
+                NetworkUtils.SendPacket(new PlayAttackClipPacket(__instance.gameObject.transform.GetPath(true), clip.name, clipStartTime, overrideFps));
+
+            if (NetworkUtils.IsConnected && __instance == HeroController.instance?.GetComponent<tk2dSpriteAnimator>())
                 NetworkUtils.SendPacket(new PlayClipPacket(NetworkUtils.LocalClient.ClientID, clip.name, clipStartTime, overrideFps));
             return true;
         }

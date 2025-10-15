@@ -149,9 +149,9 @@ namespace SilkBound.Managers
                 if(collection.materialInsts != null && collection.materialInsts.Length >= i)
                     collection.materialInsts[i].SetTexture("_MainTex", skinTex);
                 collection.textures[i] = skinTex;
-                Logger.Msg("Applied texture", key);
+                //Logger.Msg("Applied texture", key);
             }
-            Logger.Msg("Applied skin:", collection.name, skin.SkinName);
+            //Logger.Msg("Applied skin:", collection.name, skin.SkinName);
         }
 
         #region Legacy Hue Shifting Methods

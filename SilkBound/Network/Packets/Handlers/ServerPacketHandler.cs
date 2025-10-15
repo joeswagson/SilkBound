@@ -20,6 +20,7 @@ using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
 using UnityEngine;
 using Logger = SilkBound.Utils.Logger;
 using HutongGames.PlayMaker.Actions;
+using SilkBound.Extensions;
 
 namespace SilkBound.Network.Packets.Handlers
 {
@@ -94,10 +95,7 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(SkinUpdatePacket))]
         public void OnSkinUpdatePacket(SkinUpdatePacket packet, NetworkConnection connection)
         {
-            Skin skin = SkinManager.GetOrDefault(packet.SkinName);
-            packet.Sender.AppliedSkin = skin;
-            if (packet.Sender.Mirror != null)
-                SkinManager.ApplySkin(packet.Sender.Mirror.MirrorSpriteCollection, skin);
+            packet.Sender.ChangeSkin(SkinManager.GetOrDefault(packet.SkinName));
 
             //send to all clients except sender
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
@@ -111,6 +109,14 @@ namespace SilkBound.Network.Packets.Handlers
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
+        [PacketHandler(typeof(PlayAttackClipPacket))]
+        public void OnPlayAttackClipPacket(PlayAttackClipPacket packet, NetworkConnection connection)
+        {
+            GameObject? go = UnityObjectExtensions.FindObjectFromFullName(packet.Path);
+            if (go)
+                go.GetComponent<tk2dSpriteAnimator>().Play(go.GetComponent<tk2dSpriteAnimator>().GetClipByName(packet.ClipName), packet.ClipStartTime, packet.OverrideFps);
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
         {

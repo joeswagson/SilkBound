@@ -14,9 +14,9 @@ namespace SilkBound.Utils
 {
     public class NetworkUtils
     {
-        public static LocalWeaver? LocalClient;
-        public static NetworkServer? LocalServer;
-        public static PacketHandler? LocalPacketHandler;
+        public static LocalWeaver LocalClient = null!;
+        public static NetworkServer LocalServer = null!;
+        public static PacketHandler LocalPacketHandler = null!;
         public static ClientPacketHandler? ClientPacketHandler => LocalPacketHandler as ClientPacketHandler;
         public static ServerPacketHandler? ServerPacketHandler => LocalPacketHandler as ServerPacketHandler;
         public static Authority LocalAuthority => IsServer ? Authority.Server : Authority.Client; // ts so miniscule im not even putting it in the commit notes
@@ -95,16 +95,16 @@ namespace SilkBound.Utils
                 string fullName = $"{method.DeclaringType.FullName}.{method.Name}";
                 if (fullName.Contains("PacketHandler"))
                 {
-                    Logger.Msg("PacketHandler detected in stack trace:");
-                    foreach (var f in frames)
-                    {
-                        MethodBase m = f.GetMethod();
-                        string methodInfo = m?.DeclaringType != null
-                            ? $"{m.DeclaringType.FullName}.{m.Name}"
-                            : "<unknown>";
-                        string fileInfo = f.GetFileName() != null ? $" at {f.GetFileName()}:{f.GetFileLineNumber()}" : "";
-                        Logger.Msg(methodInfo + fileInfo);
-                    }
+                    //Logger.Msg("PacketHandler detected in stack trace:");
+                    //foreach (var f in frames)
+                    //{
+                    //    MethodBase m = f.GetMethod();
+                    //    string methodInfo = m?.DeclaringType != null
+                    //        ? $"{m.DeclaringType.FullName}.{m.Name}"
+                    //        : "<unknown>";
+                    //    string fileInfo = f.GetFileName() != null ? $" at {f.GetFileName()}:{f.GetFileLineNumber()}" : "";
+                    //    //Logger.Msg(methodInfo + fileInfo);
+                    //}
                     return true;
                 }
             }

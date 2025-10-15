@@ -4,6 +4,7 @@ using SilkBound.Behaviours;
 using SilkBound.Managers;
 using SilkBound.Network;
 using SilkBound.Types;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace SilkBound.Extensions
                 {
                     try
                     {
-                        Logger.Msg("set prop:", prop.Name, "to", prop.GetValue(original, null));
+                        //Logger.Msg("set prop:", prop.Name, "to", prop.GetValue(original, null));
                         prop.SetValue(copy, prop.GetValue(original, null), null);
                     }
                     catch { }
@@ -46,17 +47,19 @@ namespace SilkBound.Extensions
             FieldInfo[] fields = type.GetFields(flags);
             foreach (var field in fields.Where(prop => !excludeProps.Contains(prop.Name)))
             {
-                Logger.Msg("set field:", field.Name, "to", field.GetValue(original));
+                //Logger.Msg("set field:", field.Name, "to", field.GetValue(original));
                 field.SetValue(copy, field.GetValue(original));
             }
-            Logger.Msg("copied:", copy);
+            //Logger.Msg("copied:", copy);
 
             return copy;
         }
 
-        public static string GetPath(this Transform transform)
+        public static string GetPath(this Transform transform, bool replaceMirror = false)
         {
-            return GetFullName(transform.gameObject);
+            return replaceMirror ?
+                GetFullName(transform.gameObject).Replace("Hero_Controller(Clone)", NetworkUtils.LocalClient.Mirror!.GetName()) :
+                GetFullName(transform.gameObject);
 
             //if (transform.parent == null)
             //    return "/" + transform.name;

@@ -103,6 +103,7 @@ namespace SilkBound
             else
             {
                 NetworkUtils.ConnectTCP("127.0.0.1", "client");
+                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
 
                 //NetworkUtils.LocalClient!.AppliedSkin = SkinManager.GetOrDefault("blue");
                 //NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
@@ -210,9 +211,8 @@ namespace SilkBound
                 //NetworkUtils.ConnectP2P(76561198383107093, "dyluxe");
                 Logger.Msg("sednign handshakl");
                 //NetworkUtils.LocalConnection!.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID, NetworkUtils.LocalClient!.ClientName));
-
-                NetworkUtils.LocalClient!.AppliedSkin = SkinManager.GetOrDefault("blue");
                 NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
+
             }
         }
 

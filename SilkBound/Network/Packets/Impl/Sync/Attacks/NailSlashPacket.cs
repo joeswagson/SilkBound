@@ -12,22 +12,24 @@ namespace SilkBound.Network.Packets.Impl.Sync.Attacks
         public NailSlash slash = slash;
         public override Packet Deserialize(BinaryReader reader)
         {
-            Guid weaverId = Guid.Parse(reader.ReadString());
-            string path = reader.ReadString();
+            return null!;
 
-            Weaver? weaver = Server.CurrentServer!.GetWeaver(weaverId);
-            if(weaver == null || weaver.Mirror == null)
-            {
-                throw new Exception("Weaver not found for packet.");
-            }
+            //Guid weaverId = Guid.Parse(reader.ReadString());
+            //string path = reader.ReadString();
 
-            return new NailSlashPacket(weaverId, weaver.Mirror.GetNailAttack<NailSlash>(path)!);
+            //Weaver? weaver = Server.CurrentServer!.GetWeaver(weaverId);
+            //if(weaver == null || weaver.Mirror == null)
+            //{
+            //    throw new Exception("Weaver not found for packet.");
+            //}
+
+            //return new NailSlashPacket(weaverId, weaver.Mirror.GetNailAttack<NailSlash>(path)!);
         }
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(weaver.ToString());
-            writer.Write(slash.transform.parent.name + "/" + slash.gameObject.name);
+            //writer.Write(weaver.ToString());
+            //writer.Write(slash.transform.parent.name + "/" + slash.gameObject.name);
         }
     }
 }

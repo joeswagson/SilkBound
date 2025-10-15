@@ -108,7 +108,7 @@ namespace SilkBound.Behaviours
 
             Attacks = Instantiate(HeroController.instance.transform.Find("Attacks").gameObject, Root.transform);
             Attacks.name = "Attacks";
-            //Attacks.GetComponentsInChildren<DamageEnemies>(true).ToList().ForEach(c => c.enabled = false); // position misalignments could cause damage inbalances. we will sync this from direct calls instead
+            Attacks.GetComponentsInChildren<DamageEnemies>(true).ToList().ForEach(c => c.enabled = false); // position misalignments could cause damage inbalances. we will sync this from direct calls instead
             Attacks.GetComponentsInChildren<AudioSource>(true).ToList().ForEach((source) =>                // audio falloffs
             {
                 source.rolloffMode = AudioRolloffMode.Linear;
@@ -178,7 +178,7 @@ namespace SilkBound.Behaviours
         }
         public static tk2dSpriteCollectionData CopyCollection(GameObject mirror, tk2dSpriteCollectionData source, Skin skin)
         {
-            tk2dSpriteCollectionData collection = (tk2dSpriteCollectionData) source.CopyComponent(mirror, "inst", "platformSpecificData", "name", "materialInsts", "textureInsts", "materials", "textures");
+            tk2dSpriteCollectionData collection = (tk2dSpriteCollectionData) source.CopyComponent(mirror, "inst", "platformSpecificData", "name", "spriteDefinitions", "materialInsts", "textureInsts", "materials", "textures");
 
             if(source.material != null)
                 collection.material = new Material(source.material);
@@ -213,6 +213,55 @@ namespace SilkBound.Behaviours
 
             Logger.Msg("Mirror Skin:", skin.SkinName);
             SkinManager.ApplySkin(collection, skin);
+
+            collection.spriteDefinitions = new tk2dSpriteDefinition[source.spriteDefinitions.Length];
+            for (int i = 0; i < collection.spriteDefinitions.Length; i++)
+            {
+                var sourceDefinition = source.spriteDefinitions[i];
+                collection.spriteDefinitions[i] = new tk2dSpriteDefinition() // im sorry
+                {
+                    name = sourceDefinition.name,
+                    texelSize = sourceDefinition.texelSize,
+                    material = sourceDefinition.material,
+                    materialInst = sourceDefinition.materialInst,
+                    materialId = sourceDefinition.materialId,
+                    sourceTextureGUID = sourceDefinition.sourceTextureGUID,
+                    extractRegion = sourceDefinition.extractRegion,
+                    regionX = sourceDefinition.regionX,
+                    regionY = sourceDefinition.regionY,
+                    regionW = sourceDefinition.regionW,
+                    regionH = sourceDefinition.regionH,
+                    complexGeometry = sourceDefinition.complexGeometry,
+                    colliderConvex = sourceDefinition.colliderConvex,
+                    colliderSmoothSphereCollisions = sourceDefinition.colliderSmoothSphereCollisions,
+                    flipped = sourceDefinition.flipped,
+                    physicsEngine = sourceDefinition.physicsEngine,
+                    colliderType = sourceDefinition.colliderType,
+                    colliderVertices = sourceDefinition.colliderVertices,
+                    colliderIndicesFwd = sourceDefinition.colliderIndicesFwd,
+                    colliderIndicesBack = sourceDefinition.colliderIndicesBack,
+                    boundsData = sourceDefinition.boundsData,
+                    untrimmedBoundsData = sourceDefinition.untrimmedBoundsData,
+                    positions = sourceDefinition.positions,
+                    normals = sourceDefinition.normals,
+                    tangents = sourceDefinition.tangents,
+                    uvs = sourceDefinition.uvs,
+                    polygonCollider2D = sourceDefinition.polygonCollider2D ?? new tk2dCollider2DData[0],
+                    edgeCollider2D = sourceDefinition.edgeCollider2D ?? new tk2dCollider2DData[0],
+                    customColliders = sourceDefinition.customColliders ?? new tk2dSpriteColliderDefinition[0],
+                    normalizedUvs = sourceDefinition.normalizedUvs ?? new Vector2[0],
+                    indices = sourceDefinition.indices ?? new int[]
+                    {
+                        0,
+                        3,
+                        1,
+                        2,
+                        3,
+                        0
+                    },
+                    attachPoints = sourceDefinition.attachPoints ?? new tk2dSpriteDefinition.AttachPoint[0]
+                };
+            }
 
             foreach (var sprite in collection.spriteDefinitions)
             {
@@ -301,7 +350,7 @@ namespace SilkBound.Behaviours
             //    }
             //}
             //tk2dSpriteAnimator mirrorAnimator = tk2dSpriteAnimator.AddComponent(mirrorObj, library, reference.Library.GetClipIdByName(reference.CurrentClip.name));// mirrorObj.AddComponent<HeroAnimationController>(); //tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, reference.Library.GetClipIdByName(reference.CurrentClip.name));
-            tk2dSpriteAnimator mirrorAnimator = tk2dSpriteAnimator.AddComponent(mirrorObj, library, library.GetClipIdByName(reference.CurrentClip.name));
+            tk2dSpriteAnimator mirrorAnimator = tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, 876);
             mirrorAnimator.Library = library;
             //mirrorAnimator._sprite = mirrorSprite;
 
@@ -369,7 +418,10 @@ namespace SilkBound.Behaviours
 
             if (MirrorSprite?.Collection != MirrorSpriteCollection && !IsLocal)
             {
-                MirrorAnimator.SetSprite(MirrorSpriteCollection, Sprite!.spriteId);
+                MirrorAnimator.SetSprite(MirrorSpriteCollection, MirrorSprite!.spriteId);
+                MirrorAnimator.Sprite.collectionInst = MirrorSpriteCollection.inst;
+                Root!.GetComponent<Renderer>().material = MirrorSpriteCollection.spriteDefinitions[MirrorSprite.spriteId].material;
+                MirrorAnimator.Sprite.UpdateMaterial();
                 //MirrorSprite!.Collection = MirrorSpriteCollection;
             }
 

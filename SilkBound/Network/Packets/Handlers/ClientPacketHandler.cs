@@ -2,6 +2,7 @@
 using MelonLoader;
 using Mono.Unix.Native;
 using SilkBound.Behaviours;
+using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network.Packets.Impl;
 using SilkBound.Network.Packets.Impl.Communication;
@@ -117,10 +118,7 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(SkinUpdatePacket))]
         public void OnSkinUpdatePacket(SkinUpdatePacket packet, NetworkConnection connection)
         {
-            Skin skin = SkinManager.GetOrDefault(packet.SkinName);
-            packet.Sender.AppliedSkin = skin;
-            if (packet.Sender.Mirror != null)
-                SkinManager.ApplySkin(packet.Sender.Mirror.MirrorSpriteCollection, skin);
+            packet.Sender.ChangeSkin(SkinManager.GetOrDefault(packet.SkinName));
         }
 
         [PacketHandler(typeof(ClientConnectionPacket))]
@@ -134,6 +132,14 @@ namespace SilkBound.Network.Packets.Handlers
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
             (packet.Sender.Mirror ??= HornetMirror.CreateMirror(packet))?.UpdateMirror(packet);
+        }
+
+        [PacketHandler(typeof(PlayAttackClipPacket))]
+        public void OnPlayAttackClipPacket(PlayAttackClipPacket packet, NetworkConnection connection)
+        {
+            GameObject? go = UnityObjectExtensions.FindObjectFromFullName(packet.Path);
+            if (go)
+                go.GetComponent<tk2dSpriteAnimator>().Play(go.GetComponent<tk2dSpriteAnimator>().GetClipByName(packet.ClipName), packet.ClipStartTime, packet.OverrideFps);
         }
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)

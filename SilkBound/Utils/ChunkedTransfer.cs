@@ -27,7 +27,7 @@ namespace SilkBound.Utils
             };
 
             string json = JsonConvert.SerializeObject(data, settings);
-            Logger.Msg("Serialized JSON:", json);
+            //Logger.Msg("Serialized JSON:", json);
             return CompressString(json);
         }
 
@@ -43,7 +43,7 @@ namespace SilkBound.Utils
             };
 
             string json = DecompressString(rawData);
-            Logger.Msg("Deserialized JSON:", json);
+            //Logger.Msg("Deserialized JSON:", json);
             return JsonConvert.DeserializeObject<T>(json, settings)!;
         }
 

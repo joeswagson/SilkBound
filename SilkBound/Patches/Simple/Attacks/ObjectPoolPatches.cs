@@ -31,7 +31,7 @@ namespace SilkBound.Patches.Simple.Attacks
 
             if (TransactionManager.Fetch<bool>(prefab))
             {
-                //Logger.Msg("Found key");
+                Logger.Msg("Found key");
                 TransactionManager.Revoke(prefab);
                 return true;
             }
@@ -62,45 +62,45 @@ namespace SilkBound.Patches.Simple.Attacks
             // terry davis forgive me for this is not what you envisioned
             public static readonly List<CachedEffect> Effects = new List<CachedEffect>()
             {
-                //{ new CachedEffect(() => GlobalSettings.Effects.EnemyNailTerrainThunk)},
+                { new CachedEffect(() => GlobalSettings.Effects.EnemyNailTerrainThunk)},
 
-                //{ new CachedEffect(() => HeroController.instance?.nailTerrainImpactEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.nailTerrainImpactEffectPrefabDownSpike) },
-                //{ new CachedEffect(() => HeroController.instance?.downspikeEffectPrefabSpawnPoint) },
-                //{ new CachedEffect(() => HeroController.instance?.takeHitSingleEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.takeHitDoubleEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.takeHitDoubleBlackThreadEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.takeHitBlackHealthNullifyPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.takeHitDoubleFlameEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.softLandingEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.hardLandingEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.runEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.backDashPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.jumpEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.jumpTrailPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.fallEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.wallslideDustPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.artChargeEffect) },
-                //{ new CachedEffect(() => HeroController.instance?.artChargedEffect) },
-                //{ new CachedEffect(() => HeroController.instance?.artChargedEffectAnim) },
-                //{ new CachedEffect(() => HeroController.instance?.downspikeBurstPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.dashBurstPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.dashParticles) },
-                //{ new CachedEffect(() => HeroController.instance?.wallPuffPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.backflipPuffPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.airDashEffect) },
-                //{ new CachedEffect(() => HeroController.instance?.walldashKickoffEffect) },
-                //{ new CachedEffect(() => HeroController.instance?.umbrellaEffect) },
-                //{ new CachedEffect(() => HeroController.instance?.doubleJumpEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.canBindEffect) },
-                //{ new CachedEffect(() => HeroController.instance?.quickeningEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.quickeningPoisonEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.maggotEffectPrefab) },
-                //{ new CachedEffect(() => HeroController.instance?.frostedEffect) },
-                ////{ new CachedEffect(() => HeroController.instance?.SlashNoiseMakerFront) },
-                ////{ new CachedEffect(() => HeroController.instance?.SlashNoiseMakerAbove) },
-                ////{ new CachedEffect(() => HeroController.instance?.SlashNoiseMakerBelow) },
-                //{ new CachedEffect(() => HeroController.instance?.luckyDiceShieldEffectPrefab) }
+                { new CachedEffect(() => HeroController.instance?.nailTerrainImpactEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.nailTerrainImpactEffectPrefabDownSpike) },
+                { new CachedEffect(() => HeroController.instance?.downspikeEffectPrefabSpawnPoint) },
+                { new CachedEffect(() => HeroController.instance?.takeHitSingleEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.takeHitDoubleEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.takeHitDoubleBlackThreadEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.takeHitBlackHealthNullifyPrefab) },
+                { new CachedEffect(() => HeroController.instance?.takeHitDoubleFlameEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.softLandingEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.hardLandingEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.runEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.backDashPrefab) },
+                { new CachedEffect(() => HeroController.instance?.jumpEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.jumpTrailPrefab) },
+                { new CachedEffect(() => HeroController.instance?.fallEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.wallslideDustPrefab) },
+                { new CachedEffect(() => HeroController.instance?.artChargeEffect) },
+                { new CachedEffect(() => HeroController.instance?.artChargedEffect) },
+                { new CachedEffect(() => HeroController.instance?.artChargedEffectAnim) },
+                { new CachedEffect(() => HeroController.instance?.downspikeBurstPrefab) },
+                { new CachedEffect(() => HeroController.instance?.dashBurstPrefab) },
+                { new CachedEffect(() => HeroController.instance?.dashParticles) },
+                { new CachedEffect(() => HeroController.instance?.wallPuffPrefab) },
+                { new CachedEffect(() => HeroController.instance?.backflipPuffPrefab) },
+                { new CachedEffect(() => HeroController.instance?.airDashEffect) },
+                { new CachedEffect(() => HeroController.instance?.walldashKickoffEffect) },
+                { new CachedEffect(() => HeroController.instance?.umbrellaEffect) },
+                { new CachedEffect(() => HeroController.instance?.doubleJumpEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.canBindEffect) },
+                { new CachedEffect(() => HeroController.instance?.quickeningEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.quickeningPoisonEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.maggotEffectPrefab) },
+                { new CachedEffect(() => HeroController.instance?.frostedEffect) },
+                //{ new CachedEffect(() => HeroController.instance?.SlashNoiseMakerFront) },
+                //{ new CachedEffect(() => HeroController.instance?.SlashNoiseMakerAbove) },
+                //{ new CachedEffect(() => HeroController.instance?.SlashNoiseMakerBelow) },
+                { new CachedEffect(() => HeroController.instance?.luckyDiceShieldEffectPrefab) }
             };
 
             public static bool IsEffect(Object go, out CachedEffect effect)

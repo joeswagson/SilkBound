@@ -12,22 +12,23 @@ namespace SilkBound.Network.Packets.Impl.Sync.Attacks
         public Downspike slash = slash;
         public override Packet Deserialize(BinaryReader reader)
         {
-            Guid weaverId = Guid.Parse(reader.ReadString());
-            string path = reader.ReadString();
+            return null!;
+            //Guid weaverId = Guid.Parse(reader.ReadString());
+            //string path = reader.ReadString();
 
-            Weaver? weaver = Server.CurrentServer!.GetWeaver(weaverId);
-            if(weaver == null || weaver.Mirror == null)
-            {
-                throw new Exception("Weaver not found for packet.");
-            }
+            //Weaver? weaver = Server.CurrentServer!.GetWeaver(weaverId);
+            //if(weaver == null || weaver.Mirror == null)
+            //{
+            //    throw new Exception("Weaver not found for packet.");
+            //}
 
-            return new DownspikePacket(weaverId, weaver.Mirror.GetNailAttack<Downspike>(path)!);
+            //return new DownspikePacket(weaverId, weaver.Mirror.GetNailAttack<Downspike>(path)!);
         }
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(weaver.ToString());
-            writer.Write(slash.transform.parent.name + "/" + slash.gameObject.name);
+            //writer.Write(weaver.ToString());
+            //writer.Write(slash.transform.parent.name + "/" + slash.gameObject.name);
         }
     }
 }
