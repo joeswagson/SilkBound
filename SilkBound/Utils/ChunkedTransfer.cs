@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.IO;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using SilkBound.Network.Packets.Impl;
-using System.Linq;
-using XGamingRuntime.Interop;
 using SilkBound.Types.JsonConverters;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using XGamingRuntime.Interop;
 
 namespace SilkBound.Utils
 {
@@ -15,36 +16,30 @@ namespace SilkBound.Utils
     {
         public const int CHUNK_SIZE = SilkConstants.CHUNK_TRANSFER;
 
+        public static readonly JsonSerializerSettings SerializerSettings = new()
+        {
+            NullValueHandling = NullValueHandling.Include,
+            MissingMemberHandling = MissingMemberHandling.Ignore,
+        };
+        public static JsonSerializer CreateSerializer(params JsonConverter[] converters)
+        {
+            SerializerSettings.Converters = converters;
+            return JsonSerializer.Create(SerializerSettings);
+        }
         public static byte[] Serialize(object? data, params JsonConverter[] converters)
         {
-            JsonSerializerSettings settings = new()
-            {
-                Converters = converters,
-                NullValueHandling = NullValueHandling.Include,
-                MissingMemberHandling = MissingMemberHandling.Ignore,
-                //ObjectCreationHandling = ObjectCreationHandling.Replace,
-                //DefaultValueHandling = DefaultValueHandling.Populate
-            };
-
-            string json = JsonConvert.SerializeObject(data, settings);
-            //Logger.Msg("Serialized JSON:", json);
+            SerializerSettings.Converters = converters;
+            string json = JsonConvert.SerializeObject(data, SerializerSettings);
+            Logger.Msg("Serialized JSON:", json);
             return CompressString(json);
         }
 
         public static T Deserialize<T>(byte[] rawData, params JsonConverter[] converters)
         {
-            JsonSerializerSettings settings = new()
-            {
-                Converters = converters,
-                NullValueHandling = NullValueHandling.Include,
-                MissingMemberHandling = MissingMemberHandling.Ignore,
-                //ObjectCreationHandling = ObjectCreationHandling.Replace,
-                //DefaultValueHandling = DefaultValueHandling.Populate
-            };
-
             string json = DecompressString(rawData);
-            //Logger.Msg("Deserialized JSON:", json);
-            return JsonConvert.DeserializeObject<T>(json, settings)!;
+            Logger.Msg("Deserialized JSON:", json);
+            SerializerSettings.Converters = converters;
+            return JsonConvert.DeserializeObject<T>(json, SerializerSettings)!;
         }
 
         public static List<byte[]> Pack(object data, params JsonConverter[] converters)

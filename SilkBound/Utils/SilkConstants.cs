@@ -7,6 +7,10 @@ namespace SilkBound.Utils
     public class SilkConstants
     {
         public const bool DEBUG = true;
+        #region debug cheats
+        public const bool INVULNERABILITY = false;
+        public const bool GETALLPOWERUPS = true;
+        #endregion
 
         public const bool CUSTOM_TITLE = true;
         

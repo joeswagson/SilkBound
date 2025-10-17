@@ -4,13 +4,13 @@ using SilkBound.Extensions;
 
 namespace SilkBound.Network.Packets.Impl.World
 {
-    public class PrefabSpawnPacket(string prefabName, Vector3 position, Quaternion rotation, Transform? parent, bool steal=false) : Packet
+    public class PrefabSpawnPacket(string prefabName, Vector3 position, Quaternion rotation, string? transformPath, bool steal=false) : Packet
     {
         // accessors
         public string PrefabName => prefabName;
         public Vector3 Position => position;
         public Quaternion Rotation => rotation;
-        public Transform? Parent => parent;
+        public Transform? Parent => UnityObjectExtensions.FindObjectFromFullName(transformPath)?.transform;
         public bool Steal => steal;
 
         // serialization
@@ -27,8 +27,7 @@ namespace SilkBound.Network.Packets.Impl.World
             writer.Write(rotation.z);
             writer.Write(rotation.w);
 
-            string transformPath = parent ? parent.GetPath() : string.Empty;
-            writer.Write(transformPath);
+            writer.Write(transformPath ?? string.Empty);
 
             writer.Write(steal);
         }
@@ -51,13 +50,9 @@ namespace SilkBound.Network.Packets.Impl.World
             );
 
             string transformPath = reader.ReadString();
-            Transform? resolvedTransform = null;
-            if (!string.IsNullOrEmpty(transformPath))
-                resolvedTransform = UnityObjectExtensions.FindObjectFromFullName(transformPath)?.transform;
-
             bool steal = reader.ReadBoolean();
 
-            return new PrefabSpawnPacket(prefabName, pos, rot, resolvedTransform, steal);
+            return new PrefabSpawnPacket(prefabName, pos, rot, transformPath, steal);
         }
     }
 }

@@ -5,17 +5,17 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace SilkBound.Types.Transfers
+namespace SilkBound.Managers
 {
-    public class SerializedGameObject
+    public class SerializedGameObjectManager
     {
-        public SerializedGameObject(Guid id, GameObject obj, string? path=null)
+        public SerializedGameObjectManager(Guid id, GameObject obj, string? path=null)
         {
             Id = id;
             Path = path ?? obj.transform.GetPath();
             Instance = obj;
         }
-        public SerializedGameObject(GameObject obj)
+        public SerializedGameObjectManager(GameObject obj)
         {
             Id = Guid.NewGuid();
             Path = obj.transform.GetPath(); //we js gon hope ts works
@@ -39,7 +39,7 @@ namespace SilkBound.Types.Transfers
             Buffer.BlockCopy(path, 0, buffer, guid.Length, path.Length);
             return buffer;
         }
-        public SerializedGameObject Deserialize(byte[] data)
+        public SerializedGameObjectManager Deserialize(byte[] data)
         {
             byte[] guid = new byte[16];
             byte[] path = new byte[data.Length - 16];
@@ -48,7 +48,7 @@ namespace SilkBound.Types.Transfers
             Id = new Guid(guid);
             Path = Encoding.UTF8.GetString(path);
             Instance = UnityObjectExtensions.FindObjectFromFullName(Path);
-            return new SerializedGameObject(Id, Instance!);
+            return new SerializedGameObjectManager(Id, Instance!);
         }
 
 

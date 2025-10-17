@@ -12,7 +12,7 @@ namespace SilkBound.Types.Transfers
     {
         public HeroStateTransfer() : this(default, new Dictionary<string, object>()) { } // required for deserialization
         public Dictionary<string, object> changes = new();
-        public override void Completed(List<byte[]> unpacked)
+        public override void Completed(List<byte[]> unpacked, NetworkConnection connection)
         {
             var result = ChunkedTransfer.Unpack<KeyValuePair<Guid, Dictionary<string, object>>?>(unpacked);
             if (!result.HasValue)

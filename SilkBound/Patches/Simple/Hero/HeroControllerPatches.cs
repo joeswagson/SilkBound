@@ -1,4 +1,5 @@
 ﻿using GlobalEnums;
+using GlobalSettings;
 using HarmonyLib;
 using SilkBound.Behaviours;
 using SilkBound.Managers;
@@ -6,6 +7,7 @@ using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Types.Mirrors;
 using SilkBound.Utils;
 using UnityEngine;
+using static MelonLoader.MelonLogger;
 using Logger = SilkBound.Utils.Logger;
 
 namespace SilkBound.Patches.Simple.Hero
@@ -43,6 +45,23 @@ namespace SilkBound.Patches.Simple.Hero
 
             NetworkUtils.LocalClient.Mirror = HornetMirror.CreateLocal();
             NetworkUtils.LocalClient.ChangeSkin(NetworkUtils.LocalClient.AppliedSkin);
+            if (SilkConstants.DEBUG && SilkConstants.GETALLPOWERUPS) GameManager.instance.GetAllPowerups();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(nameof(HeroController.StartDashEffect))]
+        public static void DashVFX(HeroController __instance)
+        {
+            if(!NetworkUtils.IsConnected || NetworkUtils.IsPacketThread())
+                return;
+
+            float num = 1f
+                + (__instance.IsUsingQuickening ? 0.25f : 0f)
+                + (Gameplay.SprintmasterTool.IsEquipped ? 0.25f : 0f)
+                + (!Mathf.Approximately(__instance.sprintSpeedAddFloat.Value, 0f) ? 0.25f : 0f);
+
+
+            NetworkUtils.SendPacket(new AirDashVFXPacket(__instance.cState.onGround, !__instance.cState.wallSliding && !__instance.cState.onGround, __instance.cState.wallSliding, __instance.dashingDown, num));
         }
 
         //[HarmonyPrefix]

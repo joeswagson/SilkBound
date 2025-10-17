@@ -3,19 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SilkBound.Network.Packets.Impl.Communication
+namespace SilkBound.Network.Packets.Impl.Sync.Entity
 {
-    public class ClientDisconnectionPacket(string reason) : Packet
+    public class UpdateBossPacket : Packet
     {
         public override Packet Deserialize(BinaryReader reader)
         {
-            string reason = reader.ReadString();
-            return new ClientDisconnectionPacket(reason);
+            throw new NotImplementedException();
         }
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(reason);
+            throw new NotImplementedException();
         }
     }
 }

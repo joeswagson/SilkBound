@@ -1,4 +1,5 @@
 ﻿using SilkBound.Types;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,30 +7,21 @@ using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Sync.Attacks
 {
-    public class NailSlashPacket(Guid weaver, NailSlash slash) : Packet
+    public class NailSlashPacket(string crest, string attack) : Packet
     {
-        public Guid weaver = weaver;
-        public NailSlash slash = slash;
+        public NailSlash Slash => Sender.Mirror!.GetNailAttack<NailSlash>($"{crest}/{attack}")!;
         public override Packet Deserialize(BinaryReader reader)
         {
-            return null!;
-
-            //Guid weaverId = Guid.Parse(reader.ReadString());
-            //string path = reader.ReadString();
-
-            //Weaver? weaver = Server.CurrentServer!.GetWeaver(weaverId);
-            //if(weaver == null || weaver.Mirror == null)
-            //{
-            //    throw new Exception("Weaver not found for packet.");
-            //}
-
-            //return new NailSlashPacket(weaverId, weaver.Mirror.GetNailAttack<NailSlash>(path)!);
+            string crest = reader.ReadString();
+            string attack = reader.ReadString();
+            return new NailSlashPacket(crest, attack);
         }
 
         public override void Serialize(BinaryWriter writer)
         {
-            //writer.Write(weaver.ToString());
-            //writer.Write(slash.transform.parent.name + "/" + slash.gameObject.name);
+            writer.Write(crest);
+            writer.Write(attack);
+            //writer.Write(slash.transform.parent.name, slash.gameObject.name);
         }
     }
 }

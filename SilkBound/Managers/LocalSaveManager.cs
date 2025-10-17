@@ -7,6 +7,16 @@ using System.Text;
 
 namespace SilkBound.Managers
 {
+    public class MultiplayerSaveGameData
+    {
+        public SaveGameData Data { get; }
+        public Dictionary<string, SceneState> SceneStates { get; }
+        public MultiplayerSaveGameData(SaveGameData data)
+        {
+            Data = data; // god i love setting a getter only property! (it makes sense but i bet this would kill a newgen)
+            SceneStates = SceneStateManager.States; // look at that i did it again!
+        }
+    }
     public class LocalSaveManager
     {
         public static string SavePath = ModFolder.Saves.FullName;
@@ -17,12 +27,13 @@ namespace SilkBound.Managers
 
         public static void WriteToFile(string path, SaveGameData data)
         {
-            using(FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            var mpdata = new MultiplayerSaveGameData(data);
+            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
             using(BinaryWriter writer = new BinaryWriter(fs))
             {
                 writer.Write(MagicByteManager.SAVE_SIGNATURE);
 
-                List<byte[]> chunks = ChunkedTransfer.Pack(data);
+                List<byte[]> chunks = ChunkedTransfer.Pack(mpdata);
                 writer.Write(chunks.Count);
                 foreach (byte[] chunk in chunks)
                 {
@@ -40,7 +51,11 @@ namespace SilkBound.Managers
             return File.Exists(GetSavePath(id));
         }
 
-        public static SaveGameData? ReadFromFile(string path)
+        public static MultiplayerSaveGameData? ReadFromFile(int id)
+        {
+            return ReadFromFile(GetSavePath(id));
+        }
+        public static MultiplayerSaveGameData? ReadFromFile(string path)
         {
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             using (BinaryReader reader = new BinaryReader(fs))
@@ -57,7 +72,27 @@ namespace SilkBound.Managers
                     chunks.Add(chunk);
                 }
 
-                return ChunkedTransfer.Unpack<SaveGameData>(chunks);
+                return ChunkedTransfer.Unpack<MultiplayerSaveGameData>(chunks);
+            }
+        }
+        public static void CreateFromData(int id, MultiplayerSaveGameData mpdata)
+        {
+            CreateFromData(GetSavePath(id), mpdata);
+        }
+        public static void CreateFromData(string path, MultiplayerSaveGameData mpdata)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (BinaryWriter writer = new BinaryWriter(fs))
+            {
+                writer.Write(MagicByteManager.SAVE_SIGNATURE);
+
+                List<byte[]> chunks = ChunkedTransfer.Pack(mpdata);
+                writer.Write(chunks.Count);
+                foreach (byte[] chunk in chunks)
+                {
+                    writer.Write(chunk.Length);
+                    writer.Write(chunk);
+                }
             }
         }
     }

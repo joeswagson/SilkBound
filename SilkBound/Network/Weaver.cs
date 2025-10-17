@@ -32,13 +32,13 @@ namespace SilkBound.Network
         public Skin AppliedSkin = SkinManager.Default;
         public bool IsLocal => NetworkUtils.ClientID == ClientID;
 
-        public NetworkConnection? Connection;
-        public SaveGameData? SaveGame;
-        public HornetMirror? Mirror;
+        // SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP GET OUT OF MY HEAD GAAAAGH
+        public NetworkConnection Connection = null!;
+        public MultiplayerSaveGameData SaveGame = null!;
+        public HornetMirror Mirror = null!;
 
         public void ChangeSkin(Skin skin)
         {
-            Logger.Msg("skin:", skin.SkinName);
             if (IsLocal)
                 NetworkUtils.SendPacket(new SkinUpdatePacket(skin.SkinName));
 

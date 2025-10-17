@@ -52,15 +52,18 @@ namespace SilkBound.Types.Transfers
             return Data!;
         }
 
-        public override void Completed(List<byte[]> unpacked)
+        public override void Completed(List<byte[]> unpacked, NetworkConnection connection)
         {
             Data = ChunkedTransfer.Unpack<OnlineSave>(unpacked);
             if (Data == null)
                 return;
-
-            NetworkUtils.LocalClient!.SaveGame = LocalSaveManager.SaveExists(Data.HostHash) ? LocalSaveManager.ReadFromFile(LocalSaveManager.GetSavePath(Data.HostHash)) : Data.SaveGame;
+            if(ModMain.Config.UseMultiplayerSaving)
+                NetworkUtils.LocalClient!.SaveGame = LocalSaveManager.SaveExists(Data.HostHash) ? LocalSaveManager.ReadFromFile(LocalSaveManager.GetSavePath(Data.HostHash))! : new MultiplayerSaveGameData(Data.SaveGame!);
+            else
+                NetworkUtils.LocalClient!.SaveGame = new MultiplayerSaveGameData(Data.SaveGame!);
             //TransactionManager.Promise<bool>(Data.HostHash, true);
-            GameManager.instance.LoadGameFromUI(Data.HostHash, NetworkUtils.LocalClient.SaveGame);
+
+            GameManager.instance.LoadGameFromUI(Data.HostHash, NetworkUtils.LocalClient.SaveGame.Data);
         }
     }
 }

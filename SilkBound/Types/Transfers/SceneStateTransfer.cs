@@ -1,18 +1,29 @@
-﻿using SilkBound.Managers;
+﻿using Newtonsoft.Json;
+using SilkBound.Managers;
+using SilkBound.Types.JsonConverters;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SilkBound.Types.Transfers
 {
-    public class SceneStateTransfer(SceneState state) : Transfer
+    public class SceneStateTransfer(string name, StateChange[] changes) : Transfer
     {
-        public override void Completed(List<byte[]> unpacked)
+        static JsonConverter[] converters => new JsonConverter[] { new GameObjectConverter(true) };
+        public override JsonConverter[] Converters => converters;
+        public override void Completed(List<byte[]> unpacked, NetworkConnection connection)
         {
-            SceneStateManager.Register(ChunkedTransfer.Unpack<SceneState>(unpacked));
+            Logger.Msg($"Converters ({converters.Length}):");
+            converters.ToList().ForEach((conv)=>Logger.Msg("-", conv.GetType().Name));
+            (string, StateChange[])? state = ChunkedTransfer.Unpack<(string, StateChange[])>(unpacked, converters);
+            if (state.HasValue)
+                SceneStateManager.ApplyChanges(SceneStateManager.Fetch(state.Value.Item1).Value, state.Value.Item2);
+            else
+                Logger.Error("SceneStateTransfer failed. Reason: Unpacked data chunks resulted in a null StateChange array.");
         }
 
-        public override object Fetch(params object[] args) => ChunkedTransfer.Pack(state);
+        public override object Fetch(params object[] args) => (name, changes);
     }
 }

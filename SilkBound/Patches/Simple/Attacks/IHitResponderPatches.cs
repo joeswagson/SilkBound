@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Types.JsonConverters;
@@ -28,9 +29,13 @@ namespace SilkBound.Patches.Simple.Attacks
             //hitInstance.NailImbuement = null;
             //hitInstance.SlashEffectOverrides = null;
             //Logger.Msg("hitinstance:", instance.GetType().FullName, ChunkedTransfer.Serialize(hitInstance, new GameObjectConverter()).Length);
-            Logger.Msg("hi");
+            //Logger.Msg("hi");
+            if(__instance.GetType() == typeof(Breakable))
+            {
+                Logger.Msg("Attemping Breakable Sync:", SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterBrokenObject), (__instance as MonoBehaviour)!.gameObject)));
+            }
             //Logger.Msg("source:", ChunkedTransfer.Deserialize<HitInstance>(ChunkedTransfer.Serialize(hitInstance, new GameObjectConverter(), new ToolItemConverter()), new GameObjectConverter(false), new ToolItemConverter()).Source);
-            NetworkUtils.SendPacket(new SyncHitPacket(hitInstance, __instance));
+            NetworkUtils.SendPacket(new SyncHitPacket(hitInstance, (__instance as Component)!.transform.GetPath()));
             return true;
         }
     }

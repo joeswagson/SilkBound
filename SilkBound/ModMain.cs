@@ -1,28 +1,29 @@
-﻿using SilkBound;
+﻿using HarmonyLib;
 using MelonLoader;
-using System;
-using UnityEngine;
-using SilkBound.Types;
-using SilkBound.Utils;
-using Logger = SilkBound.Utils.Logger;
-using SilkBound.Network.Packets.Impl;
-using SilkBound.Types.NetLayers;
-using Steamworks;
+using SilkBound;
 using SilkBound.Managers;
-using System.Collections.Concurrent;
+using SilkBound.Network.Packets.Handlers;
+using SilkBound.Network.Packets.Impl;
+using SilkBound.Network.Packets.Impl.Communication;
+using SilkBound.Network.Packets.Impl.Mirror;
+using SilkBound.Patches.Overrides;
+using SilkBound.Patches.Overrides.Impl;
+using SilkBound.Patches.Simple.Attacks;
+using SilkBound.Types;
+using SilkBound.Types.NetLayers;
 using SilkBound.Types.Transfers;
+using SilkBound.Utils;
+using Steamworks;
+using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using SilkBound.Patches.Overrides.Impl;
-using SilkBound.Patches.Overrides;
-using SilkBound.Network.Packets.Impl.Communication;
-using HarmonyLib;
-using SilkBound.Patches.Simple.Attacks;
-using SilkBound.Network.Packets.Impl.Mirror;
-using SilkBound.Network.Packets.Handlers;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Logger = SilkBound.Utils.Logger;
 
 
 [assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
@@ -35,14 +36,23 @@ namespace SilkBound
         }
 
 
+        int _loaded = -1;
+        (Scene, LoadSceneMode) _lastScene;
         public override void OnInitializeMelon()
         {
             Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber());
             if (SilkConstants.DEBUG)
             {
-                
+                CheatManager.Invincibility = SilkConstants.INVULNERABILITY ? CheatManager.InvincibilityStates.FullInvincible : CheatManager.InvincibilityStates.Off;
                 Application.SetStackTraceLogType(LogType.Exception, StackTraceLogType.Full);
             }
+
+            _loaded = -1;
+            SceneManager.sceneLoaded += (scene, mode) =>
+            {
+                _loaded = Time.frameCount;
+                _lastScene = (scene, mode);
+            };
 
             #region Patches
             //var overrideInstance = new HeroAnimationControllerOverrides();
@@ -168,6 +178,19 @@ namespace SilkBound
         {
             TickManager.Update();
 
+            if (_loaded > -1 && Time.frameCount > _loaded)
+            {
+                _loaded = -1;
+
+                Scene scene = _lastScene.Item1;
+                LoadSceneMode mode = _lastScene.Item2;
+
+                if (scene.name == "Menu_Title" || scene.name == "Pre_Menu_Intro" || !scene.IsValid())
+                    return;
+
+                SceneStateManager.Fetch(scene.name).Value.Sync(scene);
+            }
+
             if (Cursor.visible && HeroController.instance != null)
                 return;
 
@@ -213,6 +236,11 @@ namespace SilkBound
                 //NetworkUtils.LocalConnection!.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID, NetworkUtils.LocalClient!.ClientName));
                 NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
 
+            }
+
+            if(Input.GetKeyDown(KeyCode.K))
+            {
+                NetworkUtils.Disconnect("Leaving.");
             }
         }
 

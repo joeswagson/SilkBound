@@ -7,6 +7,34 @@ using System.Text;
 
 namespace SilkBound.Managers
 {
+    public struct ServerSettings()
+    {
+        #region Enums
+        public enum ServerVisibility
+        {
+            Public,
+            Private,
+            //FriendsOnly,
+        }
+        public enum BossTargeting
+        {
+            Nearest,
+            Furthest,
+            LowestHealth,
+            HighestHealth,
+            Random,
+
+            Default=Nearest
+        }
+        #endregion
+
+        public bool LogPlayerDisconnections = true;
+        public bool ServerBenches = true;
+        public bool GhostAfterDeath = true;
+        public BossTargeting BossTargetingMethod = BossTargeting.Default;
+        [JsonIgnore]
+        public ServerVisibility Visibility = ServerVisibility.Private;
+    }
     public class Config
     {
         #region Config
@@ -17,7 +45,7 @@ namespace SilkBound.Managers
         public string Username = "Weaver";
 
         /// <summary>
-        /// Default port for hosting/joining-(if not specified) servers.
+        /// Default port for hosting/joining-(default, if not specified) servers.
         /// </summary>
         public ushort Port = SilkConstants.PORT;
 
@@ -25,6 +53,8 @@ namespace SilkBound.Managers
         /// If true, the game will attempt to save (wip lol) and load your save data from the local files instead of the hosts.
         /// </summary>
         public bool UseMultiplayerSaving = true;
+
+        public ServerSettings HostSettings = default;
 
         #endregion
 

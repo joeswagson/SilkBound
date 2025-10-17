@@ -1,4 +1,6 @@
-﻿using SilkBound.Extensions;
+﻿using GlobalEnums;
+using GlobalSettings;
+using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network;
 using SilkBound.Network.Packets;
@@ -36,6 +38,7 @@ namespace SilkBound.Behaviours
         public tk2dSpriteAnimation MirrorLibrary = null!;
         public Weaver Client = null!;
         public float Layer = 0.004f;
+        public string Scene = string.Empty;
 
         private static tk2dSpriteAnimator? _cachedLocal;
         public static tk2dSpriteAnimator ReferenceAnimator
@@ -49,10 +52,10 @@ namespace SilkBound.Behaviours
             }
         }
 
-        public static HornetMirror AddComponent(GameObject go, bool local, Weaver? client = null, HeroControllerMirror? mirrorController=null, tk2dSprite? mirrorSprite = null, tk2dSpriteCollectionData? mirrorSpriteCollection=null, tk2dSpriteAnimation? mirrorLibrary=null, tk2dSpriteAnimator? mirrorAnimator = null, SimpleInterpolator? interpolator = null, float? layer=null)
+        public static HornetMirror AddComponent(GameObject go, bool local, Weaver? client = null, HeroControllerMirror? mirrorController = null, tk2dSprite? mirrorSprite = null, tk2dSpriteCollectionData? mirrorSpriteCollection = null, tk2dSpriteAnimation? mirrorLibrary = null, tk2dSpriteAnimator? mirrorAnimator = null, SimpleInterpolator? interpolator = null, float? layer = null)
         {
             HornetMirror mirror = go.AddComponent<HornetMirror>();
-            
+
             mirror.IsLocal = local;
             mirror.Root = go;
             mirror.Client = client ?? NetworkUtils.LocalClient!;
@@ -62,10 +65,10 @@ namespace SilkBound.Behaviours
             mirror.MirrorAnimator = mirrorAnimator!;
             mirror.MirrorController = mirrorController!;
             mirror.Interpolator = interpolator!;
-            
-            if(layer.HasValue)
+
+            if (layer.HasValue)
                 mirror.Layer = layer.Value;
-            
+
             mirror.Init();
 
             TransactionManager.Revoke(go);
@@ -100,14 +103,25 @@ namespace SilkBound.Behaviours
             return AddComponent(mirrorObj, true, NetworkUtils.LocalClient); // not gunna do object comparisons js as a precaution
         }
         public GameObject Attacks = null!;
+        public GameObject Effects = null!;
+        public GameObject Dash = null!;
+        public GameObject AirDash = null!;
+        public GameObject WallDashKickoff = null!;
         public void Init()
         {
             if (IsLocal) return;
 
             Root.AddComponent<HeroNailImbuement>();
 
+            Effects = Instantiate(HeroController.instance.transform.Find("Effects").gameObject, Root.transform);
+            Effects.name = "Effects";
+            Dash = Effects.transform.Find("Dash Burst").gameObject;
+            AirDash = Effects.transform.Find("Dash Burst").gameObject;
+            WallDashKickoff = Effects.transform.Find("Walldash Kickoff").gameObject;
+
             Attacks = Instantiate(HeroController.instance.transform.Find("Attacks").gameObject, Root.transform);
             Attacks.name = "Attacks";
+
             Attacks.GetComponentsInChildren<DamageEnemies>(true).ToList().ForEach(c => c.enabled = false); // position misalignments could cause damage inbalances. we will sync this from direct calls instead
             Attacks.GetComponentsInChildren<AudioSource>(true).ToList().ForEach((source) =>                // audio falloffs
             {
@@ -118,6 +132,9 @@ namespace SilkBound.Behaviours
             });
 
             MirrorController.SetupGameRefs();
+
+            regionListener = Root.AddComponentIfNotPresent<EnviroRegionListener>();
+            regionListener.enabled = false;
         }
 
         public T? GetNailAttack<T>(string path) where T : NailAttackBase
@@ -178,22 +195,23 @@ namespace SilkBound.Behaviours
         }
         public static tk2dSpriteCollectionData CopyCollection(GameObject mirror, tk2dSpriteCollectionData source, Skin skin)
         {
-            tk2dSpriteCollectionData collection = (tk2dSpriteCollectionData) source.CopyComponent(mirror, "inst", "platformSpecificData", "name", "spriteDefinitions", "materialInsts", "textureInsts", "materials", "textures");
+            tk2dSpriteCollectionData collection = (tk2dSpriteCollectionData)source.CopyComponent(mirror, "inst", "platformSpecificData", "name", "spriteDefinitions", "materialInsts", "textureInsts", "materials", "textures");
 
-            if(source.material != null)
+            if (source.material != null)
                 collection.material = new Material(source.material);
 
             collection.materials = new Material[source.materials.Length];
-            for(int i = 0; i < source.materials.Length; i++)
+            for (int i = 0; i < source.materials.Length; i++)
             {
                 var material = source.materials[i];
                 collection.materials[i] = new Material(material);
             }
 
             collection.textures = new Texture[source.textures.Length];
-            for(int i = 0; i < source.textures.Length; i++)
+            collection.textureInsts = new Texture2D[source.textureInsts.Length];
+            for (int i = 0; i < source.textures.Length; i++)
             {
-                var texture = (Texture2D) source.textures[i];
+                var texture = (Texture2D)source.textures[i];
 
                 Texture2D copy = new Texture2D(texture.width, texture.height, texture.format, false);
                 copy.LoadRawTextureData(texture.GetRawTextureData());
@@ -289,9 +307,9 @@ namespace SilkBound.Behaviours
 
             tk2dSprite source = Sprite!;
             tk2dSpriteCollectionData collection = CopyCollection(mirrorObj, source.Collection, packet.Sender.AppliedSkin);
-            Logger.Msg("source:", source?.name, "with", source?.Collection?.spriteDefinitions?.Length, "sprites");
-            Logger.Msg("copied collection:", collection.name, "with", collection.spriteDefinitions?.Length, "sprites");
-            Logger.Msg("collection object:", collection);
+            //Logger.Msg("source:", source?.name, "with", source?.Collection?.spriteDefinitions?.Length, "sprites");
+            //Logger.Msg("copied collection:", collection.name, "with", collection.spriteDefinitions?.Length, "sprites");
+            //Logger.Msg("collection object:", collection);
             tk2dSprite mirrorSprite = tk2dSprite.AddComponent(mirrorObj, source!.Collection, UnityEngine.Random.Range(int.MinValue, int.MaxValue));
             //mirrorSprite.SetSprite(collection, mirrorSprite.GetSpriteIdByName(source!.CurrentSprite.name));
             //mirrorSprite
@@ -350,7 +368,7 @@ namespace SilkBound.Behaviours
             //    }
             //}
             //tk2dSpriteAnimator mirrorAnimator = tk2dSpriteAnimator.AddComponent(mirrorObj, library, reference.Library.GetClipIdByName(reference.CurrentClip.name));// mirrorObj.AddComponent<HeroAnimationController>(); //tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, reference.Library.GetClipIdByName(reference.CurrentClip.name));
-            tk2dSpriteAnimator mirrorAnimator = tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, 876);
+            tk2dSpriteAnimator mirrorAnimator = tk2dSpriteAnimator.AddComponent(mirrorObj, reference.Library, 0);
             mirrorAnimator.Library = library;
             //mirrorAnimator._sprite = mirrorSprite;
 
@@ -364,15 +382,24 @@ namespace SilkBound.Behaviours
 
             var rb2d = ((Rigidbody2D)HeroController.instance.GetComponent<Rigidbody2D>().CopyComponent(mirrorObj));
             //rb2d.bodyType = RigidbodyType2D.Kinematic;
-            rb2d.bodyType = RigidbodyType2D.Static;
+            //rb2d.bodyType = RigidbodyType2D.Static;
+            rb2d.bodyType = RigidbodyType2D.Dynamic;
             rb2d.constraints = RigidbodyConstraints2D.FreezeAll;
 
             return HornetMirror.AddComponent(mirrorObj, false, packet.Sender, mirrorController, mirrorSprite, collection, library, mirrorAnimator, interpolator, mirrorObj.transform.position.z);
         }
 
+        private EnviroRegionListener regionListener = null!;
+        public EnvironmentTypes CurrentEnvironment { get; private set; } = EnvironmentTypes.Dust;
         public void UpdateMirror(UpdateWeaverPacket packet)
         {
             if (IsLocal) return;
+
+            Scene = packet.Scene;
+
+            CurrentEnvironment = packet.Environment;
+            regionListener.overrideEnvironment = true;
+            regionListener.overrideEnvironmentType = packet.Environment;
             Root.SetActive(packet.Scene == SceneManager.GetActiveScene().name);
 
             Root.transform.position = new Vector3(packet.PosX, packet.PosY, Layer);
@@ -381,15 +408,41 @@ namespace SilkBound.Behaviours
             Interpolator.velocity = new Vector3(packet.VelocityX, packet.VelocityY, 0);
             //Logger.Msg("updating mirror:", packet.posX, packet.posY, packet.scaleX, packet.vX, packet.vY);
         }
-
         public void PlayClip(PlayClipPacket packet)
         {
             if (IsLocal) return;
 
-            MirrorAnimator.Play(MirrorAnimator.Library.GetClipByName(packet.clipName), packet.clipStartTime, packet.overrideFps);
+            MirrorAnimator.Play(MirrorLibrary.GetClipByName(packet.clipName), packet.clipStartTime, packet.overrideFps);
             //Mirror
         }
+        public void DoAirDashVFX(bool doGroundDash, bool doAirDash, bool wallSliding, bool dashDown, float scale)
+        {
+            if (wallSliding)
+            {
+                WallDashKickoff.SetActive(false);
+                WallDashKickoff.SetActive(true);
+            }
 
+            float num = scale;
+            if (doGroundDash)
+            {
+                Dash.transform.localScale = new Vector3(-num, num, num);
+                Dash.SetActive(false);
+                Dash.SetActive(true);
+                return;
+            }
+            if (dashDown)
+            {
+                AirDash.transform.SetLocalRotation2D(90f);
+            }
+            else
+            {
+                AirDash.transform.SetLocalRotation2D(0f);
+            }
+            AirDash.transform.localScale = new Vector3(num * -Math.Abs(Root.transform.localScale.x), num, num); // this works idk why
+            AirDash.SetActive(false);
+            AirDash.SetActive(true);
+        }
         protected override void Start()
         {
 
@@ -400,6 +453,14 @@ namespace SilkBound.Behaviours
 
         }
 
+        EnviroRegionListener? _cached = null;
+        EnviroRegionListener cachedEnviro
+        {
+            get
+            {
+                return _cached ??= HeroController.instance.GetComponent<EnviroRegionListener>();
+            }
+        }
         public UpdateWeaverPacket CraftPacket()
         {
             return new UpdateWeaverPacket(
@@ -408,7 +469,8 @@ namespace SilkBound.Behaviours
                 HeroController.instance.transform.position.y,
                 HeroController.instance.transform.localScale.x,
                 HeroController.instance.GetComponent<Rigidbody2D>().linearVelocity.x * Time.timeScale,
-                HeroController.instance.GetComponent<Rigidbody2D>().linearVelocity.y * Time.timeScale
+                HeroController.instance.GetComponent<Rigidbody2D>().linearVelocity.y * Time.timeScale,
+                cachedEnviro?.CurrentEnvironmentType ?? EnvironmentTypes.Dust
             );
         }
         protected override void Tick(float dt)

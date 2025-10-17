@@ -1,4 +1,5 @@
-﻿using SilkBound.Network;
+﻿using SilkBound.Managers;
+using SilkBound.Network;
 using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Network.Packets.Impl.Communication;
@@ -16,11 +17,11 @@ namespace SilkBound.Utils
     {
         public static LocalWeaver LocalClient = null!;
         public static NetworkServer LocalServer = null!;
+        public static NetworkConnection LocalConnection = null!;
         public static PacketHandler LocalPacketHandler = null!;
         public static ClientPacketHandler? ClientPacketHandler => LocalPacketHandler as ClientPacketHandler;
         public static ServerPacketHandler? ServerPacketHandler => LocalPacketHandler as ServerPacketHandler;
-        public static Authority LocalAuthority => IsServer ? Authority.Server : Authority.Client; // ts so miniscule im not even putting it in the commit notes
-        public static NetworkConnection? LocalConnection;
+        public static AuthorityNode LocalAuthority => IsServer ? AuthorityNode.Server : AuthorityNode.Client; // ts so miniscule im not even putting it in the commit notes
         public static bool IsServer
         {
             get
@@ -76,12 +77,29 @@ namespace SilkBound.Utils
 
             return LocalClient;
         }
-        public static void Disconnect(string reason="Unspecified")
+        public static void Disconnect(string reason="Unspecified", Weaver? target=null)
         {
-            //if (IsConnected)
-                //SendPacket(new ClientDisconnectionPacket());
-        }
+            target ??= LocalClient;
 
+            if (IsConnected && target == LocalClient)
+                SendPacket(new ClientDisconnectionPacket(reason));
+
+            HandleDisconnection(LocalConnection, reason);
+        }
+        internal static void HandleDisconnection(NetworkConnection connection, string reason="Unspecified")
+        {
+            Weaver? client = Server.CurrentServer?.GetWeaver(connection);
+            if(client != null && NetworkUtils.IsServer)
+                NetworkObjectManager.RevokeOwnership(client);
+
+            if (client?.Mirror != null)
+                UnityEngine.Object.Destroy(client.Mirror);
+
+            connection.Disconnect();
+
+            if(ModMain.Config.HostSettings.LogPlayerDisconnections)
+                Logger.Msg($"{client?.ClientName ?? $"Connection {connection.Host}{(connection.Port.HasValue ? ":"+connection.Port.Value : string.Empty)}"}");
+        }
         public static bool IsPacketThread()
         {
             StackTrace trace = new StackTrace(true);

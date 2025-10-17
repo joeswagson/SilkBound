@@ -18,12 +18,13 @@ namespace SilkBound.Managers
                 return;
 
             Type transferType = transfer.GetType();
-            List<byte[]> chunks = ChunkedTransfer.Pack(transfer.Fetch(fetchArgs));
+            List<byte[]> chunks = ChunkedTransfer.Pack(transfer.Fetch(fetchArgs), transfer.Converters);  
+            Logger.Msg("Transfering", transferType.Name, "with id", transfer.TransferId, "in", chunks.Count, "chunks");
             for (int i = 0; i < chunks.Count; i++)
             {
                 byte[] chunk = chunks[i];
-                Logger.Msg("sending chunk", i + 1, "of", chunks.Count);
-                NetworkUtils.LocalConnection!.Send(new TransferDataPacket(chunk, i, chunks.Count, transfer.TransferId, transferType));
+                //Logger.Msg("sending chunk", i + 1, "of", chunks.Count);
+                NetworkUtils.SendPacket(new TransferDataPacket(chunk, i, chunks.Count, transfer.TransferId, transferType));
             }
         }
     }

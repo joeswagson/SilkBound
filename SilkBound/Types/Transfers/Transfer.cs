@@ -3,6 +3,7 @@ using SilkBound.Managers;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace SilkBound.Types.Transfers
@@ -17,7 +18,7 @@ namespace SilkBound.Types.Transfers
 
         public Guid TransferId;
         public TransferData? ChunkData;
-
+        public virtual JsonConverter[] Converters => Array.Empty<JsonConverter>();
         public Transfer()
         {
             TransferId = Guid.NewGuid();
@@ -25,14 +26,14 @@ namespace SilkBound.Types.Transfers
         }
         public static Transfer Create(Type original)
         {
-            return Activator.CreateInstance(original) as Transfer ?? throw new Exception("Failed to create Transfer instance");
+            return FormatterServices.GetUninitializedObject(original) as Transfer ?? throw new Exception("Failed to create Transfer instance"); // once more can use an uninitialized object as the source Fetch should never be called for this object
         }
 
         public abstract object Fetch(params object[] args);
-        public abstract void Completed(List<byte[]> unpacked);
-        public void TransferCompleted(List<byte[]> unpacked)
+        public abstract void Completed(List<byte[]> unpacked, NetworkConnection connection);
+        public void TransferCompleted(List<byte[]> unpacked, NetworkConnection connection)
         {
-            Completed(unpacked);
+            Completed(unpacked, connection);
             TransactionManager.Revoke(TransferId.ToString("N"));
         }
     }

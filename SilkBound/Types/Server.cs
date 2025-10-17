@@ -23,7 +23,7 @@ namespace SilkBound.Types
             Connection = connection;
         }
 
-        public static Server? CurrentServer;
+        public static Server CurrentServer = null!;
         public static bool IsOnline
         {
             get
@@ -38,9 +38,16 @@ namespace SilkBound.Types
         {
             return Connections.Find(c => c.ClientID == clientId);
         }
+        public Weaver? GetWeaver(NetworkConnection connection)
+        {
+            return Connections.Find(c => c.Connection == connection);
+        }
         public void Kick(Weaver weaver)
         {
-            if (NetworkUtils.IsServer && Connection is SteamServer)
+            if (!NetworkUtils.IsServer)
+                return;
+
+            if (Connection is SteamServer server)
             {
                 CSteamID weaverId = ((SteamConnection)weaver.Connection).RemoteId;
 
@@ -55,12 +62,16 @@ namespace SilkBound.Types
 
                 Connections.Remove(weaver);
             }
+            else
+            {
+                
+            }
         }
 
-        public Weaver? Host { get; internal set; }
-        public string? Address { get; internal set; }
+        public Weaver Host { get; internal set; } = null!;
+        public string Address { get; internal set; } = null!;
         public int? Port { get; internal set; }
-        public NetworkConnection? Connection { get; internal set; }
+        public NetworkConnection Connection { get; internal set; } = null!;
         public static Server ConnectPipe(string host, string name)
         {
             return Connect(new NamedPipeServer(host), name);
@@ -69,7 +80,7 @@ namespace SilkBound.Types
         {
             return Connect(new SteamServer(), name);
         }
-        public static Server ConnectTCP(string host, string name, int? port=null)
+        public static Server ConnectTCP(string host, string name, int? port = null)
         {
             return Connect(new TCPServer(host, port), name);
         }

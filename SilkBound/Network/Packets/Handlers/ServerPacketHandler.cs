@@ -21,6 +21,7 @@ using UnityEngine;
 using Logger = SilkBound.Utils.Logger;
 using HutongGames.PlayMaker.Actions;
 using SilkBound.Extensions;
+using SilkBound.Sync;
 
 namespace SilkBound.Network.Packets.Handlers
 {
@@ -63,16 +64,15 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(TransferDataPacket))]
         public void OnTransferDataPacket(TransferDataPacket packet, NetworkConnection connection)
         {
-            Logger.Msg($"Received TransferSaveDataPacket: TransferId={packet.TransferId}, ChunkIndex={packet.ChunkIndex}, TotalChunks={packet.TotalChunks}, DataLength={packet.Data.Length}");
-            Transfer? transfer = TransactionManager.Fetch<Transfer>(packet.TransferId.ToString("N"));
-            if (transfer == null) return;
+            Logger.Msg($"Received TransferDataPacket: TransferId={packet.TransferId}, ChunkIndex={packet.ChunkIndex}, TotalChunks={packet.TotalChunks}, DataLength={packet.Data.Length}");
+            Transfer transfer = TransactionManager.Fetch<Transfer?>(packet.TransferId.ToString("N")) ?? TransactionManager.Promise<Transfer>(packet.TransferId.ToString("N"), Transfer.Create(packet.TransferType));
 
             Transfer.TransferData? data = transfer.ChunkData;
 
             if (data != null)
             {
                 data.Chunks[packet.ChunkIndex] = packet.Data;
-                Logger.Msg($"Received chunk {packet.ChunkIndex}/{data.TotalChunks} for transfer {packet.TransferId} ({data.Chunks.Count(a => a != null)}/{data.TotalChunks} complete)");
+                Logger.Msg($"Received chunk {packet.ChunkIndex + 1}/{data.TotalChunks} for transfer {packet.TransferId} ({(float)data.Chunks.Count(a => a != null) / data.TotalChunks:P} complete)");
             }
             else
             {
@@ -82,13 +82,14 @@ namespace SilkBound.Network.Packets.Handlers
                     TotalChunks = packet.TotalChunks
                 };
                 data.Chunks[packet.ChunkIndex] = packet.Data;
-                Logger.Msg($"Received chunk {packet.ChunkIndex}/{data.TotalChunks} for transfer {packet.TransferId} (1/{data.TotalChunks} complete)");
-                TransactionManager.Promise(packet.TransferId.ToString("N"), data);
+                Logger.Msg($"Received chunk {packet.ChunkIndex + 1}/{data.TotalChunks} for transfer {packet.TransferId} ({1f / data.TotalChunks:P} complete)");
+                transfer.ChunkData = data;
+                TransactionManager.Promise(packet.TransferId.ToString("N"), transfer);
             }
 
             if (data.Chunks.Count(a => a != null) >= data.TotalChunks && NetworkUtils.LocalClient != null)
             {
-                transfer.Completed(new List<byte[]>(data.Chunks!));
+                transfer.Completed(new List<byte[]>(data.Chunks), connection);
             }
         }
 
@@ -109,14 +110,15 @@ namespace SilkBound.Network.Packets.Handlers
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
-        [PacketHandler(typeof(PlayAttackClipPacket))]
-        public void OnPlayAttackClipPacket(PlayAttackClipPacket packet, NetworkConnection connection)
-        {
-            GameObject? go = UnityObjectExtensions.FindObjectFromFullName(packet.Path);
-            if (go)
-                go.GetComponent<tk2dSpriteAnimator>().Play(go.GetComponent<tk2dSpriteAnimator>().GetClipByName(packet.ClipName), packet.ClipStartTime, packet.OverrideFps);
-            NetworkUtils.LocalServer!.SendExcept(packet, connection);
-        }
+        //[PacketHandler(typeof(PlayAttackClipPacket))]
+        //public void OnPlayAttackClipPacket(PlayAttackClipPacket packet, NetworkConnection connection)
+        //{
+        //    Logger.Msg("Attack Sync:", $"Crest: {packet.Crest}", "\\", $"Attack: {packet.Attack}", $"ClipName: {packet.ClipName}", $"ClipStartTime: {packet.ClipStartTime}", $"OverrideFps: {packet.OverrideFps}");
+        //    GameObject? go = packet.Sender.Mirror?.Attacks?.transform.Find(packet.Crest)?.Find(packet.Attack)?.gameObject; //UnityObjectExtensions.FindObjectFromFullName(packet.Path);
+        //    if (go)
+        //        go.GetComponent<tk2dSpriteAnimator>()?.Play(go.GetComponent<tk2dSpriteAnimator>().GetClipByName(packet.ClipName), packet.ClipStartTime, packet.OverrideFps);
+        //    NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        //}
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
         {
@@ -135,6 +137,14 @@ namespace SilkBound.Network.Packets.Handlers
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
+        [PacketHandler(typeof(AirDashVFXPacket))]
+        public void OnAirDashVFXPacket(AirDashVFXPacket packet, NetworkConnection connection)
+        {
+            if (packet.Sender.Mirror?.IsInScene ?? false)
+                packet.Sender.Mirror.DoAirDashVFX(packet.GroundDash, packet.AirDash, packet.WallSliding, packet.DashDown, packet.Scale);
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
+
         [PacketHandler(typeof(PrefabSpawnPacket))]
         public void OnPrefabSpawnPacket(PrefabSpawnPacket packet, NetworkConnection connection)
         {
@@ -146,8 +156,10 @@ namespace SilkBound.Network.Packets.Handlers
                     return;
                 }
 
-                TransactionManager.Promise<bool>(effect.Prefab, true);
-                ObjectPool.Spawn(effect.Prefab as GameObject, packet.Parent, packet.Position, packet.Rotation, packet.Steal);
+                //TransactionManager.Promise<bool>(effect.Prefab, true);
+                GameObject obj = ObjectPool.Spawn(effect.Prefab as GameObject, packet.Parent, packet.Position, packet.Rotation, packet.Steal);
+                //Logger.Msg("Spawned:", obj);
+                effect.Spawned?.Invoke(packet, obj);
             }
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
@@ -157,14 +169,17 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(NailSlashPacket))]
         public void OnNailSlashPacket(NailSlashPacket packet, NetworkConnection connection)
         {
-            packet.slash.StartSlash();
+            packet.Slash.StartSlash();
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
         [PacketHandler(typeof(DownspikePacket))]
         public void OnDownspikePacket(DownspikePacket packet, NetworkConnection connection)
         {
-            packet.slash.StartSlash();
+            if (packet.Cancel)
+                packet.Slash.CancelAttack();
+            else
+                packet.Slash.StartSlash();
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
@@ -188,6 +203,15 @@ namespace SilkBound.Network.Packets.Handlers
         //    NetworkUtils.LocalServer!.SendExcept(packet, connection);
         //}
 
+        #endregion
+
+        #region Network Ownership
+        [PacketHandler(typeof(UpdateNetworkOwnerPacket))]
+        public void OnUpdateNetworkOwnerPacket(UpdateNetworkOwnerPacket packet, NetworkConnection connection)
+        {
+            if (NetworkObjectManager.TryGet(packet.NetworkId, out NetworkObject netObj))
+                connection.Send(new UpdateNetworkOwnerPacket(netObj.Owner.ClientID));
+        }
         #endregion
     }
 }

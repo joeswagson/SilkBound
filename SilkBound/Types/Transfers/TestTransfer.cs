@@ -9,7 +9,7 @@ namespace SilkBound.Types.Transfers
     {
         public TestTransfer() : this(new Dictionary<string, string>()) { } // required for deserialization
 
-        public override void Completed(List<byte[]> unpacked)
+        public override void Completed(List<byte[]> unpacked, NetworkConnection connection)
         {
             Dictionary<string, string>? result = ChunkedTransfer.Unpack<Dictionary<string, string>>(unpacked);
             if (result == null)

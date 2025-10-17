@@ -58,7 +58,7 @@ namespace SilkBound.Extensions
         public static string GetPath(this Transform transform, bool replaceMirror = false)
         {
             return replaceMirror ?
-                GetFullName(transform.gameObject).Replace("Hero_Controller(Clone)", NetworkUtils.LocalClient.Mirror!.GetName()) :
+                GetFullName(transform.gameObject).Replace("Hero_Hornet(Clone)", NetworkUtils.LocalClient.Mirror!.GetName()) :
                 GetFullName(transform.gameObject);
 
             //if (transform.parent == null)
@@ -111,7 +111,7 @@ namespace SilkBound.Extensions
             return roots;
         }
 
-        public static GameObject? FindObjectFromFullName(string fullName)
+        public static GameObject? FindObjectFromFullName(string? fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
                 return null;
