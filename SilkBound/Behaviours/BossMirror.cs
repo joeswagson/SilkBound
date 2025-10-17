@@ -15,9 +15,9 @@ namespace SilkBound.Behaviours
     {
         public GameObject BossRoot = null!;
 
-        public static BossMirror Create(UpdateBossPacket packet)
+        public static BossMirror? Create(UpdateBossPacket packet)
         {
-            
+            return null;
         }
 
         protected override void Reset()
