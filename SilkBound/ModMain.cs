@@ -1,58 +1,67 @@
-﻿using HarmonyLib;
+﻿global using Logger = SilkBound.Utils.Logger;
+global using Object = UnityEngine.Object;
+using HarmonyLib;
+using HutongGames.PlayMaker;
 using MelonLoader;
 using SilkBound;
 using SilkBound.Managers;
-using SilkBound.Network.Packets.Handlers;
-using SilkBound.Network.Packets.Impl;
-using SilkBound.Network.Packets.Impl.Communication;
-using SilkBound.Network.Packets.Impl.Mirror;
-using SilkBound.Patches.Overrides;
-using SilkBound.Patches.Overrides.Impl;
 using SilkBound.Patches.Simple.Attacks;
 using SilkBound.Types;
-using SilkBound.Types.NetLayers;
-using SilkBound.Types.Transfers;
 using SilkBound.Utils;
 using Steamworks;
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using Logger = SilkBound.Utils.Logger;
-
+#if DEBUG
+using UnityExplorer.CacheObject;
+using UnityExplorer.CacheObject.Views;
+#endif
 
 [assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
 namespace SilkBound
 {
     public class ModMain : MelonMod
     {
+        public const string CONNECT_IP = "127.0.0.1";
+
+        public static int MainThreadId;
         public override void OnEarlyInitializeMelon()
         {
+
+#if TargetLoader == MelonLoader
+            Logger.Msg("MELONLOADER RAAH!!!");
+#endif
         }
 
 
-        int _loaded = -1;
-        (Scene, LoadSceneMode) _lastScene;
         public override void OnInitializeMelon()
         {
-            Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber());
+            MainThreadId = Environment.CurrentManagedThreadId;
+            Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(), "| Unity Thread ID:", MainThreadId);
+            var method = AccessTools.Method(typeof(HealthManager), "TakeDamage", [typeof(HitInstance)]);
+            Logger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
+
             if (SilkConstants.DEBUG)
             {
+                if (SilkDebug.GetClientNumber() > SilkConstants.TEST_CLIENTS)
+                {
+                    Logger.Error("Client number exceeds TEST_CLIENTS constant. Quitting.");
+                    Application.Quit();
+                    return;
+                }
+
+                DebugDrawColliderRuntime.IsShowing = SilkConstants.DEBUG_COLLIDERS;
+
                 CheatManager.Invincibility = SilkConstants.INVULNERABILITY ? CheatManager.InvincibilityStates.FullInvincible : CheatManager.InvincibilityStates.Off;
                 Application.SetStackTraceLogType(LogType.Exception, StackTraceLogType.Full);
             }
-
-            _loaded = -1;
-            SceneManager.sceneLoaded += (scene, mode) =>
-            {
-                _loaded = Time.frameCount;
-                _lastScene = (scene, mode);
-            };
+            //_loaded = -1;
+            //SceneManager.sceneLoaded += (scene, mode) =>
+            //{
+            //    _loaded = Time.frameCount;
+            //    _lastScene = (scene, mode);
+            //};
 
             #region Patches
             //var overrideInstance = new HeroAnimationControllerOverrides();
@@ -61,7 +70,7 @@ namespace SilkBound
             {
                 if (typeof(IHitResponder).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
                 {
-                    var m = AccessTools.Method(t, "Hit", new Type[] { typeof(HitInstance) });
+                    var m = AccessTools.Method(t, "Hit", [typeof(HitInstance)]);
                     if (m == null) continue;
 
                     if (m.DeclaringType != t)
@@ -92,28 +101,42 @@ namespace SilkBound
 #if DEBUG
         System.Collections.IEnumerator DelayedWindowPosition()
         {
-
+            int cW = 500;
+            int w = SilkConstants.TEST_CLIENTS <= 2 ? 1 : 2;// SilkConstants.TEST_CLIENTS - (SilkConstants.TEST_CLIENTS % 1);
             SilkDebug.PositionConsoleWindow(
-                new Vector2Int(50, 50),
-                new Vector2Int(1200, 600),
-                1
+                new Vector2Int(50, 15),
+                new Vector2Int(1200 + cW, 680),
+                w
             );
-            yield return new WaitForSeconds(1);
+
+            yield return new WaitForSeconds(0.5f);
 
             SilkDebug.PositionGameWindow(
-                new Vector2Int(1250, 50),
-                new Vector2Int(1200, 600),
-                1
+                new Vector2Int(((int)Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (1200 + cW)) + 50, 15),
+                new Vector2Int(1600, 680),
+                w
             );
 
             if (SilkDebug.GetClientNumber() == 1)
             {
                 Server.ConnectTCP("127.0.0.1", "host");
+                Skin skin = SkinManager.GetOrDefault("purple");
+                NetworkUtils.LocalClient!.ChangeSkin(skin);
             }
             else
             {
-                NetworkUtils.ConnectTCP("127.0.0.1", "client");
-                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
+                NetworkUtils.ConnectTCP(CONNECT_IP, $"client{SilkDebug.GetClientNumber() - 1}");
+                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () =>
+                {
+                    Skin skin = SilkDebug.GetClientNumber() switch
+                    {
+                        2 => SkinManager.GetOrDefault("blue"),
+                        3 => SkinManager.GetOrDefault("green"),
+                        4 => SkinManager.GetOrDefault("red"),
+                        _ => SkinManager.Default
+                    };
+                    NetworkUtils.LocalClient!.ChangeSkin(skin);
+                };
 
                 //NetworkUtils.LocalClient!.AppliedSkin = SkinManager.GetOrDefault("blue");
                 //NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
@@ -167,29 +190,32 @@ namespace SilkBound
         //}
 
         public static readonly Config Config = ConfigurationManager.ReadFromFile("config");
-        private static readonly System.Random random = new System.Random();
+        private static readonly System.Random random = new();
         public static string RandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
+            return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);
         }
         public override void OnUpdate()
         {
             TickManager.Update();
 
-            if (_loaded > -1 && Time.frameCount > _loaded)
-            {
-                _loaded = -1;
 
-                Scene scene = _lastScene.Item1;
-                LoadSceneMode mode = _lastScene.Item2;
 
-                if (scene.name == "Menu_Title" || scene.name == "Pre_Menu_Intro" || !scene.IsValid())
-                    return;
+            //Logger.Msg("Clients:", (Server.CurrentServer?.Connection as TCPServer)?.GetPlayerList().Count);
 
-                SceneStateManager.Fetch(scene.name).Value.Sync(scene);
-            }
+            //if (_loaded > -1 && Time.frameCount > _loaded)
+            //{
+            //    _loaded = -1;
+
+            //    Scene scene = _lastScene.Item1;
+            //    LoadSceneMode mode = _lastScene.Item2;
+
+            //    if (scene.name == "Menu_Title" || scene.name == "Pre_Menu_Intro" || !scene.IsValid())
+            //        return;
+
+            //    SceneStateManager.Fetch(scene.name).Value.Sync(scene);
+            //}
 
             if (Cursor.visible && HeroController.instance != null)
                 return;
@@ -230,15 +256,15 @@ namespace SilkBound
             {
                 //NetworkUtils.ConnectPipe("sb_dbg", "client");
 
-                NetworkUtils.ConnectTCP("127.0.0.1", "client");
-                //NetworkUtils.ConnectP2P(76561198383107093, "dyluxe");
-                Logger.Msg("sednign handshakl");
-                //NetworkUtils.LocalConnection!.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID, NetworkUtils.LocalClient!.ClientName));
-                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
+                NetworkUtils.ConnectTCP(CONNECT_IP, "client");
+                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () =>
+                {
+                    NetworkUtils.LocalClient!.ChangeSkin(SkinManager.GetOrDefault("blue"));
+                };
 
             }
 
-            if(Input.GetKeyDown(KeyCode.K))
+            if (Input.GetKeyDown(KeyCode.K))
             {
                 NetworkUtils.Disconnect("Leaving.");
             }
@@ -262,6 +288,48 @@ namespace SilkBound
                 ref AsyncOperation ___loadop) // , ref float ___FADE_SPEED
             {
                 __instance.gameObject.GetComponent<Animator>().speed = 99999;
+            }
+        }
+
+        [HarmonyPatch(typeof(CacheObjectBase))]
+        public class CacheObjectBasePatches
+        {
+            [HarmonyPrefix]
+            [HarmonyPatch("SetValueState")]
+            public static bool blehhh(CacheObjectBase __instance, CacheObjectCell cell, CacheObjectBase.ValueStateArgs args)
+            {
+                if (cell is not CacheListEntryCell listEntry)
+                    return true;
+
+
+                void Convert(string name)
+                {
+                    AccessTools.Property(typeof(CacheObjectBase), "ValueLabelText")
+                        .SetValue(
+                            __instance, 
+                            UniverseLib.Utility.ToStringUtility.ToStringWithType(
+                                __instance.Value, 
+                                __instance.FallbackType, 
+                                true
+                                )
+                            + $" - <i><color=#b0edff>{name}</color></i>"
+                        );
+                }
+
+                switch (__instance.Value)
+                {
+                    case FsmState fsm: Convert(fsm.Name); break;
+                    case FsmEvent fsm: Convert(fsm.Name); break;
+                    case FsmStateAction fsm: Convert(fsm.Name); break;
+                    case FsmVar fsm: Convert(fsm.NamedVar.Name); break;
+                    case tk2dSprite tk2d: Convert(tk2d.Collection.spriteCollectionName); break;
+                    case tk2dSpriteCollection tk2d: Convert(tk2d.spriteCollection.name); break;
+                    case tk2dSpriteCollectionData tk2d: Convert(tk2d.name); break;
+                    case tk2dSpriteAnimation tk2d: Convert(tk2d.name); break;
+                    case tk2dSpriteAnimationClip tk2d: Convert(tk2d.name); break;
+                }
+
+                return true;
             }
         }
 #endif

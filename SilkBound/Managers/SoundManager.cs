@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
 using UnityEngine;
 using SilkBound.Network.Packets.Impl.Sync.World;
 using SilkBound.Utils;
-using Logger = SilkBound.Utils.Logger;
-using System.IO;
 using UnityEngine.Audio;
-using SilkBound.Extensions;
 
 namespace SilkBound.Managers
 {
@@ -88,22 +84,17 @@ namespace SilkBound.Managers
 
             static async Task<AudioClip?> LoadClip(string path)
             {
-                using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.WAV))
-                {
-                    await uwr.SendWebRequest();
-                    await Task.Delay(100);
-                    try
-                    {
+                using UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.WAV);
+                await uwr.SendWebRequest();
+                await Task.Delay(100);
+                try {
 
-                        if (uwr.result == UnityWebRequest.Result.ConnectionError || uwr.result == UnityWebRequest.Result.ProtocolError)
-                            Debug.Log($"{uwr.error}");
-                        else
-                            return DownloadHandlerAudioClip.GetContent(uwr);
-                    }
-                    catch (Exception err)
-                    {
-                        Debug.Log($"{err.Message}, {err.StackTrace}");
-                    }
+                    if (uwr.result == UnityWebRequest.Result.ConnectionError || uwr.result == UnityWebRequest.Result.ProtocolError)
+                        Debug.Log($"{uwr.error}");
+                    else
+                        return DownloadHandlerAudioClip.GetContent(uwr);
+                } catch (Exception err) {
+                    Debug.Log($"{err.Message}, {err.StackTrace}");
                 }
 
                 return null;

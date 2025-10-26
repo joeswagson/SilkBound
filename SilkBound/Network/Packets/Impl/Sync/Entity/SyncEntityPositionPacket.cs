@@ -1,31 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using GlobalEnums;
-using SilkBound.Network.Packets.Impl.Mirror;
+﻿using System.IO;
+using UnityEngine;
 
 namespace SilkBound.Network.Packets.Impl.Sync.Entity
 {
-    public class SyncEntityPositionPacket : UpdateWeaverPacket
+    public class SyncEntityPositionPacket(string entityId, string scene, Vector3 position, Vector2 velocity, float scaleX) : Packet
     {
-        public Guid EntityId;
-        public SyncEntityPositionPacket(Guid entityId, string scene, float posX, float posY, float scaleX, float vX, float vY, EnvironmentTypes env) : base(scene, posX, posY, scaleX, vX, vY, env)
-        {
-            EntityId = entityId;
-        }
+        public string EntityId => entityId;
+        public string Scene => scene;
+        public Vector3 Position => position;
+        public Vector2 Velocity => velocity;
+        public float ScaleX => scaleX;
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(EntityId.ToByteArray());
-            base.Serialize(writer);
+            writer.Write(EntityId);
+            writer.Write(scene);
+            writer.Write(position.x);
+            writer.Write(position.y);
+            writer.Write(position.z);
+            writer.Write(velocity.x);
+            writer.Write(velocity.y);
+            writer.Write(scaleX);
         }
 
         public override Packet Deserialize(BinaryReader reader)
         {
-            Guid entityId = new Guid(reader.ReadBytes(16));
-            UpdateWeaverPacket basePacket = (UpdateWeaverPacket)base.Deserialize(reader);
-            return new SyncEntityPositionPacket(entityId, basePacket.Scene, basePacket.PosX, basePacket.PosY, basePacket.ScaleX, basePacket.VelocityX, basePacket.VelocityY, basePacket.Environment);
+            string entityId = reader.ReadString();
+            string scene = reader.ReadString();
+            Vector3 position = new(
+                reader.ReadSingle(),
+                reader.ReadSingle(),
+                reader.ReadSingle()
+            );
+            Vector2 velocity = new(
+                reader.ReadSingle(),
+                reader.ReadSingle()
+            );
+            float scaleX = reader.ReadSingle();
+            return new SyncEntityPositionPacket(entityId, scene, position, velocity, scaleX);
         }
     }
 }

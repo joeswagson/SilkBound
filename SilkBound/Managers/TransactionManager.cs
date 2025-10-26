@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace SilkBound.Managers
 {
     public class TransactionManager
     {
-        public static Dictionary<object, object> Transactions = new Dictionary<object, object>();
+        public static Dictionary<object, object> Transactions = [];
 
         public static T Promise<T>(object transactionId, T transactionData)
         {

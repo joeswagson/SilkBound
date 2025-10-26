@@ -27,7 +27,7 @@ namespace SilkBound.Network.Packets.Impl.World
             writer.Write(rotation.z);
             writer.Write(rotation.w);
 
-            writer.Write(transformPath ?? string.Empty);
+            writer.Write((transformPath ?? string.Empty).ReplaceController());
 
             writer.Write(steal);
         }
@@ -36,13 +36,13 @@ namespace SilkBound.Network.Packets.Impl.World
         {
             string prefabName = reader.ReadString();
 
-            Vector3 pos = new Vector3(
+            Vector3 pos = new(
                 reader.ReadSingle(),
                 reader.ReadSingle(),
                 reader.ReadSingle()
             );
 
-            Quaternion rot = new Quaternion(
+            Quaternion rot = new(
                 reader.ReadSingle(),
                 reader.ReadSingle(),
                 reader.ReadSingle(),

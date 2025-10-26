@@ -2,9 +2,6 @@
 using SilkBound.Behaviours;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SilkBound.Patches.Simple.Attacks
 {
@@ -15,7 +12,7 @@ namespace SilkBound.Patches.Simple.Attacks
         [HarmonyPatch(nameof(NailSlash.StartSlash))]
         public static bool StartSlash_Prefix(NailSlash __instance)
         {
-            if (!NetworkUtils.IsConnected || NetworkUtils.IsPacketThread())
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread())
                 return true;
 
             if (__instance.gameObject.GetComponentInParent<HornetMirror>() != null)

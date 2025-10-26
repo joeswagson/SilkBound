@@ -2,16 +2,14 @@
 using SilkBound.Managers;
 using SilkBound.Types.JsonConverters;
 using SilkBound.Utils;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SilkBound.Types.Transfers
 {
     public class SceneStateTransfer(string name, StateChange[] changes) : Transfer
     {
-        static JsonConverter[] converters => new JsonConverter[] { new GameObjectConverter(true) };
+        static JsonConverter[] converters => [new GameObjectConverter(true)];
         public override JsonConverter[] Converters => converters;
         public override void Completed(List<byte[]> unpacked, NetworkConnection connection)
         {
@@ -19,7 +17,7 @@ namespace SilkBound.Types.Transfers
             converters.ToList().ForEach((conv)=>Logger.Msg("-", conv.GetType().Name));
             (string, StateChange[])? state = ChunkedTransfer.Unpack<(string, StateChange[])>(unpacked, converters);
             if (state.HasValue)
-                SceneStateManager.ApplyChanges(SceneStateManager.Fetch(state.Value.Item1).Value, state.Value.Item2);
+                SceneStateManager.ApplyChanges(SceneStateManager.Fetch(state.Value.Item1).Result, state.Value.Item2);
             else
                 Logger.Error("SceneStateTransfer failed. Reason: Unpacked data chunks resulted in a null StateChange array.");
         }

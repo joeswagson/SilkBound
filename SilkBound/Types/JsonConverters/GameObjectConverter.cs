@@ -22,13 +22,13 @@ namespace SilkBound.Types.JsonConverters
             bool createNew = array[0].ToObject<bool>(serializer);
             string name = array[1].ToObject<string>(serializer) ?? "SBUnnamedGO";
 
-            Vector3 position = new Vector3(
+            Vector3 position = new(
                 array[2].ToObject<float>(serializer),
                 array[3].ToObject<float>(serializer),
                 array[4].ToObject<float>(serializer)
             );
 
-            Quaternion rotation = new Quaternion(
+            Quaternion rotation = new(
                 array[5].ToObject<float>(serializer),
                 array[6].ToObject<float>(serializer),
                 array[7].ToObject<float>(serializer),

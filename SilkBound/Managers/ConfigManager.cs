@@ -1,9 +1,8 @@
 ﻿using Newtonsoft.Json;
+using SilkBound.Network.Packets;
 using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SilkBound.Managers
 {
@@ -16,7 +15,7 @@ namespace SilkBound.Managers
             Private,
             //FriendsOnly,
         }
-        public enum BossTargeting
+        public enum BossTargetingMethod
         {
             Nearest,
             Furthest,
@@ -24,16 +23,45 @@ namespace SilkBound.Managers
             HighestHealth,
             Random,
 
-            Default=Nearest
+            Default = Nearest
+        }
+        public enum RespawnMode
+        {
+            Individual, // players go to their own benches
+            Shared, // players go to the last used bench by any player instantly
+            PartyDeath, // players go to their own last used bench after last living player dies - ignores GhostAfterDeath
+            SharedPartyDeath, // players go to the last bench used by any player after last living player dies - ignores GhostAfterDeath  
+
+            Default = Individual
         }
         #endregion
 
+        /// <summary>
+        /// Send a message in console when a player disconnects
+        /// </summary>
         public bool LogPlayerDisconnections = true;
-        public bool ServerBenches = true;
-        public bool GhostAfterDeath = true;
-        public BossTargeting BossTargetingMethod = BossTargeting.Default;
+        public bool ForceHostSaveData = false;
+        public BossTargetingMethod BossTargeting = BossTargetingMethod.Default;
+        public RespawnMode RespawnMethod = RespawnMode.Default;
+        public AuthorityNode LoadGamePermission = AuthorityNode.Any;
+        public bool DistributedCocoonSilk = false;
+
+        [Obsolete("Placeholder for future implementation of concept.")]
         [JsonIgnore]
         public ServerVisibility Visibility = ServerVisibility.Private;
+
+        [Obsolete("Placeholder for future implementation of concept.")]
+        [JsonIgnore]
+        // NOTE: SilkBound will not include a client anticheat (the only way to do this would to make a closed source native binary and theres no way thats happening unless its a huge issue)
+        // ^ (cont.) this means that all the anticheat stuff will be performed on the server.
+        // ^ (cont. 2) kinda only useful to act as a reminder that a serverside anticheat could increase lag and make it more efficient to turn it off for private coop servers (where the server is also a client)
+        public bool AntiCheatEnabled = false;
+
+        //i dont think these need jsonignore but ill do it anyways lol
+        [JsonIgnore]
+        public bool ServerBenches => RespawnMethod == RespawnMode.SharedPartyDeath || RespawnMethod == RespawnMode.Shared;
+        [JsonIgnore]
+        public bool GhostAfterDeath => RespawnMethod == RespawnMode.SharedPartyDeath || RespawnMethod == RespawnMode.PartyDeath;
     }
     public class Config
     {
@@ -71,7 +99,7 @@ namespace SilkBound.Managers
     }
     public class ConfigurationManager
     {
-        static string FileDirectory = ModFolder.Root.FullName;
+        static readonly string FileDirectory = ModFolder.Root.FullName;
         static string Resolve(string path)
         {
             return Path.Combine(FileDirectory, path);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using SilkBound.Addons.Events.Abstract;
 using SilkBound.Addons.Events.Handlers;
@@ -10,7 +9,7 @@ namespace SilkBound.Addons.AddonLoading
 {
     public static class AddonManager
     { 
-        internal static Dictionary<string,AddonInfo> Addons = new();
+        internal static Dictionary<string,AddonInfo> Addons = [];
         
         public static EventHandler<AddonInfo> AddonLoaded = (_, _) => {};
         public static EventHandler<AddonInfo[]> FinishedAddonLoading = (_, _) => {};
@@ -68,7 +67,7 @@ namespace SilkBound.Addons.AddonLoading
                 if (addon is not null) 
                     Logger.Msg($"Loaded addon {addon.Name}!");
             }
-            FinishedAddonLoading.Invoke(null, Addons.Values.ToArray());
+            FinishedAddonLoading.Invoke(null, [.. Addons.Values]);
         }
 
         internal static void UnloadAddons()

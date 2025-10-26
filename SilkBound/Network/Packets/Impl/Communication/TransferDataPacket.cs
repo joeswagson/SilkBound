@@ -1,10 +1,5 @@
-﻿using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Text;
-using Unity.Collections.LowLevel.Unsafe;
-using static UnityEngine.UI.SaveSlotButton;
 
 namespace SilkBound.Network.Packets.Impl.Communication
 {
@@ -15,7 +10,7 @@ namespace SilkBound.Network.Packets.Impl.Communication
         public int TotalChunks;
         public Guid TransferId;
         public Type TransferType;
-        public TransferDataPacket() { Data = new byte[0]; TransferType = GetType(); }
+        public TransferDataPacket() { Data = []; TransferType = GetType(); }
         public TransferDataPacket(byte[] data, int chunkIndex, int totalChunks, Guid transferId, Type transferType)
         {
             Data = data;

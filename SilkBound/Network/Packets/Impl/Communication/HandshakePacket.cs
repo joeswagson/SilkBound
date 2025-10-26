@@ -1,10 +1,6 @@
 ﻿using SilkBound.Managers;
-using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Communication
 {
@@ -25,11 +21,11 @@ namespace SilkBound.Network.Packets.Impl.Communication
 
         public override Packet Deserialize(BinaryReader reader)
         {
-            Guid clientId = new Guid(reader.ReadBytes(16));
+            Guid clientId = new(reader.ReadBytes(16));
             string clientName = reader.ReadString();
             //DateTime expiry = new DateTime(reader.ReadInt64());
             //AuthToken token = AuthToken.Deserialize(reader.ReadBytes(16));
-            Guid handshakeId = new Guid(reader.ReadBytes(16));
+            Guid handshakeId = new(reader.ReadBytes(16));
             Guid? hostGuid = null;
             if (reader.ReadBoolean())
                 hostGuid = new Guid(reader.ReadBytes(16));

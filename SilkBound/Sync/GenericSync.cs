@@ -1,24 +1,14 @@
-﻿using SilkBound.Addons.Events;
-using SilkBound.Addons.Events.Handlers;
-using SilkBound.Managers;
-using SilkBound.Network;
-using SilkBound.Types;
+﻿using SilkBound.Managers;
 using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
 using UnityEngine;
 
 namespace SilkBound.Sync
 {
     public abstract class GenericSync : MonoBehaviour
     {
-        private float _tickTimeout;
-
         private void Awake()
         {
-            if (!NetworkUtils.IsConnected)
+            if (!NetworkUtils.Connected)
             {
                 Destroy(this);
                 return;
@@ -37,7 +27,7 @@ namespace SilkBound.Sync
         protected abstract void Start();
         protected void _tick(float dt)
         {
-            if (NetworkUtils.IsConnected)
+            if (NetworkUtils.Connected)
                 Tick(dt);
             else
                 TickDisconnected(dt);

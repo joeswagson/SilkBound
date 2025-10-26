@@ -1,6 +1,5 @@
 ﻿using SilkBound.Network.Packets;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,28 +11,26 @@ namespace SilkBound.Utils
 {
     public class PacketProtocol
     {
-        public static byte[]? PackPacket(Packet packet)
+        public static byte[]? PackPacket(Packet packet, Guid? sender = null)
         {
-            using MemoryStream ms = new MemoryStream();
-            using BinaryWriter writer = new BinaryWriter(ms, Encoding.UTF8);
+            using MemoryStream ms = new();
+            using BinaryWriter writer = new(ms, Encoding.UTF8);
+            //Guid clientId = packet.Sender?.ClientID ?? NetworkUtils.ClientID;
+            int hash = packet.GetHashCode();
+            //Logger.Debug("CLIENT_ID:", hash, clientId);
+            //if (clientId == NetworkUtils.ClientID)
+            //    Logger.Stacktrace();
 
-            // serialize packet data
             packet.SerializeInternal(writer);
             byte[] serialized = ms.ToArray();
 
             // encode packet name
             string packetName = packet.GetType().Name;
             byte[] packetNameEncoded = Encoding.UTF8.GetBytes(packetName);
-            if (packetNameEncoded.Length > byte.MaxValue)
-            {
-                Logger.Error("Packet", packetName, "has too long of a name to pack.");
-                return null;
-            }
 
             byte nameLength = (byte)packetNameEncoded.Length;
-
-            // encode clientId
-            byte[] clientIdBytes = packet.Sender.ClientID.ToByteArray();//NetworkUtils.ClientID.ToByteArray();
+            //Logger.Debug("CLIENT_ID:", hash, clientId);
+            byte[] clientIdBytes = packet.Sender.ClientID.ToByteArray();
 
             // payload: [nameLen][name][clientId][payload]
             byte[] inner = new byte[1 + nameLength + clientIdBytes.Length + serialized.Length];
@@ -50,54 +47,70 @@ namespace SilkBound.Utils
             return framed;
         }
 
+        static readonly string[] validRoots =
+        [
+            "SilkBound.Network.Packets.Impl"
+        ];
+        private static IEnumerable<Type>? CachedPacketTypes;
+        public static Type[] GetPacketTypes()
+        {
+            return // nneeds to be neat it needs to be NEAT i nnnednd it neeDS it NENEDEDS to be NEAST AND CLEAN it CANT B E disGORGA RNIZED GDhf kh5ugv m5mkieu5c b6dmgjygke6 5k6ik ,5i7
+                [.. (CachedPacketTypes ??= Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(
+                        t => t.Namespace != null
+                        && validRoots.Any(
+                            root => t.Namespace.StartsWith(
+                                root,
+                                StringComparison.Ordinal
+                            )
+                        )
+                        && typeof(Packet).IsAssignableFrom(t)
+                    )
+                )];
+        }
+
+        public static Type GetPacketType(string packetName)
+        {
+            return GetPacketTypes().FirstOrDefault(
+                t => string.Equals(
+                    t.Name,
+                    packetName,
+                    StringComparison.Ordinal
+                )
+            );
+        }
+
         public static (string?, Guid?, Packet?) UnpackPacket(byte[] data)
         {
             try
             {
-                using (MemoryStream stream = new MemoryStream(data))
-                using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
-                {
-                    // name length + name
-                    byte nameLength = reader.ReadByte();
-                    byte[] nameBytes = reader.ReadBytes(nameLength);
-                    string packetName = Encoding.UTF8.GetString(nameBytes);
+                using MemoryStream stream = new(data);
+                using BinaryReader reader = new(stream, Encoding.UTF8);
+                // name length + name
+                byte nameLength = reader.ReadByte();
+                byte[] nameBytes = reader.ReadBytes(nameLength);
+                string packetName = Encoding.UTF8.GetString(nameBytes);
 
-                    // clientId (byte[16] Guid)
-                    byte[] clientIdBytes = reader.ReadBytes(16);
-                    Guid clientId = new Guid(clientIdBytes);
+                // clientId (byte[16] Guid)
+                byte[] clientIdBytes = reader.ReadBytes(16);
+                Guid clientId = new(clientIdBytes);
+                //Logger.Warn("Read clientid:", clientId);
 
-                    // remaining payload
-                    byte[] payload = reader.ReadBytes((int)(stream.Length - stream.Position));
+                // remaining payload
+                byte[] payload = reader.ReadBytes((int) (stream.Length - stream.Position));
 
-                    string[] validRoots =
-                    {
-                        "SilkBound.Network.Packets.Impl"
-                    };
+                var type = GetPacketType(packetName);
 
-                    var asm = Assembly.GetExecutingAssembly();
-                    var type = asm.GetTypes()
-                        .FirstOrDefault(t =>
-                            t.Namespace != null &&
-                            validRoots.Any(root =>
-                                t.Namespace.StartsWith(root, StringComparison.Ordinal)) &&
-                            typeof(Packet).IsAssignableFrom(t) &&
-                            string.Equals(
-                                t.Name,
-                                packetName,
-                                StringComparison.Ordinal));
-
-                    if (type == null)
-                    {
-                        Logger.Error("UnpackPacket", $"Unknown packet type '{packetName}'");
-                        return (packetName, clientId, null);
-                    }
-
-                    var tmp = (Packet)FormatterServices.GetUninitializedObject(type)!;
-
-                    using (MemoryStream payloadStream = new MemoryStream(payload))
-                    using (BinaryReader payloadReader = new BinaryReader(payloadStream, Encoding.UTF8))
-                        return (packetName, clientId, tmp.Deserialize(clientId, payloadReader));
+                if (type == null) {
+                    Logger.Error("UnpackPacket", $"Unknown packet type '{packetName}'");
+                    return (packetName, clientId, null);
                 }
+
+                var tmp = (Packet) FormatterServices.GetUninitializedObject(type)!;
+
+                using MemoryStream payloadStream = new(payload);
+                using BinaryReader payloadReader = new(payloadStream, Encoding.UTF8);
+                return (packetName, clientId, tmp.Deserialize(clientId, payloadReader));
             }
             catch (Exception ex)
             {

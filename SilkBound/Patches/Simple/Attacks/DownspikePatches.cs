@@ -1,10 +1,6 @@
 ﻿using HarmonyLib;
-using SilkBound.Behaviours;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
 using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SilkBound.Patches.Simple.Attacks
 {
@@ -15,7 +11,7 @@ namespace SilkBound.Patches.Simple.Attacks
         [HarmonyPatch(nameof(Downspike.StartSlash))]
         public static bool StartSlash_Prefix(Downspike __instance)
         {
-            if (!NetworkUtils.IsConnected || NetworkUtils.IsPacketThread()) 
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) 
                 return true;
 
             NetworkUtils.SendPacket(new DownspikePacket(__instance.transform.parent.name, __instance.gameObject.name, false));
@@ -25,7 +21,7 @@ namespace SilkBound.Patches.Simple.Attacks
         [HarmonyPatch(nameof(Downspike.CancelAttack))]
         public static bool CancelAttack_Prefix(Downspike __instance)
         {
-            if (!NetworkUtils.IsConnected || NetworkUtils.IsPacketThread())
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread())
                 return true;
 
             NetworkUtils.SendPacket(new DownspikePacket(__instance.transform.parent.name, __instance.gameObject.name, true));

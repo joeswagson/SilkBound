@@ -2,9 +2,6 @@
 using HutongGames.PlayMaker.Actions;
 using SilkBound.Managers;
 using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SilkBound.Patches.Simple.Game
 {
@@ -16,7 +13,7 @@ namespace SilkBound.Patches.Simple.Game
         public static bool OnEnter(ExitFromTransitionGate __instance)
         {
             Logger.Debug("ExitFromTransitionGate OnEnter");
-            if (!NetworkUtils.IsConnected) return true;
+            if (!NetworkUtils.Connected) return true;
 
             bool? isFromNetwork = TransactionManager.Fetch<bool?>(__instance);
             if (isFromNetwork != null)

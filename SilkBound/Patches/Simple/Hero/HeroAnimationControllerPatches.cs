@@ -1,14 +1,7 @@
 ﻿using HarmonyLib;
 using SilkBound.Behaviours;
 using SilkBound.Types.Mirrors;
-using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
-
-namespace SilkBound.Patches.Simple.Hero
+using UnityEngine;namespace SilkBound.Patches.Simple.Hero
 {
     [HarmonyPatch(typeof(HeroAnimationController))]
     public class HeroAnimationControllerPatches

@@ -7,7 +7,7 @@ namespace SilkBound.Addons.Events.Handlers;
 
 internal static class EventManager
 {
-    internal static Dictionary<Type, List<ListenerInfo>> Listeners = new();
+    internal static Dictionary<Type, List<ListenerInfo>> Listeners = [];
     internal static void CallEvent<T>(T @event) where T : SilkboundEvent
     {
         if(!Listeners.TryGetValue(typeof(T), out List<ListenerInfo> listeners))
@@ -21,10 +21,9 @@ internal static class EventManager
 
     internal static ListenerInfo RegisterListener(Type eventType, MethodInfo method, EventPriority priority)
     {
-        ListenerInfo info = new ListenerInfo(eventType, method, priority);
+        ListenerInfo info = new(eventType, method, priority);
 
-        List<ListenerInfo> infos = new(Listeners[eventType]);
-        infos.Add(info);
+        List<ListenerInfo> infos = [.. Listeners[eventType], info];
         infos.Sort((x, y) => x.Priority.CompareTo(y.Priority));
         Listeners[eventType] = infos;
 
@@ -36,7 +35,7 @@ internal static class EventManager
 
         void Wrapper(object @event)
         {
-            method.Invoke(null, new object[] { @event });
+            method.Invoke(null, [@event]);
             UnregisterListener(info!);
         }
 

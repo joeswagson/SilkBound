@@ -1,9 +1,4 @@
-﻿using SilkBound.Types;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 
 namespace SilkBound.Network.Packets.Impl.Sync.Attacks
 {

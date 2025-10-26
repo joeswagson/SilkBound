@@ -1,13 +1,11 @@
 ﻿using SilkBound.Managers;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SilkBound.Types.Tick
 {
     public abstract class Queue<T>
     {
-        public List<T> items { get; private set; } = new List<T>();
+        public List<T> items { get; private set; } = [];
         public void Enqueue(T item)
         {
             items.Add(item);

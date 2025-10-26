@@ -1,22 +1,13 @@
 ﻿using SilkBound.Managers;
-using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Network.Packets.Impl.Sync.World;
 using SilkBound.Types;
-using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SilkBound.Network
 {
-    public class LocalWeaver : Weaver
+    public class LocalWeaver(string name, NetworkConnection? connection = null, Guid? clientID = null) : Weaver(name, connection, clientID)
     {
-        public LocalWeaver(string name, NetworkConnection? connection = null, Guid? clientID = null) : base(name, connection, clientID)
-        {
-            
-        }
-
         void ListenAnimationCompleted(ref Action<tk2dSpriteAnimator, tk2dSpriteAnimationClip> action, Action<tk2dSpriteAnimator, tk2dSpriteAnimationClip> listener)
         {
             if (action == null || !action.GetInvocationList().Contains(listener))

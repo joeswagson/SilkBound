@@ -1,4 +1,5 @@
 ﻿using SilkBound;
+using SilkBound.Utils;
 using System.Diagnostics;
 
 namespace UnityLauncher
@@ -21,20 +22,26 @@ namespace UnityLauncher
                 p.Kill();
                 killed = true;
             }
-            foreach (Process p in Process.GetProcessesByName("Hollow Knight Silksong.Client2"))
+            for (int i = 2; i <= 10; i++)
             {
-                p.Kill();
-                killed = true;
+                Console.WriteLine($"Checking for Hollow Knight Silksong.Client{i}");
+                foreach (Process p in Process.GetProcessesByName($"Hollow Knight Silksong.Client{i}"))
+                {
+                    p.Kill();
+                    killed = true;
+                }
             }
             if (killed)
                 Thread.Sleep(100);
 
-            string procPath = $"{(DEBUG ? "F:\\! GAMES\\silksong\\Hollow-Knight-Silksong-SteamRIP.com\\Hollow Knight Silksong" : "F:\\SteamLibrary\\steamapps\\common\\Hollow Knight Silksong")}\\Hollow Knight Silksong.exe";
+            string procPath = $"{(DEBUG ? "F:\\! GAMES\\silksong\\NoInstanceCheck\\Hollow Knight Silksong" : "F:\\SteamLibrary\\steamapps\\common\\Hollow Knight Silksong")}\\Hollow Knight Silksong.exe";
             Process.Start(procPath);
             if (DEBUG)
             {
                 Thread.Sleep(500);
-                Process.Start(procPath.Replace("Silksong.exe", "Silksong.Client2.exe"));
+                if (SilkConstants.TEST_CLIENTS > 1)
+                    for (int i = 2; i <= SilkConstants.TEST_CLIENTS; i++)
+                        Process.Start(procPath.Replace("Silksong.exe", $"Silksong.Client{i}.exe"));
             }
         }
     }

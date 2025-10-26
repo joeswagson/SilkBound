@@ -1,22 +1,11 @@
-﻿using GlobalSettings;
-using HarmonyLib;
+﻿using HarmonyLib;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
-using System.Reflection;
-using System.Text;
 using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
 using SilkBound.Behaviours;
-using static MelonLoader.MelonLogger;
-using SilkBound.Network.Packets.Impl.Sync.World;
-using SilkBound.Network.Packets.Impl;
 using SilkBound.Network.Packets.Impl.World;
-using Object = UnityEngine.Object;
-using SilkBound.Managers;
-using SilkBound.Network;
 using SilkBound.Network.Packets;
 using SilkBound.Extensions;
 
@@ -27,9 +16,19 @@ namespace SilkBound.Patches.Simple.Attacks
     {
         internal static string debug_log_target = string.Empty;//"BackdashTriple Effect";
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TestGameObjectActivator), nameof(TestGameObjectActivator.Start))]
+        public static void CreateStartupPools(TestGameObjectActivator __instance)
+        {
+            __instance.gameObject.AddComponentIfNotPresent<SceneStateSyncController>();
+            //var scene = SceneManager.GetActiveScene();
+            //Logger.Msg("syncing scenestate:", scene.name);
+            //SceneStateManager.Fetch(scene.name).Value.Sync(scene);
+        }
+
         //[HarmonyPrefix]
         [HarmonyPostfix]
-        [HarmonyPatch(nameof(ObjectPool.Spawn), new[] { typeof(GameObject), typeof(Transform), typeof(Vector3), typeof(Quaternion), typeof(bool) })]
+        [HarmonyPatch(nameof(ObjectPool.Spawn), [typeof(GameObject), typeof(Transform), typeof(Vector3), typeof(Quaternion), typeof(bool)])]
         public static void Spawn(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation, bool stealActiveSpawned = false)
         {
             if (NetworkUtils.LocalClient == null || HeroController.instance == null || NetworkUtils.IsPacketThread())
@@ -63,14 +62,17 @@ namespace SilkBound.Patches.Simple.Attacks
                 {
                     get
                     {
-                        return _cached ??= getter();
+                        if (_cached == null || _cached.GetCachedPtr() == IntPtr.Zero)
+                            _cached = getter();
+
+                        return _cached;
                     }
                 }
                 public Action<Packet, GameObject>? Spawned => spawned;
             }
 
             // terry davis forgive me for this is not what you envisioned
-            public static readonly List<CachedEffect> Effects = new List<CachedEffect>()
+            public static readonly List<CachedEffect> Effects = new()
             {
                 { new CachedEffect(() => GlobalSettings.Effects.EnemyNailTerrainThunk)},
                 { new CachedEffect(() => HeroController.instance?.nailTerrainImpactEffectPrefab) },

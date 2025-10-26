@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace SilkBound.Behaviours
 {
     public class SimpleInterpolator : MonoBehaviour
     {
-
         public Vector3 velocity;
         public float drag = 0.8f;
-
-        private void Start()
-        {
-
-        }
 
         private void Update()
         {

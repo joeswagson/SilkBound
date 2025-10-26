@@ -1,9 +1,8 @@
-﻿using MelonLoader;
-using MelonLoader.Utils;
+﻿using MelonLoader.Utils;
 using System;
-using System.Collections.Generic;
+#if DEBUG
 using System.Runtime.InteropServices;
-using System.Text;
+#endif
 using System.Text.RegularExpressions;
 using Unity.Mathematics;
 using UnityEngine;
@@ -68,7 +67,7 @@ namespace SilkBound.Utils
             int x = (i - 1) % w;
             int y = -(((int)math.ceil((float)i / (float)w)) - 1);
 
-            Vector2Int newPos = new Vector2Int(origin.x + x * windowSize.x + pX, origin.y - y * windowSize.y + pY);
+            Vector2Int newPos = new(origin.x + x * windowSize.x + pX, origin.y - y * windowSize.y + pY);
 
             Logger.Msg("Moved window:", i, x, y, newPos.x, newPos.y, windowSize.x, windowSize.y);
 
@@ -91,7 +90,7 @@ namespace SilkBound.Utils
             int x = (i - 1) % w;
             int y = -(((int)math.ceil((float)i / (float)w)) - 1);
 
-            Vector2Int newPos = new Vector2Int(origin.x + x * windowSize.x + pX, origin.y - y * windowSize.y + pY);
+            Vector2Int newPos = new(origin.x + x * windowSize.x + pX, origin.y - y * windowSize.y + pY);
 
             Logger.Msg("Moved console:", i, x, y, newPos.x, newPos.y, windowSize.x, windowSize.y);
 

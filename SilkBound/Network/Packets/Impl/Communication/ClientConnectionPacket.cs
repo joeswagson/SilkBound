@@ -1,8 +1,6 @@
 ﻿using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Communication
 {
@@ -13,7 +11,7 @@ namespace SilkBound.Network.Packets.Impl.Communication
 
         public override Packet Deserialize(BinaryReader reader)
         {
-            Guid clientId = new Guid(reader.ReadBytes(16));
+            Guid clientId = new(reader.ReadBytes(16));
             string clientName = reader.ReadString();
 
             return new ClientConnectionPacket((clientId), clientName);

@@ -1,20 +1,13 @@
 ﻿using SilkBound.Utils;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.World
 {
-    public class LoadGameFromUIPacket : Packet
+    public class LoadGameFromUIPacket(int saveSlot, Dictionary<string, string> saveData) : Packet
     {
-        public int SaveSlot;
-        public Dictionary<string, string> SaveData;
-        public LoadGameFromUIPacket(int saveSlot, Dictionary<string, string> saveData)
-        {
-            SaveSlot = saveSlot;
-            SaveData = saveData;
-        }
+        public int SaveSlot = saveSlot;
+        public Dictionary<string, string> SaveData = saveData;
 
         public override Packet Deserialize(BinaryReader reader)
         {

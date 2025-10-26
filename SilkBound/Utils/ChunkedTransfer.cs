@@ -1,14 +1,9 @@
 ﻿using Newtonsoft.Json;
-using SilkBound.Network.Packets.Impl;
-using SilkBound.Types.JsonConverters;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
-using XGamingRuntime.Interop;
 
 namespace SilkBound.Utils
 {
@@ -30,14 +25,14 @@ namespace SilkBound.Utils
         {
             SerializerSettings.Converters = converters;
             string json = JsonConvert.SerializeObject(data, SerializerSettings);
-            Logger.Msg("Serialized JSON:", json);
+            //Logger.Msg("Serialized JSON:", json);
             return CompressString(json);
         }
 
         public static T Deserialize<T>(byte[] rawData, params JsonConverter[] converters)
         {
             string json = DecompressString(rawData);
-            Logger.Msg("Deserialized JSON:", json);
+            //Logger.Msg("Deserialized JSON:", json);
             SerializerSettings.Converters = converters;
             return JsonConvert.DeserializeObject<T>(json, SerializerSettings)!;
         }

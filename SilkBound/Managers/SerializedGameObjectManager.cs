@@ -52,7 +52,8 @@ namespace SilkBound.Managers
         }
 
 
-        private static Dictionary<Guid, GameObject> Registered = new Dictionary<Guid, GameObject>();
+
+        private static readonly Dictionary<Guid, GameObject> Registered = [];
 
         public static void Register(Guid id, GameObject obj)
         {

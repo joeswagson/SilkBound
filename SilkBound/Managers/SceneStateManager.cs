@@ -1,111 +1,138 @@
-﻿using Newtonsoft.Json;
+﻿using HutongGames.PlayMaker;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SilkBound.Extensions;
+using SilkBound.Network.Packets.Impl.Sync.Entity;
 using SilkBound.Types.JsonConverters;
 using SilkBound.Types.Transfers;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Logger = SilkBound.Utils.Logger;
 
-namespace SilkBound.Managers
-{
+namespace SilkBound.Managers {
     // note: unless YOU wanna fuck around and make a whole ass JsonConverter for a single parameter type thats YOUR job to implement. otherwise just stick with serializable types and strictly gameobjects for unityobjects.
-    public class SceneState
-    {
+    public class SceneState(string sceneName) {
+        public string SceneName = sceneName;
+
+        #region StateChange cache
         [JsonIgnore]
-        public List<StateChange> CachedChanges = new List<StateChange>();
-
-        public static SceneState Create(string sceneName)
-        {
-            return new SceneState()
-            {
-                SceneName = sceneName,
-                BrokenObjects = new List<string>()
-            };
-        }
-
-        public string SceneName = string.Empty;
+        public List<StateChange> CachedChanges = [];
+        #endregion
 
         #region Breakables
-        public List<string> BrokenObjects = new List<string>();
-        public bool RegisterBrokenObject(GameObject breakable)
-        {
-            Logger.Msg("registering broken object:", breakable.name);
-            string serialized = breakable.transform.GetPath();
-            if (BrokenObjects.Contains(serialized))
+        public List<string> BrokenObjects = [];
+        public bool RegisterBrokenObject(string path) {
+            Logger.Msg("registering broken object:", path.Split('\\').Last());
+            if (BrokenObjects.Contains(path))
                 return false;
 
-            BrokenObjects.Add(serialized);
+            BrokenObjects.Add(path);
             return true;
         }
         #endregion
 
-        public void Sync(Scene scene)
-        {
+        #region FSM Event Queue
+        public struct FSMEventData {
+            public string goPath;
+            public string fsmName;
+            public string eventName;
+            public bool dispatched;
+        }
+        public struct FSMStatusData {
+            public string goPath;
+            public string fsmName;
+            public bool started;
+        }
+        public List<FSMEventData> QueuedEvents = [];
+        public Dictionary<string, FSMStatusData> StatusUpdates = [];
+        public void RegisterFSMEvent(string goPath, string fsmName, string eventName) {
+            FSMEventData data = new() {
+                goPath = goPath,
+                fsmName = fsmName,
+                eventName = eventName,
+                dispatched = false
+            };
+
+            QueuedEvents.Add(data);
+        }
+        public void RegisterFSMStatus(string goPath, string fsmName, bool started) {
+            FSMStatusData data = new() {
+                goPath = goPath,
+                fsmName = fsmName,
+                started = started
+            };
+
+            if (StatusUpdates.ContainsKey(fsmName))
+                StatusUpdates[fsmName] = data;
+            else
+                StatusUpdates.Add(fsmName, data);
+        }
+        #endregion
+
+        public void Sync(Scene scene) {
             #region StateChange flusher
 
-            JsonSerializer methodSerializer = ChunkedTransfer.CreateSerializer(new JsonConverter[] { new GameObjectConverter(false) });
+            JsonSerializer methodSerializer = ChunkedTransfer.CreateSerializer([new GameObjectConverter(false)]);
             foreach (var change in CachedChanges)
-                switch (change.ChangeAction)
-                {
-                    case StateChange.Action.FieldSet:
-                        {
-                            var field = GetType().GetField(change.TargetName);
-                            if (field == null)
-                                throw new Exception($"Field {change.TargetName} not found on SceneState");
-                            if (change.Args.Length != 1)
-                                throw new Exception($"FieldSet requires exactly 1 argument, got {change.Args.Length}");
-                            field.SetValue(this, change.Args[0]);
-                            break;
-                        }
-                    case StateChange.Action.PropertySet:
-                        {
-                            var prop = GetType().GetProperty(change.TargetName);
-                            if (prop == null)
-                                throw new Exception($"Property {change.TargetName} not found on SceneState");
-                            if (change.Args.Length != 1)
-                                throw new Exception($"PropertySet requires exactly 1 argument, got {change.Args.Length}");
-                            prop.SetValue(this, change.Args[0]);
-                            break;
-                        }
-                    case StateChange.Action.MethodCall:
-                        {
-                            var method = GetType().GetMethod(change.TargetName);
-                            if (method == null)
-                                throw new Exception($"Method {change.TargetName} not found on SceneState");
-                            for (int i = 0; i < change.Args.Length; i++)
-                                if (change.Args[i] is JArray deserialized)
-                                    change.Args[i] = deserialized.ToObject(method.GetParameters()[i].ParameterType, methodSerializer);
-                            method.Invoke(this, change.Args);
-                            break;
-                        }
-                        #region wip stuff
-                        //case StateChange.Action.ListAppend:
-                        //    {
-                        //        var field = state.GetType().GetField(change.TargetName);
-                        //        if (field == null)
-                        //            throw new Exception($"Field {change.TargetName} not found on SceneState");
-                        //        if (change.Args.Length != 1)
-                        //            throw new Exception($"ListAppend requires exactly 1 argument, got {change.Args.Length}");
-                        //        var list = field.GetValue(state) as System.Collections.IList;
-                        //        if (list == null)
-                        //            throw new Exception($"Field {change.TargetName} is not a list");
-                        //        list.Add(change.Args[0]);
-                        //        break;
-                        //    }
-                        #endregion
+                switch (change.ChangeAction) {
+                    case StateChange.Action.FieldSet: {
+                        var field = GetType().GetField(change.TargetName) ?? throw new Exception($"Field {change.TargetName} not found on SceneState");
+                        if (change.Args.Length != 1)
+                            throw new Exception($"FieldSet requires exactly 1 argument, got {change.Args.Length}");
+
+                        if (change.Args[0] is JArray deserialized)
+                            change.Args[0] = deserialized.ToObject(field.FieldType, methodSerializer);
+                        field.SetValue(this, change.Args[0]);
+                        break;
+                    }
+                    case StateChange.Action.PropertySet: {
+                        var prop = GetType().GetProperty(change.TargetName) ?? throw new Exception($"Property {change.TargetName} not found on SceneState");
+                        if (change.Args.Length != 1)
+                            throw new Exception($"PropertySet requires exactly 1 argument, got {change.Args.Length}");
+
+                        if (change.Args[0] is JArray deserialized)
+                            change.Args[0] = deserialized.ToObject(prop.PropertyType, methodSerializer);
+                        prop.SetValue(this, change.Args[0]);
+                        break;
+                    }
+                    case StateChange.Action.MethodCall: {
+                        var method = GetType().GetMethod(change.TargetName) ?? throw new Exception($"Method {change.TargetName} not found on SceneState");
+                        for (int i = 0; i < change.Args.Length; i++)
+                            if (change.Args[i] is JArray deserialized)
+                                change.Args[i] = deserialized.ToObject(method.GetParameters()[i].ParameterType, methodSerializer);
+                        method.Invoke(this, change.Args);
+                        break;
+                    }
+                    case StateChange.Action.Reset: {
+                        BrokenObjects.Clear();
+
+                        break;
+                    }
+
+                    #region wip stuff
+                    //case StateChange.Action.ListAppend:
+                    //    {
+                    //        var field = state.GetType().GetField(change.TargetName);
+                    //        if (field == null)
+                    //            throw new Exception($"Field {change.TargetName} not found on SceneState");
+                    //        if (change.Args.Length != 1)
+                    //            throw new Exception($"ListAppend requires exactly 1 argument, got {change.Args.Length}");
+                    //        var list = field.GetValue(state) as System.Collections.IList;
+                    //        if (list == null)
+                    //            throw new Exception($"Field {change.TargetName} is not a list");
+                    //        list.Add(change.Args[0]);
+                    //        break;
+                    //    }
+                    #endregion
                 }
             CachedChanges.Clear();
             #endregion
 
             #region Breakables
-            foreach (string path in BrokenObjects)
-            {
+            foreach (string path in BrokenObjects) {
                 GameObject? go = UnityObjectExtensions.FindObjectFromFullName(path);
                 if (go == null)
                     continue;
@@ -117,22 +144,43 @@ namespace SilkBound.Managers
                 component.SetAlreadyBroken();
             }
             #endregion
+
+            #region FSM Event Queue
+            for (int i = 0; i < QueuedEvents.Count; i++) {
+                var eventData = QueuedEvents[i];
+                if (UnityObjectExtensions.FindComponents<PlayMakerFSM>(eventData.goPath)?.First(fsm => fsm.Fsm.name == eventData.fsmName)?.Fsm is var fsm && (fsm == null)) continue;
+
+                fsm.Event(eventData.eventName);
+                eventData.dispatched = true;
+
+                QueuedEvents[i] = eventData;
+            }
+
+            foreach(var statusUpdate in StatusUpdates) {
+                if(FSMPacket.FindFSM(statusUpdate.Value.goPath, statusUpdate.Value.fsmName, out Fsm? fsm)) {
+                    if (statusUpdate.Value.started && !fsm.Started)
+                        fsm.Start();
+                    else if (!statusUpdate.Value.started && !fsm.Started)
+                        fsm.Stop();
+                }
+
+            }
+            QueuedEvents.RemoveAll(@event => @event.dispatched);
+            #endregion
         }
     }
 
-    public struct GuaranteedFetchResult<T>(T value, bool created)
-    {
-        public T Value => value;
-        public bool Created => created;
+    public struct GuaranteedFetchResult<T>(T value, bool created) {
+        public readonly T Result => value;
+        public readonly bool Created => created;
     }
 
-    public struct StateChange
-    {
-        public enum Action
-        {
+    public struct StateChange {
+        public enum Action {
             FieldSet,
             PropertySet,
             MethodCall,
+            Reset
             //[Obsolete] ListAppend
         }
 
@@ -140,52 +188,47 @@ namespace SilkBound.Managers
         public string TargetName;
         public object?[] Args;
 
-        public static StateChange Method(string name, params object?[] args)
-        {
-            return new StateChange()
-            {
+        public static StateChange Method(string name, params object?[] args) {
+            return new StateChange() {
                 ChangeAction = Action.MethodCall,
                 TargetName = name,
                 Args = args
             };
         }
-        public static StateChange Field(string name, object? value)
-        {
-            return new StateChange()
-            {
+        public static StateChange Field(string name, object? value) {
+            return new StateChange() {
                 ChangeAction = Action.FieldSet,
                 TargetName = name,
-                Args = new object?[] { value }
+                Args = [value]
             };
         }
-        public static StateChange Property(string name, object? value)
-        {
-            return new StateChange()
-            {
+        public static StateChange Property(string name, object? value) {
+            return new StateChange() {
                 ChangeAction = Action.PropertySet,
                 TargetName = name,
-                Args = new object?[] { value }
+                Args = [value]
+            };
+        }
+        public static StateChange Reset() {
+            return new StateChange() {
+                ChangeAction = Action.Reset,
             };
         }
     }
 
-    public class SceneStateManager
-    {
-        public static Dictionary<string, SceneState> States { get; internal set; } = new Dictionary<string, SceneState>();
-        public static GuaranteedFetchResult<SceneState> Fetch(string sceneName)
-        {
+    public class SceneStateManager {
+        public static Dictionary<string, SceneState> States { get; internal set; } = [];
+        public static GuaranteedFetchResult<SceneState> Fetch(string sceneName) {
             if (States.ContainsKey(sceneName))
                 return new(States[sceneName], false);
-            else
-            {
-                SceneState state = SceneState.Create(sceneName);
+            else {
+                SceneState state = new(sceneName);
                 States[sceneName] = state;
                 return new(state, true);
             }
         }
 
-        public bool TryAdd(SceneState state)
-        {
+        public bool TryAdd(SceneState state) {
             if (States.ContainsKey(state.SceneName))
                 return false;
 
@@ -194,34 +237,27 @@ namespace SilkBound.Managers
             return true;
         }
 
-        public static void Register(SceneState state)
-        {
+        public static void Register(SceneState state) {
             States[state.SceneName] = state;
         }
 
-        public static SceneState GetCurrent()
-        {
-            return Fetch(SceneManager.GetActiveScene().name).Value;
+        public static SceneState GetCurrent() {
+            return Fetch(SceneManager.GetActiveScene().name).Result;
         }
 
-        public static void ApplyChange(string sceneName, StateChange change)
-        {
-            ApplyChanges(Fetch(sceneName).Value, new[] { change });
+        public static void ApplyChange(string sceneName, StateChange change) {
+            ApplyChanges(Fetch(sceneName).Result, [change]);
         }
-        public static void ApplyChanges(SceneState state, StateChange[] changes)
-        {
+        public static void ApplyChanges(SceneState state, StateChange[] changes) {
             state.CachedChanges.AddRange(changes);
         }
-        public static bool ProposeChanges(string sceneName, params StateChange[] change)
-        {
-            return ProposeChanges(Fetch(sceneName).Value, change);
+        public static bool ProposeChanges(string sceneName, params StateChange[] change) {
+            return ProposeChanges(Fetch(sceneName).Result, change);
         }
-        public static bool ProposeChanges(SceneState state, params StateChange[] changes)
-        {
+        public static bool ProposeChanges(SceneState state, params StateChange[] changes) {
             ApplyChanges(state, changes);
 
-            if (NetworkUtils.IsConnected)
-            {
+            if (NetworkUtils.Connected) {
                 TransferManager.Send(new SceneStateTransfer(state.SceneName, changes));
                 return true;
             }

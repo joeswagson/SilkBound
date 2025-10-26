@@ -1,16 +1,15 @@
 ﻿using SilkBound.Network;
 using SilkBound.Sync;
-using SilkBound.Types;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SilkBound.Managers
 {
     public class NetworkObjectManager
     {
-        public static readonly List<NetworkObject> NetworkObjects = new List<NetworkObject>();
+        public static readonly List<NetworkObject> NetworkObjects = [];
         
         public static void Register(NetworkObject obj)
         {
@@ -24,15 +23,19 @@ namespace SilkBound.Managers
                 NetworkObjects.Remove(obj);
         }
 
-        public static bool TryGet(Guid id, out NetworkObject netObj)
+        public static bool TryGet(string id, [NotNullWhen(true)] out NetworkObject netObj)
         {
+            NetworkObjects.RemoveAll(obj => !obj.Active);
+
             NetworkObject? found = NetworkObjects.Find(o => o.NetworkId == id);
-            netObj = found!;
+            netObj = found;
             return found != null;
         }
-        public static bool TryGet<T>(Guid id, out T netObj) where T : NetworkObject
+        public static bool TryGet<T>(string id, [NotNullWhen(true)] out T netObj) where T : NetworkObject
         {
-            return TryGet(id, out netObj);
+            bool found = TryGet(id, out NetworkObject intermediate);
+            netObj = (T) intermediate; // considered using `as` here but if the cast fails i want it to throw instead of causing it to throw some random nullref somewhere else
+            return found;
         }
 
         public static void RevokeOwnership(Weaver target)

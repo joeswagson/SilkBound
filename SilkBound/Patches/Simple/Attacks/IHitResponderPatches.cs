@@ -2,40 +2,127 @@
 using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
-using SilkBound.Types.JsonConverters;
+using SilkBound.Types.Language;
 using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TeamCherry.Localization;
 using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Patches.Simple.Attacks
 {
+    public struct HitFlagData(bool isPacketThread, HealthManager healthManager) {
+        public bool IsPacketThread = isPacketThread;
+        public string? Path = healthManager.transform.GetPath();
+    }
     public class IHitResponderPatches
     {
         public static bool HitPrefix(IHitResponder __instance, [HarmonyArgument(0)] HitInstance hitInstance, ref IHitResponder.HitResponse __result)
         {
-            //Logger.Msg(NetworkUtils.LocalAuthority.ToString());
-            if (!NetworkUtils.IsConnected || NetworkUtils.IsPacketThread()) return true;
-            //var instance = (MonoBehaviour)__instance;
-            //if (hitInstance.RepresentingTool != null)
-            //{
-            //    hitInstance.RepresentingTool = new SerializedTool(hitInstance.RepresentingTool.name, hitInstance.RepresentingTool.Type);
-            //}
+            if (!NetworkUtils.Connected) return true;
+            bool packetThread = NetworkUtils.IsPacketThread();
 
-            //hitInstance.NailImbuement = null;
-            //hitInstance.SlashEffectOverrides = null;
-            //Logger.Msg("hitinstance:", instance.GetType().FullName, ChunkedTransfer.Serialize(hitInstance, new GameObjectConverter()).Length);
-            //Logger.Msg("hi");
-            if(__instance.GetType() == typeof(Breakable))
+            string goPath = (__instance as Component)!.transform.GetPath();
+            Type responderType = __instance.GetType();
+
+            #region Non-Packet thread handling
+            if (!packetThread)
             {
-                Logger.Msg("Attemping Breakable Sync:", SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterBrokenObject), (__instance as MonoBehaviour)!.gameObject)));
+                NetworkUtils.SendPacket(new SyncHitPacket(hitInstance, goPath));
+
+                if (responderType == typeof(Breakable))
+                {
+                    Logger.Msg("Attemping Breakable Sync:", SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterBrokenObject), goPath)));
+                }
+                else if (responderType == typeof(HealthManager))
+                {
+                    //hitInstance.CanWeakHit = true;
+                    var hm = (HealthManager)__instance;
+                    Logger.Msg("overwriting healthmanager.msg");
+
+                    //Logger.Msg("Attemping HealthManager Sync:", SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterBrokenObject), goPath)));
+
+                    // overwrite of IHitResponder.HitResponse HealthManager.Hit(HitInstance hitInstance)
+                    if (hm.isDead)
+                    {
+                        __result = IHitResponder.Response.None;
+                        return false;
+                    }
+                    if (hm.evasionByHitRemaining > 0f)
+                    {
+                        __result = IHitResponder.Response.None;
+                        return false;
+                    }
+                    if (hitInstance.HitEffectsType != EnemyHitEffectsProfile.EffectsTypes.LagHit && hitInstance.DamageDealt <= 0 && !hitInstance.CanWeakHit)
+                    {
+                        __result = IHitResponder.Response.None;
+                        return false;
+                    }
+                    FSMUtility.SendEventToGameObject(hitInstance.Source, "DEALT DAMAGE", false);
+                    int cardinalDirection = DirectionUtils.GetCardinalDirection(hitInstance.GetActualDirection(hm.transform, HitInstance.TargetType.Regular));
+                    if (hm.IsBlockingByDirection(cardinalDirection, hitInstance.AttackType, hitInstance.SpecialType))
+                    {
+                        hm.Invincible(hitInstance);
+                        __result = IHitResponder.Response.Invincible;
+                        return false;
+                    }
+                    using (new StackFlag<HitFlagData>(new HitFlagData(false, hm)))
+                    {
+                        hm.TakeDamage(hitInstance);
+                    }
+                    __result = IHitResponder.Response.DamageEnemy;
+
+                    return false;
+                    // end section
+                }
+
+                return true;
             }
-            //Logger.Msg("source:", ChunkedTransfer.Deserialize<HitInstance>(ChunkedTransfer.Serialize(hitInstance, new GameObjectConverter(), new ToolItemConverter()), new GameObjectConverter(false), new ToolItemConverter()).Source);
-            NetworkUtils.SendPacket(new SyncHitPacket(hitInstance, (__instance as Component)!.transform.GetPath()));
+            #endregion
+
+            #region Packet thread handling
+
+            if (responderType == typeof(HealthManager))
+            {
+                //hitInstance.CanWeakHit = true;
+                var hm = (HealthManager)__instance;
+                Logger.Msg("overwriting healthmanager.msg");
+
+                //Logger.Msg("Attemping HealthManager Sync:", SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterBrokenObject), goPath)));
+
+                // overwrite of IHitResponder.HitResponse HealthManager.Hit(HitInstance hitInstance)
+                if (hm.isDead)
+                {
+                    __result = IHitResponder.Response.None;
+                    return false;
+                }
+                if (hm.evasionByHitRemaining > 0f)
+                {
+                    __result = IHitResponder.Response.None;
+                    return false;
+                }
+                if (hitInstance.HitEffectsType != EnemyHitEffectsProfile.EffectsTypes.LagHit && hitInstance.DamageDealt <= 0 && !hitInstance.CanWeakHit)
+                {
+                    __result = IHitResponder.Response.None;
+                    return false;
+                }
+                FSMUtility.SendEventToGameObject(hitInstance.Source, "DEALT DAMAGE", false);
+                int cardinalDirection = DirectionUtils.GetCardinalDirection(hitInstance.GetActualDirection(hm.transform, HitInstance.TargetType.Regular));
+                if (hm.IsBlockingByDirection(cardinalDirection, hitInstance.AttackType, hitInstance.SpecialType))
+                {
+                    hm.Invincible(hitInstance);
+                    __result = IHitResponder.Response.Invincible;
+                    return false;
+                }
+                //hitInstance.DamageDealt = 0;
+                using (new StackFlag<HitFlagData>(new HitFlagData(true, hm)))
+                {
+                    Logger.Msg("firing takedamage");
+                    hm.TakeDamage(hitInstance);
+                }
+                __result = IHitResponder.Response.DamageEnemy;
+
+                return false;
+                // end section
+            }
+            #endregion
             return true;
         }
     }

@@ -1,15 +1,8 @@
-﻿using HutongGames.PlayMaker;
-using SilkBound.Extensions;
+﻿using SilkBound.Extensions;
 using SilkBound.Types.JsonConverters;
 using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using UnityEngine;
-using UnityEngine.UIElements;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Network.Packets.Impl.Sync.Attacks
 {
     public class SyncHitPacket(HitInstance hitInstance, string? objectPath=null) : Packet

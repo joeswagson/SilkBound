@@ -4,7 +4,6 @@ using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Text;
 
 namespace SilkBound.Types.Transfers
 {
@@ -18,7 +17,7 @@ namespace SilkBound.Types.Transfers
 
         public Guid TransferId;
         public TransferData? ChunkData;
-        public virtual JsonConverter[] Converters => Array.Empty<JsonConverter>();
+        public virtual JsonConverter[] Converters => [];
         public Transfer()
         {
             TransferId = Guid.NewGuid();

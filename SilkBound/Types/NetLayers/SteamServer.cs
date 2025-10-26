@@ -1,20 +1,17 @@
 ﻿using SilkBound.Network.Packets;
-using SilkBound.Utils;
 using Steamworks;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
 using SilkBound.Network.Packets.Handlers;
-using MelonLoader.TinyJSON;
 
 namespace SilkBound.Types.NetLayers
 {
     public class SteamServer : NetworkServer
     {
-        private readonly Dictionary<CSteamID, SteamConnection> _connections = new();
+        private readonly Dictionary<CSteamID, SteamConnection> _connections = [];
         private readonly object _connLock = new();
 
         private Callback<P2PSessionRequest_t>? _p2pSessionRequest;
@@ -184,8 +181,8 @@ namespace SilkBound.Types.NetLayers
 
         public override void Send(Packet packet)
         {
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
+            //byte[]? data = PacketProtocol.PackPacket(packet);
+            //if (data == null) return;
 
             lock (_connLock)
             {
@@ -215,8 +212,8 @@ namespace SilkBound.Types.NetLayers
 
         public override void SendIncluding(Packet packet, List<NetworkConnection> include)
         {
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
+            //byte[]? data = PacketProtocol.PackPacket(packet);
+            //if (data == null) return;
 
             lock (_connLock)
             {
@@ -231,8 +228,8 @@ namespace SilkBound.Types.NetLayers
 
         public override void SendExcluding(Packet packet, List<NetworkConnection> exclude)
         {
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
+            //byte[]? data = PacketProtocol.PackPacket(packet);
+            //if (data == null) return;
 
             lock (_connLock)
             {

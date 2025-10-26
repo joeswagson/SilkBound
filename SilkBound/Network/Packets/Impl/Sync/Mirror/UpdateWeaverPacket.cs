@@ -1,8 +1,5 @@
 ﻿using GlobalEnums;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Mirror
 {

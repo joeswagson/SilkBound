@@ -1,26 +1,14 @@
-﻿using SilkBound.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using UnityEngine;
-using static MelonLoader.MelonLogger;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Managers
 {
 
-    public class Skin
-    {
-        public Dictionary<string, Texture2D> Textures { get; private set; }
-        public string SkinName { get; private set; }
-
-        public Skin(Dictionary<string, Texture2D> textures, string skinName = "Unnamed")
-        {
-            Textures = textures;
-            SkinName = skinName;
-        }
+    public class Skin(Dictionary<string, Texture2D> textures, string skinName = "Unnamed") {
+        public Dictionary<string, Texture2D> Textures { get; private set; } = textures;
+        public string SkinName { get; private set; } = skinName;
 
         public static Skin LoadFromFolder(string path)
         {
@@ -33,7 +21,7 @@ namespace SilkBound.Managers
 
                 if (File.Exists(filePath))
                 {
-                    Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    Texture2D tex = new(2, 2, TextureFormat.RGBA32, false);
                     tex.LoadImage(File.ReadAllBytes(filePath));
                     tex.Apply();
                     textures.Add(Path.GetFileNameWithoutExtension(filename), tex);
@@ -45,52 +33,47 @@ namespace SilkBound.Managers
 
         public static byte[] Serialize(Skin skin)
         {
-            using (MemoryStream ms = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(ms, Encoding.UTF8))
-            {
-                writer.Write(MagicByteManager.SKIN_SIGNATURE);
+            using MemoryStream ms = new();
+            using BinaryWriter writer = new(ms, Encoding.UTF8);
 
-                writer.Write(skin.SkinName);
-                writer.Write(skin.Textures.Count);
+            writer.Write(MagicByteManager.SKIN_SIGNATURE);
 
-                int index = 0;
-                foreach (var kvp in skin.Textures)
-                {
-                    byte[] pngData = kvp.Value.EncodeToPNG();
-                    writer.Write(pngData.Length);
-                    writer.Write(pngData);
-                    index++;
-                }
+            writer.Write(skin.SkinName);
+            writer.Write(skin.Textures.Count);
 
-                return ms.ToArray();
+            int index = 0;
+            foreach (var kvp in skin.Textures) {
+                byte[] pngData = kvp.Value.EncodeToPNG();
+                writer.Write(pngData.Length);
+                writer.Write(pngData);
+                index++;
             }
+
+            return ms.ToArray();
         }
 
         public static Skin Deserialize(byte[] data)
         {
-            using (MemoryStream ms = new MemoryStream(data))
-            using (BinaryReader reader = new BinaryReader(ms, Encoding.UTF8))
-            {
-                reader.ReadBytes(MagicByteManager.SKIN_SIGNATURE.Length);
+            using MemoryStream ms = new(data);
+            using BinaryReader reader = new(ms, Encoding.UTF8);
+            reader.ReadBytes(MagicByteManager.SKIN_SIGNATURE.Length);
 
-                string skinName = reader.ReadString();
-                int textureCount = reader.ReadInt32();
+            string skinName = reader.ReadString();
+            int textureCount = reader.ReadInt32();
 
-                var textures = new Dictionary<string, Texture2D>();
-                for (int i = 0; i < textureCount; i++)
-                {
-                    int sectionLength = reader.ReadInt32();
-                    byte[] sectionData = reader.ReadBytes(sectionLength);
+            var textures = new Dictionary<string, Texture2D>();
+            for (int i = 0; i < textureCount; i++) {
+                int sectionLength = reader.ReadInt32();
+                byte[] sectionData = reader.ReadBytes(sectionLength);
 
-                    Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                    tex.LoadImage(sectionData);
-                    tex.Apply();
+                Texture2D tex = new(2, 2, TextureFormat.RGBA32, false);
+                tex.LoadImage(sectionData);
+                tex.Apply();
 
-                    textures.Add($"atlas{i}", tex);
-                }
-
-                return new Skin(textures, skinName);
+                textures.Add($"atlas{i}", tex);
             }
+
+            return new Skin(textures, skinName);
         }
 
         public static Skin LoadFromFile(string path)
@@ -111,6 +94,8 @@ namespace SilkBound.Managers
         public static Dictionary<string, Skin> Library { get; private set; } = new Dictionary<string, Skin>() { // finally made them embedded lmao
             { "red",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "red.skin")))},
             { "blue",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "blue.skin")))},
+            { "green",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "green.skin")))},
+            { "purple",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "purple.skin")))},
         };
 
         public static Skin Default
@@ -136,7 +121,7 @@ namespace SilkBound.Managers
                     continue;
 
                 Texture atlas = collection.textures[i];
-                Texture2D readableAtlas = new Texture2D(atlas.width, atlas.height, TextureFormat.RGBA32, false);
+                Texture2D readableAtlas = new(atlas.width, atlas.height, TextureFormat.RGBA32, false);
 
                 RenderTexture rt = RenderTexture.GetTemporary(atlas.width, atlas.height, 0);
                 Graphics.Blit(atlas, rt);
@@ -158,7 +143,7 @@ namespace SilkBound.Managers
 
         //public static readonly Color capeShade = new Color(118, 45, 86);
         //public static readonly Color capeShade2 = new Color(80, 31, 59);
-        public static readonly Color CAPE_PRIMARY = new Color(118f / 255f, 45f / 255f, 86f / 255f);
+        public static readonly Color CAPE_PRIMARY = new(118f / 255f, 45f / 255f, 86f / 255f);
 
         public static float ColorDistance(Color src, Color dst)
         {

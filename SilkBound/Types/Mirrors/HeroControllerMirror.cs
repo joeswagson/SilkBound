@@ -1,15 +1,7 @@
 ﻿using GlobalEnums;
-using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
-
-namespace SilkBound.Types.Mirrors
+using UnityEngine;namespace SilkBound.Types.Mirrors
 {
     public class HeroControllerMirror : HeroController
     {

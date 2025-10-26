@@ -5,6 +5,20 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+
+    <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release</Configurations>
+  </PropertyGroup>
+
+  <!-- MelonLoader Configurations -->
+  <PropertyGroup Condition="'$(Configuration)' == 'MelonLoader'">
+    <DefineConstants>DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <!-- BepInEx Configurations -->
+  <PropertyGroup Condition="'$(Configuration)' == 'BepInEx'">
+    <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,10 +27,10 @@
 
   <ItemGroup>
     <Reference Include="MelonLoader">
-      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\MelonLoader\net6\MelonLoader.dll</HintPath>
+      <HintPath>F:\! GAMES\silksong\NoInstanceCheck\Hollow Knight Silksong\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
-      <HintPath>F:\! GAMES\silksong\Hollow-Knight-Silksong-SteamRIP.com\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <HintPath>F:\! GAMES\silksong\NoInstanceCheck\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
     </Reference>
   </ItemGroup>
 

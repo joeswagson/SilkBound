@@ -1,11 +1,8 @@
 ﻿using SilkBound.Managers;
-using SilkBound.Network.Packets.Impl;
+using SilkBound.Network.Packets;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using static UnityEngine.UI.SaveSlotButton;
 
 namespace SilkBound.Types.Transfers
 {
@@ -57,12 +54,25 @@ namespace SilkBound.Types.Transfers
             Data = ChunkedTransfer.Unpack<OnlineSave>(unpacked);
             if (Data == null)
                 return;
-            if(ModMain.Config.UseMultiplayerSaving)
+
+            if (NetworkUtils.IsServer && Server.CurrentServer.Settings.LoadGamePermission == Network.Packets.AuthorityNode.Server)
+            {
+                if(Server.CurrentServer.Settings.LoadGamePermission == AuthorityNode.Server)
+                {
+                    Logger.Msg($"Rejecting SaveDataTransfer {(Server.CurrentServer.GetWeaver(connection)?.ClientName is string name ? "from" + name : "")} due to server load game permission settings.");
+                    return;
+                }
+
+                TransferManager.Send(this);
+                return;
+            }
+
+            //Logger.Msg(ModMain.Config.UseMultiplayerSaving, !Server.CurrentServer.Settings.ForceHostSaveData);
+            if(ModMain.Config.UseMultiplayerSaving && !Server.CurrentServer.Settings.ForceHostSaveData)
                 NetworkUtils.LocalClient!.SaveGame = LocalSaveManager.SaveExists(Data.HostHash) ? LocalSaveManager.ReadFromFile(LocalSaveManager.GetSavePath(Data.HostHash))! : new MultiplayerSaveGameData(Data.SaveGame!);
             else
                 NetworkUtils.LocalClient!.SaveGame = new MultiplayerSaveGameData(Data.SaveGame!);
             //TransactionManager.Promise<bool>(Data.HostHash, true);
-
             GameManager.instance.LoadGameFromUI(Data.HostHash, NetworkUtils.LocalClient.SaveGame.Data);
         }
     }

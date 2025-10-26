@@ -6,16 +6,16 @@ using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types;
 using SilkBound.Types.NetLayers;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Text;
 
 namespace SilkBound.Utils
 {
     public class NetworkUtils
     {
         public static LocalWeaver LocalClient = null!;
+        public static Server Server => Server.CurrentServer;
         public static NetworkServer LocalServer = null!;
         public static NetworkConnection LocalConnection = null!;
         public static PacketHandler LocalPacketHandler = null!;
@@ -29,7 +29,7 @@ namespace SilkBound.Utils
                 return LocalConnection is NetworkServer;
             }
         }
-        public static bool IsConnected
+        public static bool Connected
         {
             get
             {
@@ -37,12 +37,12 @@ namespace SilkBound.Utils
             }
         }
 
-        public static event Action? Connected;
+        public static event Action? OnConnected;
 
         public static Guid ClientID => LocalClient?.ClientID ?? Guid.Empty;
         public static bool SendPacket(Packet packet)
         {
-            if (LocalConnection == null || !IsConnected) return false;
+            if (LocalConnection == null || !Connected) return false;
             LocalConnection.Send(packet);
             return true;
         }
@@ -69,11 +69,12 @@ namespace SilkBound.Utils
             LocalClient = LocalClient ?? new LocalWeaver(name, connection);
 
             Server.CurrentServer = new Server(LocalConnection);
-            NetworkUtils.LocalConnection!.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID, NetworkUtils.LocalClient!.ClientName));
+            if(connection is not NetworkServer)
+                SendPacket(new HandshakePacket(LocalClient.ClientID, LocalClient.ClientName));
 
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
 
-            Connected?.Invoke();
+            OnConnected?.Invoke();
 
             return LocalClient;
         }
@@ -81,7 +82,7 @@ namespace SilkBound.Utils
         {
             target ??= LocalClient;
 
-            if (IsConnected && target == LocalClient)
+            if (Connected && target == LocalClient)
                 SendPacket(new ClientDisconnectionPacket(reason));
 
             HandleDisconnection(LocalConnection, reason);
@@ -102,8 +103,8 @@ namespace SilkBound.Utils
         }
         public static bool IsPacketThread()
         {
-            StackTrace trace = new StackTrace(true);
-            StackFrame[] frames = trace.GetFrames() ?? Array.Empty<StackFrame>();
+            StackTrace trace = new(true);
+            StackFrame[] frames = trace.GetFrames() ?? [];
 
             foreach (var frame in frames)
             {
@@ -128,5 +129,7 @@ namespace SilkBound.Utils
             }
             return false;
         }
+
+        public static bool IsNullPtr([NotNullWhen(false)] UnityEngine.Object? obj) => obj == null || !Object.IsNativeObjectAlive(obj);
     }
 }

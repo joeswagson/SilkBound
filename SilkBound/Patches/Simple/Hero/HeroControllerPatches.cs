@@ -1,15 +1,12 @@
-﻿using GlobalEnums;
-using GlobalSettings;
+﻿using GlobalSettings;
 using HarmonyLib;
 using SilkBound.Behaviours;
-using SilkBound.Managers;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
+using SilkBound.Network.Packets.Impl.Sync.Mirror;
+using SilkBound.Types;
 using SilkBound.Types.Mirrors;
 using SilkBound.Utils;
 using UnityEngine;
-using static MelonLoader.MelonLogger;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Patches.Simple.Hero
 {
     [HarmonyPatch(typeof(HeroController))]
@@ -25,8 +22,8 @@ namespace SilkBound.Patches.Simple.Hero
         //    Action onEnd,
         //    bool enterSkip)
         //{
-            
-            
+
+
         //    Logger.Debug($"EnterScene start: gate={enterGate.gameObject.transform.GetPath()}, delay={delayBeforeEnter}, forceFade={forceCustomFade}, skip={enterSkip}");
 
         //    while (__result.MoveNext())
@@ -52,7 +49,7 @@ namespace SilkBound.Patches.Simple.Hero
         [HarmonyPatch(nameof(HeroController.StartDashEffect))]
         public static void DashVFX(HeroController __instance)
         {
-            if(!NetworkUtils.IsConnected || NetworkUtils.IsPacketThread())
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread())
                 return;
 
             float num = 1f
@@ -62,6 +59,55 @@ namespace SilkBound.Patches.Simple.Hero
 
 
             NetworkUtils.SendPacket(new AirDashVFXPacket(__instance.cState.onGround, !__instance.cState.wallSliding && !__instance.cState.onGround, __instance.cState.wallSliding, __instance.dashingDown, num));
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(nameof(HeroController.Die))]
+        public static bool Die_Prefix(HeroController __instance)
+        {
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread())
+                return true;
+
+            if (Server.CurrentServer.Settings.GhostAfterDeath)
+            {
+                NetworkUtils.LocalClient.Mirror.Ghost();
+                NetworkUtils.SendPacket(new TransitionGhostPacket(true));
+                return false;
+            }
+
+            return true;
+        }
+
+        /// experimental
+        //[HarmonyPrefix]
+        //[HarmonyPatch(nameof(HeroController.instance), MethodType.Getter)]
+        //public static bool get_instance(ref HeroController __result)
+        //{
+        //    if (StackFlag<PacketHandlerContext>.Raised && !StackFlag<HornetMirror>.Raised)
+        //    {
+        //        //Logger.Msg("HeroController.instance flags:", NetworkUtils.IsPacketThread(), StackFlag<PacketHandlerContext>.Raised, !StackFlag<HornetMirror>.Raised);
+        //        if (StackFlag<PacketHandlerContext>.Value.Sender.Mirror?.MirrorController is var mirrorController && mirrorController != null)
+        //            __result = mirrorController;
+
+        //        return false;
+        //    }
+
+        //    return true;
+        //}
+
+        static bool first = true;
+        [HarmonyPrefix]
+        [HarmonyPatch(nameof(HeroController.HeroRespawned))]
+        public static bool Respawn_Prefix(HeroController __instance) {
+            if (!SilkConstants.DEBUG || !NetworkUtils.Connected)
+                return true;
+
+            if (first)
+                HeroController.instance.transform.position.Set(76.8323f, 17.5686f, 0.004f);
+
+            first = false;
+
+            return true;
         }
 
         //[HarmonyPrefix]

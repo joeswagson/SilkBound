@@ -3,7 +3,6 @@ using SilkBound.Network.Packets.Handlers;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -14,7 +13,7 @@ namespace SilkBound.Types.NetLayers
 {
     public class TCPServer : NetworkServer
     {
-        private readonly Dictionary<string, TCPConnection> _connections = new();
+        private readonly Dictionary<string, TCPConnection> _connections = [];
         private readonly object _connLock = new();
 
         private TcpListener? _listener;
@@ -108,8 +107,8 @@ namespace SilkBound.Types.NetLayers
             {
                 if (_connections.Values.Count == 0) return; // dont pack if no targets
 
-                byte[]? data = PacketProtocol.PackPacket(packet);
-                if (data == null) return;
+                //byte[]? data = PacketProtocol.PackPacket(packet);
+                //if (data == null) return;
 
                 foreach (var conn in _connections.Values)
                 {
@@ -139,14 +138,14 @@ namespace SilkBound.Types.NetLayers
         {
             lock (_connLock)
             {
-                NetworkConnection[] targets = _connections.Values.Where(c => include.Contains(c)).ToArray();
-                if (targets.Length == 0) return; // dont pack if no targets
+                if (include.Count == 0) return; // dont pack if no targets
 
-                byte[]? data = PacketProtocol.PackPacket(packet);
-                if (data == null) return;
+                //byte[]? data = PacketProtocol.PackPacket(packet);
+                //if (data == null) return;
 
-                foreach (TCPConnection conn in targets)
+                foreach (TCPConnection conn in include)
                 {
+                    Logger.Msg("Sending", packet.GetType().Name, "to", conn.RemoteId);
                     try { conn.Send(packet); }
                     catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
@@ -157,11 +156,11 @@ namespace SilkBound.Types.NetLayers
         {
             lock (_connLock)
             {
-                NetworkConnection[] targets = _connections.Values.Where(c => !exclude.Contains(c)).ToArray();
+                NetworkConnection[] targets = [.. _connections.Values.Except(exclude)];
                 if(targets.Length == 0) return; // dont pack if no targets
 
-                byte[]? data = PacketProtocol.PackPacket(packet);
-                if (data == null) return;
+                //byte[]? data = PacketProtocol.PackPacket(packet);
+                //if (data == null) return;
 
                 foreach (TCPConnection conn in targets)
                 {

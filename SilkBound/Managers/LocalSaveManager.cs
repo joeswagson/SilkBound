@@ -1,21 +1,12 @@
-﻿using MelonLoader.Utils;
-using SilkBound.Utils;
-using System;
+﻿using SilkBound.Utils;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SilkBound.Managers
 {
-    public class MultiplayerSaveGameData
-    {
-        public SaveGameData Data { get; }
-        public Dictionary<string, SceneState> SceneStates { get; }
-        public MultiplayerSaveGameData(SaveGameData data)
-        {
-            Data = data; // god i love setting a getter only property! (it makes sense but i bet this would kill a newgen)
-            SceneStates = SceneStateManager.States; // look at that i did it again!
-        }
+    public class MultiplayerSaveGameData(SaveGameData data) {
+        public SaveGameData Data { get; } = data; // god i love setting a getter only property! (it makes sense but i bet this would kill a newgen)
+        public Dictionary<string, SceneState> SceneStates { get; } = SceneStateManager.States; // look at that i did it again!
     }
     public class LocalSaveManager
     {
@@ -28,18 +19,15 @@ namespace SilkBound.Managers
         public static void WriteToFile(string path, SaveGameData data)
         {
             var mpdata = new MultiplayerSaveGameData(data);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
-            using(BinaryWriter writer = new BinaryWriter(fs))
-            {
-                writer.Write(MagicByteManager.SAVE_SIGNATURE);
+            using FileStream fs = new(path, FileMode.Create, FileAccess.Write);
+            using BinaryWriter writer = new(fs);
+            writer.Write(MagicByteManager.SAVE_SIGNATURE);
 
-                List<byte[]> chunks = ChunkedTransfer.Pack(mpdata);
-                writer.Write(chunks.Count);
-                foreach (byte[] chunk in chunks)
-                {
-                    writer.Write(chunk.Length);
-                    writer.Write(chunk);
-                }
+            List<byte[]> chunks = ChunkedTransfer.Pack(mpdata);
+            writer.Write(chunks.Count);
+            foreach (byte[] chunk in chunks) {
+                writer.Write(chunk.Length);
+                writer.Write(chunk);
             }
         }
 
@@ -57,23 +45,20 @@ namespace SilkBound.Managers
         }
         public static MultiplayerSaveGameData? ReadFromFile(string path)
         {
-            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-            using (BinaryReader reader = new BinaryReader(fs))
-            {
-                reader.ReadBytes(MagicByteManager.SAVE_SIGNATURE.Length);
+            using FileStream fs = new(path, FileMode.Open, FileAccess.Read);
+            using BinaryReader reader = new(fs);
+            reader.ReadBytes(MagicByteManager.SAVE_SIGNATURE.Length);
 
-                List<byte[]> chunks = new List<byte[]>();
+            List<byte[]> chunks = [];
 
-                int chunkCount = reader.ReadInt32();
-                for (int i = 0; i < chunkCount; i++)
-                {
-                    int length = reader.ReadInt32();
-                    byte[] chunk = reader.ReadBytes(length);
-                    chunks.Add(chunk);
-                }
-
-                return ChunkedTransfer.Unpack<MultiplayerSaveGameData>(chunks);
+            int chunkCount = reader.ReadInt32();
+            for (int i = 0; i < chunkCount; i++) {
+                int length = reader.ReadInt32();
+                byte[] chunk = reader.ReadBytes(length);
+                chunks.Add(chunk);
             }
+
+            return ChunkedTransfer.Unpack<MultiplayerSaveGameData>(chunks);
         }
         public static void CreateFromData(int id, MultiplayerSaveGameData mpdata)
         {
@@ -81,18 +66,15 @@ namespace SilkBound.Managers
         }
         public static void CreateFromData(string path, MultiplayerSaveGameData mpdata)
         {
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
-            using (BinaryWriter writer = new BinaryWriter(fs))
-            {
-                writer.Write(MagicByteManager.SAVE_SIGNATURE);
+            using FileStream fs = new(path, FileMode.Create, FileAccess.Write);
+            using BinaryWriter writer = new(fs);
+            writer.Write(MagicByteManager.SAVE_SIGNATURE);
 
-                List<byte[]> chunks = ChunkedTransfer.Pack(mpdata);
-                writer.Write(chunks.Count);
-                foreach (byte[] chunk in chunks)
-                {
-                    writer.Write(chunk.Length);
-                    writer.Write(chunk);
-                }
+            List<byte[]> chunks = ChunkedTransfer.Pack(mpdata);
+            writer.Write(chunks.Count);
+            foreach (byte[] chunk in chunks) {
+                writer.Write(chunk.Length);
+                writer.Write(chunk);
             }
         }
     }

@@ -65,7 +65,7 @@ namespace SilkBound.Types.NetLayers
         private async Task ReceiveLoopAsync(CancellationToken ct)
         {
             byte[] buffer = new byte[SilkConstants.PACKET_BUFFER];
-            MemoryStream recvBuffer = new MemoryStream();
+            MemoryStream recvBuffer = new();
 
             try
             {

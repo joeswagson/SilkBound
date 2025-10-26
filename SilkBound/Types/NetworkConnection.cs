@@ -1,21 +1,15 @@
 ﻿using SilkBound.Network.Packets;
 using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SilkBound.Types
 {
-    public abstract class NetworkConnection
-    {
-        public PacketHandler PacketHandler { get; private set; }
+    public abstract class NetworkConnection(PacketHandler packetHandler) {
+        public PacketHandler PacketHandler { get; private set; } = packetHandler;
         public abstract bool IsConnected { get; }
-        public NetworkConnection(PacketHandler packetHandler)
-        {
-            PacketHandler = packetHandler;
-        }
-        public Action<byte[]> DataRecieved = new Action<byte[]>((data) =>
+
+        public Action<byte[]> DataRecieved = new((data) =>
         {
             
         });

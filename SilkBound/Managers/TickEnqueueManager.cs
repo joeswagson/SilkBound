@@ -1,6 +1,4 @@
 ﻿using SilkBound.Types.Tick;
-using System;
-using System.Text;
 
 namespace SilkBound.Managers
 {

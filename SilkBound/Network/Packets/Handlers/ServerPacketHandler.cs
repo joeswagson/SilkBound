@@ -1,7 +1,5 @@
-﻿using GlobalSettings;
-using SilkBound.Behaviours;
+﻿using SilkBound.Behaviours;
 using SilkBound.Managers;
-using SilkBound.Network.Packets.Impl;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Network.Packets.Impl.Sync.Attacks;
@@ -11,17 +9,14 @@ using SilkBound.Types;
 using SilkBound.Types.Transfers;
 using SilkBound.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
-using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
 using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
-using HutongGames.PlayMaker.Actions;
 using SilkBound.Extensions;
 using SilkBound.Sync;
+using SilkBound.Network.Packets.Impl.Sync.Mirror;
+using SilkBound.Patches.Simple.Attacks;
+using SilkBound.Network.Packets.Impl.Sync.Entity;
+using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
 
 namespace SilkBound.Network.Packets.Handlers
 {
@@ -42,7 +37,7 @@ namespace SilkBound.Network.Packets.Handlers
         {
             if (TransactionManager.Fetch<HandshakePacket>(packet.HandshakeId) is HandshakePacket original)
             {
-                if (original.Fulfilled) return; 
+                if (original.Fulfilled) return;
 
                 original.Fulfilled = true;
                 Logger.Msg("Handshake Fulfilled (Server):", packet.ClientId, packet.ClientName, packet.HandshakeId);
@@ -54,8 +49,10 @@ namespace SilkBound.Network.Packets.Handlers
                 connection.Send(new HandshakePacket(packet.ClientId, NetworkUtils.LocalClient!.ClientName, packet.HandshakeId, NetworkUtils.LocalClient.ClientID)); // reply with same handshake id so the client can acknowledge handshake completion
 
                 //now that we have the client id, we can create a client object for them
-                Weaver client = new Weaver(packet.ClientName, connection, packet.ClientId);
-                Server.CurrentServer!.Connections.Add(client);
+                Weaver client = new(packet.ClientName, connection, packet.ClientId);
+                Server.CurrentServer.Connections.Add(client);
+
+                TransferManager.Send(transfer: new ServerInformationTransfer(ServerState.GetCurrent()), connections: [connection]);
 
                 NetworkUtils.LocalServer!.SendExcept(new ClientConnectionPacket(client.ClientID, client.ClientName), connection);
             }
@@ -89,7 +86,7 @@ namespace SilkBound.Network.Packets.Handlers
 
             if (data.Chunks.Count(a => a != null) >= data.TotalChunks && NetworkUtils.LocalClient != null)
             {
-                transfer.Completed(new List<byte[]>(data.Chunks), connection);
+                transfer.Completed([.. data.Chunks], connection);
             }
         }
 
@@ -105,8 +102,28 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(UpdateWeaverPacket))]
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
-            (packet.Sender.Mirror ??= HornetMirror.CreateMirror(packet))?.UpdateMirror(packet);
+            Guid senderBefore = packet.Sender.ClientID;
+            (packet.Sender.Mirror ??= HornetMirror.CreateMirror(packet)!)?.UpdateMirror(packet);
 
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+            Guid senderAfter = packet.Sender.ClientID;
+            if (senderBefore != senderAfter)
+                Logger.Warn($"Sender Mismatch: {senderBefore}({Server.CurrentServer.GetWeaver(senderBefore)?.ClientName ?? "unk"}) -> {senderAfter}({Server.CurrentServer.GetWeaver(senderAfter)?.ClientName ?? "unk"})");
+            //List<NetworkConnection> inScene = NetworkUtils.Server.Connections
+            //    .Where(weaver => weaver.ClientID != packet.Sender.ClientID && weaver.Mirror.Scene == packet.Scene)
+            //    .Select(weaver=>weaver.Connection)
+            //    .ToList();
+
+            //NetworkUtils.LocalServer.SendIncluding(packet, inScene);
+        }
+
+        [PacketHandler(typeof(TransitionGhostPacket))]
+        public void OnTransitionGhostPacket(TransitionGhostPacket packet, NetworkConnection connection)
+        {
+            if (packet.Ghosted)
+                packet.Sender.Mirror?.Ghost();
+            else
+                packet.Sender.Mirror?.EndGhost();
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
@@ -122,7 +139,14 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
         {
-            packet.Sender.Mirror?.PlayClip(packet);
+            if (packet.id.StartsWith("NETOBJ") && NetworkObjectManager.TryGet(packet.id, out NetworkEntity netent) && netent is EntityMirror mirror)
+            {
+                mirror.PlayClip(packet);
+            }
+            else
+            {
+                packet.Sender.Mirror?.PlayClip(packet);
+            }
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
@@ -196,6 +220,30 @@ namespace SilkBound.Network.Packets.Handlers
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
+        [PacketHandler(typeof(UpdateHealthPacket))]
+        public void OnUpdateHealthPacket(UpdateHealthPacket packet, NetworkConnection connection)
+        {
+            Logger.Msg($"Received UpdateHealthPacket (Server): Path={packet.Path}, Health={packet.Health}");
+            GameObject? obj = UnityObjectExtensions.FindObjectFromFullName(packet.Path);
+            if (obj)
+            {
+                HealthManager? healthManager = obj.GetComponent<HealthManager>();
+                if (healthManager)
+                {
+                    healthManager.hp = packet.Health;
+                }
+                else
+                {
+                    Logger.Warn($"GameObject at Path={packet.Path} does not have a HealthManager component.");
+                }
+            }
+            else
+            {
+                Logger.Warn($"No GameObject found at Path={packet.Path}.");
+            }
+            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+        }
+
         //[PacketHandler(typeof(DownspikeVFXPacket))]
         //public void OnDownspikeVFXPacket(DownspikeVFXPacket packet, NetworkConnection connection)
         //{
@@ -209,9 +257,50 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(UpdateNetworkOwnerPacket))]
         public void OnUpdateNetworkOwnerPacket(UpdateNetworkOwnerPacket packet, NetworkConnection connection)
         {
-            if (NetworkObjectManager.TryGet(packet.NetworkId, out NetworkObject netObj))
-                connection.Send(new UpdateNetworkOwnerPacket(netObj.Owner.ClientID));
+            if (NetworkObjectManager.TryGet(packet.NetworkId, out NetworkObject netObj) && netObj.Owner != null)
+            {
+                connection.Send(new AcknowledgeNetworkOwnerPacket(netObj.NetworkId, netObj.Owner.ClientID));
+
+                if (SilkConstants.Server.REQUIRE_SERVER_NETENT_SYNC)
+                    return;
+            }
+
+            NetworkUtils.LocalServer?.SendExcept(packet, connection);
+        }
+
+        #region Entities
+        [PacketHandler(typeof(BossGateSensorPacket))]
+        public void OnBossGateSensorPacket(BossGateSensorPacket packet, NetworkConnection connection)
+        {
+            packet.GateSensor?.UpdateSensor(packet.SensorActivated);
+            NetworkUtils.LocalServer?.SendExcept(packet, connection);
+        }
+
+        [PacketHandler(typeof(StartBattlePacket))]
+        public void OnStartBattlePacket(StartBattlePacket packet, NetworkConnection connection)
+        {
+            if (packet.Sender.Mirror?.Scene == packet.Battle?.gameObject.scene.name)
+            {
+                packet.Battle?.StartBattle();
+                NetworkUtils.LocalServer?.SendExcept(packet, connection);
+            }
+        }
+
+        [PacketHandler(typeof(SyncEntityPositionPacket))]
+        public void OnSyncEntityPositionPacket(SyncEntityPositionPacket packet, NetworkConnection connection)
+        {
+            if (NetworkObjectManager.TryGet(packet.EntityId, out NetworkEntity netent))
+            {
+                netent.UpdatePosition(packet.Position, packet.Velocity, packet.ScaleX);
+            }
+            else if (SilkConstants.Server.REQUIRE_SERVER_NETENT_SYNC)
+                return;
+
+            NetworkUtils.LocalServer?.SendExcept(packet, connection);
         }
         #endregion
+
+        #endregion
+
     }
 }

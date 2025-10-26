@@ -4,8 +4,6 @@ using SilkBound.Extensions;
 using SilkBound.Network;
 using System;
 using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Types.JsonConverters
 {
 
@@ -19,24 +17,23 @@ namespace SilkBound.Types.JsonConverters
                 return;
             }
 
-            JObject obj = new JObject();
+            JObject obj = new() {
+                ["ColliderPath"] = ReplacePath(value.collider ? value.collider.gameObject.transform.GetPath() : null!),
+                ["OtherColliderPath"] = ReplacePath(value.otherCollider ? value.otherCollider.gameObject.transform.GetPath() : null!),
+                ["RigidbodyPath"] = ReplacePath(value.rigidbody ? value.rigidbody.gameObject.transform.GetPath() : null!),
+                ["OtherRigidbodyPath"] = ReplacePath(value.otherRigidbody ? value.otherRigidbody.gameObject.transform.GetPath() : null!),
 
-            obj["ColliderPath"] = ReplacePath(value.collider ? value.collider.gameObject.transform.GetPath() : null!);
-            obj["OtherColliderPath"] = ReplacePath(value.otherCollider ? value.otherCollider.gameObject.transform.GetPath() : null!);
-            obj["RigidbodyPath"] = ReplacePath(value.rigidbody ? value.rigidbody.gameObject.transform.GetPath() : null!);
-            obj["OtherRigidbodyPath"] = ReplacePath(value.otherRigidbody ? value.otherRigidbody.gameObject.transform.GetPath() : null!);
-
-            obj["RelativeVelocity"] = JToken.FromObject(value.relativeVelocity, serializer);
-            obj["Enabled"] = value.enabled ? 1 : 0;
-            obj["ContactCount"] = value.contactCount;
+                ["RelativeVelocity"] = JToken.FromObject(value.relativeVelocity, serializer),
+                ["Enabled"] = value.enabled ? 1 : 0,
+                ["ContactCount"] = value.contactCount
+            };
 
             if (value.contacts != null && value.contacts.Length > 0)
             {
-                JArray contacts = new JArray();
+                JArray contacts = [];
                 foreach (var contact in value.contacts)
                 {
-                    JObject c = new JObject
-                    {
+                    JObject c = new() {
                         ["Point"] = JToken.FromObject(contact.point, serializer),
                         ["Normal"] = JToken.FromObject(contact.normal, serializer),
                         ["Separation"] = contact.separation,
@@ -69,7 +66,7 @@ namespace SilkBound.Types.JsonConverters
                 return null;
 
             JObject obj = JObject.Load(reader);
-            Collision2D instance = new Collision2D();
+            Collision2D instance = new();
 
             string colliderPath = obj["ColliderPath"]?.ToString()!;
             string otherColliderPath = obj["OtherColliderPath"]?.ToString()!;
@@ -113,8 +110,7 @@ namespace SilkBound.Types.JsonConverters
                 for (int i = 0; i < contacts.Count; i++)
                 {
                     var c = contacts[i];
-                    ContactPoint2D cp = new ContactPoint2D // cyberpunk!?!?!?
-                    {
+                    ContactPoint2D cp = new() {
                         m_Point = c["Point"]?.ToObject<Vector2>(serializer) ?? Vector2.zero,
                         m_Normal = c["Normal"]?.ToObject<Vector2>(serializer) ?? Vector2.zero,
                         m_Separation = c["Separation"]?.ToObject<float>() ?? 0f,

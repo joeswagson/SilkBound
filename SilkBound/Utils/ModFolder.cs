@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using MelonLoader;
 using MelonLoader.Utils;
 
 namespace SilkBound.Utils

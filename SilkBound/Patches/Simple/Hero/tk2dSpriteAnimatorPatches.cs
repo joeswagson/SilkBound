@@ -1,35 +1,27 @@
 ﻿using HarmonyLib;
-using SilkBound.Extensions;
-using SilkBound.Network.Packets.Impl;
+using HutongGames.PlayMaker;
+using SilkBound.Behaviours;
 using SilkBound.Network.Packets.Impl.Mirror;
-using SilkBound.Network.Packets.Impl.Sync.Attacks;
+using SilkBound.Types.Language;
 using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Patches.Simple.Hero
 {
     [HarmonyPatch(typeof(tk2dSpriteAnimator))]
     public class tk2dSpriteAnimatorPatches
     {
         [HarmonyPrefix]
-        [HarmonyPatch("Play", new Type[] { typeof(tk2dSpriteAnimationClip), typeof(float), typeof(float) })]
+        [HarmonyPatch("Play", [typeof(tk2dSpriteAnimationClip), typeof(float), typeof(float)])]
         public static bool Play_Prefix(tk2dSpriteAnimator __instance, tk2dSpriteAnimationClip clip, float clipStartTime, float overrideFps)
         {
-            //Logger.Msg(__instance.gameObject.transform.GetPath());
-            //if (NetworkUtils.IsConnected && __instance.gameObject.transform.parent?.parent?.name == "Attacks" && !NetworkUtils.IsPacketThread())
-            //{
-            //    Logger.Msg("sending attack");
-            //    Transform t = __instance.gameObject.transform;
-            //    NetworkUtils.SendPacket(new PlayAttackClipPacket(t.parent.name, t.name, clip.name, clipStartTime, overrideFps));
-            //}
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) return true;
 
-            if (NetworkUtils.IsConnected && __instance == HeroController.instance?.GetComponent<tk2dSpriteAnimator>())
-                NetworkUtils.SendPacket(new PlayClipPacket(NetworkUtils.LocalClient.ClientID, clip.name, clipStartTime, overrideFps));
-
+            if (__instance == HeroController.instance?.animCtrl?.animator)
+                NetworkUtils.SendPacket(new PlayClipPacket(string.Empty, clip.name, clipStartTime, overrideFps));
+            else if (__instance.gameObject.GetComponent<EntityMirror>() is var mirror
+                    && mirror != null
+                    && mirror.IsLocalOwned
+                    && !StackFlag<None>.Raised)
+                NetworkUtils.SendPacket(new PlayClipPacket(mirror.NetworkId, clip.name, clipStartTime, overrideFps));
 
             return true;
         }

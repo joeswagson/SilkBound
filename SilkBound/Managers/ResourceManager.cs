@@ -1,12 +1,7 @@
-﻿using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Managers
 {
     public class ResourceManager
@@ -18,7 +13,7 @@ namespace SilkBound.Managers
         public static byte[] LoadEmbedded(string key, Assembly? target=null)
         {
             target ??= Assembly.GetExecutingAssembly();
-            using MemoryStream ms = new MemoryStream();
+            using MemoryStream ms = new();
 
             try
             {
@@ -38,7 +33,7 @@ namespace SilkBound.Managers
             {
                 public static Sprite CastSprite(byte[] data)
                 {
-                    Texture2D tex = new Texture2D(2, 2);
+                    Texture2D tex = new(2, 2);
                     tex.LoadImage(data);
                     return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
                 }
@@ -67,7 +62,7 @@ namespace SilkBound.Managers
             public const string TEXTURES = "Textures";
             #endregion
 
-            public static EmbeddedResource<Sprite> CustomTitle = new EmbeddedResource<Sprite>(SilkResolve(TEXTURES, "silkbound_logo.png"), Casters.CastSprite);
+            public static EmbeddedResource<Sprite> CustomTitle = new(SilkResolve(TEXTURES, "silkbound_logo.png"), Casters.CastSprite);
         }
     }
 }

@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 
 namespace SilkBound.Network.Packets.Impl.Mirror
 {
-    public class PlayClipPacket(Guid id, string clipName, float clipStartTime, float overrideFps) : Packet
+    public class PlayClipPacket(string id, string clipName, float clipStartTime, float overrideFps) : Packet
     {
         // accessors
-        public Guid id = id;
+        public string id = id;
         public string clipName = clipName;
         public float clipStartTime = clipStartTime;
         public float overrideFps = overrideFps;
@@ -16,7 +13,7 @@ namespace SilkBound.Network.Packets.Impl.Mirror
         // serialization
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(id.ToString("N"));
+            writer.Write(id);
             writer.Write(clipName);
             writer.Write(clipStartTime);
             writer.Write(overrideFps);
@@ -28,7 +25,7 @@ namespace SilkBound.Network.Packets.Impl.Mirror
             float clipStartTime = reader.ReadSingle();
             float overrideFps = reader.ReadSingle();
 
-            return new PlayClipPacket(Guid.Parse(id), clipName, clipStartTime, overrideFps);
+            return new PlayClipPacket(id, clipName, clipStartTime, overrideFps);
         }
     }
 }

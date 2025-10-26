@@ -1,19 +1,9 @@
-﻿using AsmResolver.DotNet.Code.Cil;
-using HarmonyLib;
-using SilkBound.Behaviours;
-using SilkBound.Managers;
-using SilkBound.Network;
-using SilkBound.Types;
-using SilkBound.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Logger = SilkBound.Utils.Logger;
-
 namespace SilkBound.Extensions
 {
     public static class UnityObjectExtensions
@@ -26,7 +16,7 @@ namespace SilkBound.Extensions
                     "name"
                 }
             });
-            excludeProps = list.ToArray();
+            excludeProps = [.. list];
             System.Type type = original.GetType();
             Component copy = destination.AddComponent(type);
             BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Default;
@@ -58,7 +48,7 @@ namespace SilkBound.Extensions
         public static string GetPath(this Transform transform, bool replaceMirror = false)
         {
             return replaceMirror ?
-                GetFullName(transform.gameObject).Replace("Hero_Hornet(Clone)", NetworkUtils.LocalClient.Mirror!.GetName()) :
+                GetFullName(transform.gameObject).ReplaceController() :
                 GetFullName(transform.gameObject);
 
             //if (transform.parent == null)
@@ -110,7 +100,14 @@ namespace SilkBound.Extensions
 
             return roots;
         }
-
+        public static T? FindComponent<T>(string fullName) where T : Component
+        {
+            return FindObjectFromFullName(fullName)?.GetComponent(typeof(T)) as T;
+        }
+        public static T[]? FindComponents<T>(string fullName) where T : Component
+        {
+            return FindObjectFromFullName(fullName)?.GetComponents(typeof(T)).Cast<T>().ToArray();
+        }
         public static GameObject? FindObjectFromFullName(string? fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
@@ -119,7 +116,7 @@ namespace SilkBound.Extensions
             string[] parts = fullName.Split('/');
             int startIndex = parts[0] == "" ? 1 : 0;
 
-            List<GameObject> roots = new List<GameObject>();
+            List<GameObject> roots = [];
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 roots.AddRange(SceneManager.GetSceneAt(i).GetRootGameObjects());

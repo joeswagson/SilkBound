@@ -1,14 +1,13 @@
 ﻿using SilkBound.Network;
-using SilkBound.Network.Packets;
-using SilkBound.Network.Packets.Impl;
 using SilkBound.Types.NetLayers;
 using SilkBound.Utils;
 using Steamworks;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using SilkBound.Addons.AddonLoading;
 using SilkBound.Network.Packets.Impl.Steam;
+using SilkBound.Managers;
+using UnityEngine.SceneManagement;
 
 namespace SilkBound.Types
 {
@@ -32,7 +31,7 @@ namespace SilkBound.Types
             }
         }
 
-        public List<Weaver> Connections = new List<Weaver>();
+        public List<Weaver> Connections = [];
 
         public Weaver? GetWeaver(Guid clientId)
         {
@@ -68,6 +67,7 @@ namespace SilkBound.Types
             }
         }
 
+        public ServerSettings Settings { get; internal set; } = ModMain.Config.HostSettings;
         public Weaver Host { get; internal set; } = null!;
         public string Address { get; internal set; } = null!;
         public int? Port { get; internal set; }
@@ -87,16 +87,34 @@ namespace SilkBound.Types
 
         public static Server Connect(NetworkServer connection, string name)
         {
+            Weaver host = NetworkUtils.Connect(connection, name);
             NetworkUtils.LocalServer = connection;
-            NetworkUtils.Connect(connection, name);
 
             CurrentServer = new Server(connection);
-            CurrentServer.Address = connection.Host;
+            CurrentServer.Address = connection.Host!;
             CurrentServer.Port = connection.Port ?? CurrentServer.Port ?? SilkConstants.PORT;
+            CurrentServer.Host = host;
 
             AddonManager.LoadAddons();
 
             return CurrentServer;
         }
+
+        #region game functions
+        public int GetPlayersInScene()
+        {
+            return GetPlayersInScene(SceneManager.GetActiveScene().name);
+        }
+        public int GetPlayersInScene(string sceneName)
+        {
+            int count = 0;
+            foreach (Weaver weaver in Connections)
+            {
+                if (weaver.Mirror.Scene == sceneName)
+                    count++;
+            }
+            return count;
+        }
+        #endregion
     }
 }

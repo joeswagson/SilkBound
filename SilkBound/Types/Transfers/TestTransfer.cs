@@ -1,14 +1,10 @@
 ﻿using SilkBound.Utils;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SilkBound.Types.Transfers
 {
     public class TestTransfer(Dictionary<string, string> data) : Transfer
     {
-        public TestTransfer() : this(new Dictionary<string, string>()) { } // required for deserialization
-
         public override void Completed(List<byte[]> unpacked, NetworkConnection connection)
         {
             Dictionary<string, string>? result = ChunkedTransfer.Unpack<Dictionary<string, string>>(unpacked);

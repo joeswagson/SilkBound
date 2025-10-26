@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 
 namespace SilkBound.Network.Packets.Impl.Communication
 {
-    public class UpdateNetworkOwnerPacket(Guid networkId) : Packet
+    public class UpdateNetworkOwnerPacket(string networkId) : Packet
     {
-        public Guid NetworkId => networkId;
-        public override AuthorityNode ReadAuthority => AuthorityNode.Server;
+        public string NetworkId => networkId;
         public override AuthorityNode SendAuthority => AuthorityNode.Client;
+        public override AuthorityNode ReadAuthority => AuthorityNode.Server;
         public override Packet Deserialize(BinaryReader reader)
         {
-            Guid netId = new Guid(reader.ReadBytes(16));
+            string netId = reader.ReadString();
             return new UpdateNetworkOwnerPacket(netId);
         }
 
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(networkId.ToByteArray());
+            writer.Write(networkId);
         }
     }
 }

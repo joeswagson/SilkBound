@@ -1,10 +1,6 @@
 ﻿using HarmonyLib;
-using MelonLoader;
 using SilkBound.Managers;
 using SilkBound.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 namespace SilkBound.Patches.Simple.Game
