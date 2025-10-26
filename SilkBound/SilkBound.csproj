@@ -14,42 +14,41 @@
 
   <!-- Import Game Paths -->
   <Import Project="Local.props" Condition="Exists('Local.props')" />
-  
+
   <!-- MelonLoader Configurations -->
   <PropertyGroup Condition="'$(Configuration)' == 'MelonLoader'">
-      <DefineConstants>DEBUG;MELON</DefineConstants>
-      <TargetLoader>MelonLoader</TargetLoader>
-      <TargetConfiguration>Debug</TargetConfiguration>
-      <SilksongPath_Output>$(SilksongPath_Offline)\Mods</SilksongPath_Output>
-      <OutputPath>bin\MelonLoader_Debug\</OutputPath>
+    <DefineConstants>DEBUG;MELON</DefineConstants>
+    <TargetLoader>MelonLoader</TargetLoader>
+    <TargetConfiguration>Debug</TargetConfiguration>
+    <SilksongPath_Output>$(SilksongPath_Offline)\Mods</SilksongPath_Output>
+    <OutputPath>bin\MelonLoader_Debug\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'MelonLoader Release'">
-      <DefineConstants>MELON</DefineConstants>
-      <TargetLoader>MelonLoader</TargetLoader>
-      <TargetConfiguration>Release</TargetConfiguration>
-      <SilksongPath_Output>$(SilksongPath_Steam)\Mods</SilksongPath_Output>
-      <OutputPath>bin\MelonLoader_Release\</OutputPath>
+    <DefineConstants>MELON</DefineConstants>
+    <TargetLoader>MelonLoader</TargetLoader>
+    <TargetConfiguration>Release</TargetConfiguration>
+    <SilksongPath_Output>$(SilksongPath_Steam)\Mods</SilksongPath_Output>
+    <OutputPath>bin\MelonLoader_Release\</OutputPath>
   </PropertyGroup>
 
   <!-- BepInEx Configurations -->
   <PropertyGroup Condition="'$(Configuration)' == 'BepInEx'">
-      <DefineConstants>DEBUG;BEPIN</DefineConstants>
-      <TargetLoader>BepInEx</TargetLoader>
-      <TargetConfiguration>Debug</TargetConfiguration>
-      <SilksongPath_Output>$(SilksongPath_Offline)\BepInEx\plugins</SilksongPath_Output>
-      <OutputPath>bin\BepInEx_Debug\</OutputPath>
+    <DefineConstants>DEBUG;BEPIN</DefineConstants>
+    <TargetLoader>BepInEx</TargetLoader>
+    <TargetConfiguration>Debug</TargetConfiguration>
+    <SilksongPath_Output>$(SilksongPath_Offline)\BepInEx\plugins</SilksongPath_Output>
+    <OutputPath>bin\BepInEx_Debug\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'BepInEx Release'">
-      <DefineConstants>BEPIN</DefineConstants>
-      <TargetLoader>BepInEx</TargetLoader>
-      <TargetConfiguration>Release</TargetConfiguration>
+    <DefineConstants>BEPIN</DefineConstants>
+    <TargetLoader>BepInEx</TargetLoader>
+    <TargetConfiguration>Release</TargetConfiguration>
     <SilksongPath_Output>$(SilksongPath_Steam)\BepInEx\plugins</SilksongPath_Output>
-      <OutputPath>bin\BepInEx_Release\</OutputPath>
+    <OutputPath>bin\BepInEx_Release\</OutputPath>
   </PropertyGroup>
-  
-  <!-- Resources -->
+
   <ItemGroup>
     <None Remove="Resources\SkinLibrary\blue.skin" />
     <None Remove="Resources\SkinLibrary\green.skin" />
@@ -59,7 +58,6 @@
     <None Remove="Resources\Textures\silkbound_logo.png" />
   </ItemGroup>
 
-  <!-- Embed Resources -->
   <ItemGroup>
     <EmbeddedResource Include="Resources\SkinLibrary\blue.skin" />
     <EmbeddedResource Include="Resources\SkinLibrary\green.skin" />
@@ -69,30 +67,34 @@
     <EmbeddedResource Include="Resources\Textures\silkbound_logo.png" />
   </ItemGroup>
 
+  <!-- Resources -->
+
+  <!-- Embed Resources -->
+
   <!-- Generic References -->
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
     <PackageReference Include="Silksong.GameLibs" Version="1.0.2-silksong1.0.28561" Publicize="true" />
     <PackageReference Include="UnityEngine.Modules" Version="6000.0.50" IncludeAssets="compile" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3">
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3">
       <Private>false</Private>
     </PackageReference>
   </ItemGroup>
 
   <!-- MelonLoader References -->
-    <ItemGroup Condition="'$(TargetLoader)' == 'MelonLoader'">
-        <PackageReference Include="LavaGang.MelonLoader" Version="0.7.1" Publicize="true" />
-        <PackageReference Include="Lib.Harmony" Version="2.4.1" />
-    </ItemGroup>
-  
+  <ItemGroup Condition="'$(TargetLoader)' == 'MelonLoader'">
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.1" Publicize="true" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.1" />
+  </ItemGroup>
+
   <!-- BepInEx References -->
-    <ItemGroup Condition="'$(TargetLoader)' == 'BepInEx'">
-        <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-        <PackageReference Include="BepInEx.AutoPlugin" Version="1.1.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-    </ItemGroup>
+  <ItemGroup Condition="'$(TargetLoader)' == 'BepInEx'">
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
+    <PackageReference Include="BepInEx.AutoPlugin" Version="1.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
   <!-- UnityExplorer References (Debug Patches) -->
   <ItemGroup Condition="'$(TargetConfiguration)' == 'Debug'">
@@ -103,8 +105,9 @@
       <HintPath>CompileOnly\UniverseLib.Mono.dll</HintPath>
     </Reference>
   </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; /IM &quot;Hollow Knight Silksong.Client2.exe&quot; /IM &quot;Hollow Knight Silksong.Client3.exe&quot; /IM &quot;Hollow Knight Silksong.Client4.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0" />
+    <Exec Command="powershell -Command &quot;try { Get-Process -Name 'Hollow Knight Silksong','Hollow Knight Silksong.Client2','Hollow Knight Silksong.Client3','Hollow Knight Silksong.Client4' | Stop-Process -Force } catch {}; exit 0&quot;" />
   </Target>
 
   <!-- Post-build: copy built DLL to correct loader folder -->
