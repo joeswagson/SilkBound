@@ -12,10 +12,9 @@
     <UseUnityExplorerPatches>true</UseUnityExplorerPatches>
   </PropertyGroup>
 
-  <!-- Game Paths -->
-  <PropertyGroup>
-  </PropertyGroup>
-
+  <!-- Import Game Paths -->
+  <Import Project="Local.props" Condition="Exists('Local.props')" />
+  
   <!-- MelonLoader Configurations -->
   <PropertyGroup Condition="'$(Configuration)' == 'MelonLoader'">
       <DefineConstants>DEBUG;MELON</DefineConstants>
@@ -113,5 +112,4 @@
     <Message Text="Deploying to $(TargetLoader) → $(SilksongPath_Output)" Importance="high" />
     <Exec Command="xcopy /y /d &quot;$(TargetPath)&quot; &quot;$(SilksongPath_Output)&quot;" />
   </Target>
-
 </Project>
