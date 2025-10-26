@@ -1,9 +1,14 @@
 ﻿global using Logger = SilkBound.Utils.Logger;
 global using Object = UnityEngine.Object;
+using SLogger = SilkBound.Utils.Logger;
 using HarmonyLib;
 using HutongGames.PlayMaker;
-using MelonLoader;
+#if MELON
 using SilkBound;
+using MelonLoader;
+#else
+using BepInEx;
+#endif
 using SilkBound.Managers;
 using SilkBound.Patches.Simple.Attacks;
 using SilkBound.Types;
@@ -18,42 +23,53 @@ using UnityExplorer.CacheObject;
 using UnityExplorer.CacheObject.Views;
 #endif
 
+#if MELON
 [assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
+#endif
 namespace SilkBound
 {
-    public class ModMain : MelonMod
+#if MELON
+    public partial class ModMain : MelonMod
+#else
+    [BepInAutoPlugin("io.github.joeswagson", "SilkBound", "1.0.0")]
+    [BepInProcess("Hollow Knight Silksong.exe")]
+    public partial class ModMain : BaseUnityPlugin
+#endif
     {
         public const string CONNECT_IP = "127.0.0.1";
 
         public static int MainThreadId;
-        public override void OnEarlyInitializeMelon()
-        {
 
-#if TargetLoader == MelonLoader
-            Logger.Msg("MELONLOADER RAAH!!!");
+#if BEPIN
+        public Harmony HarmonyInstance = new(Id);
 #endif
-        }
 
-
+#if MELON
         public override void OnInitializeMelon()
+#elif BEPIN
+        public void Awake()
+#endif
         {
             MainThreadId = Environment.CurrentManagedThreadId;
-            Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(), "| Unity Thread ID:", MainThreadId);
+            SLogger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
+                "| Unity Thread ID:", MainThreadId);
             var method = AccessTools.Method(typeof(HealthManager), "TakeDamage", [typeof(HitInstance)]);
-            Logger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
+            SLogger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
 
             if (SilkConstants.DEBUG)
             {
                 if (SilkDebug.GetClientNumber() > SilkConstants.TEST_CLIENTS)
                 {
-                    Logger.Error("Client number exceeds TEST_CLIENTS constant. Quitting.");
+                    SLogger.Error("Client number exceeds TEST_CLIENTS constant. Quitting.");
                     Application.Quit();
                     return;
                 }
 
                 DebugDrawColliderRuntime.IsShowing = SilkConstants.DEBUG_COLLIDERS;
 
-                CheatManager.Invincibility = SilkConstants.INVULNERABILITY ? CheatManager.InvincibilityStates.FullInvincible : CheatManager.InvincibilityStates.Off;
+                CheatManager.Invincibility = SilkConstants.INVULNERABILITY
+                    ? CheatManager.InvincibilityStates.FullInvincible
+                    : CheatManager.InvincibilityStates.Off;
                 Application.SetStackTraceLogType(LogType.Exception, StackTraceLogType.Full);
             }
             //_loaded = -1;
@@ -64,6 +80,7 @@ namespace SilkBound
             //};
 
             #region Patches
+
             //var overrideInstance = new HeroAnimationControllerOverrides();
 
             foreach (var t in AccessTools.AllTypes())
@@ -75,11 +92,14 @@ namespace SilkBound
 
                     if (m.DeclaringType != t)
                         continue;
-
-                    HarmonyInstance.Patch(m, prefix: new HarmonyMethod(typeof(IHitResponderPatches), nameof(IHitResponderPatches.HitPrefix)));
+                    HarmonyInstance.Patch(m,
+                        prefix: new HarmonyMethod(typeof(IHitResponderPatches),
+                            nameof(IHitResponderPatches.HitPrefix)));
                 }
             }
+
             #endregion
+
             //foreach (var skin in SkinManager.Library)
             //{
             //    skin.Value.WriteToFile($"{skin.Key}.skin");
@@ -92,17 +112,27 @@ namespace SilkBound
 
         }
 
-        public override void OnLateInitializeMelon()
+#if MELON
+      public override void OnLateInitializeMelon()
+#elif BEPIN
+        public void Start()
+#endif
         {
 #if DEBUG
+    #if MELON
             MelonCoroutines.Start(DelayedWindowPosition());
+    #elif BEPIN
+            StartCoroutine(DelayedWindowPosition());
+    #endif
 #endif
         }
 #if DEBUG
         System.Collections.IEnumerator DelayedWindowPosition()
         {
             int cW = 500;
-            int w = SilkConstants.TEST_CLIENTS <= 2 ? 1 : 2;// SilkConstants.TEST_CLIENTS - (SilkConstants.TEST_CLIENTS % 1);
+            int w = SilkConstants.TEST_CLIENTS <= 2
+                ? 1
+                : 2; // SilkConstants.TEST_CLIENTS - (SilkConstants.TEST_CLIENTS % 1);
             SilkDebug.PositionConsoleWindow(
                 new Vector2Int(50, 15),
                 new Vector2Int(1200 + cW, 680),
@@ -196,7 +226,11 @@ namespace SilkBound
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);
         }
+#if MELON
         public override void OnUpdate()
+#elif BEPIN
+        public void Update()
+#endif
         {
             TickManager.Update();
 
@@ -223,7 +257,7 @@ namespace SilkBound
             if (Input.GetKeyDown(KeyCode.Minus))
             {
                 NetworkUtils.LocalClient?.Shaw();
-                Logger.Msg("SHAW!");
+                SLogger.Msg("SHAW!");
 
                 //Logger.Msg("Sending test transfer");
                 //TransferManager.Send(new TestTransfer(new Dictionary<string, string>
@@ -237,12 +271,13 @@ namespace SilkBound
                 //Logger.Debug("sending handshake", Guid.NewGuid().ToString("N"));
                 //NetworkUtils.LocalConnection?.Send(new HandshakePacket(NetworkUtils.LocalClient!.ClientID.ToString(), NetworkUtils.LocalClient!.ClientName));
             }
+
             if (Input.GetKeyDown(KeyCode.RightBracket))
             {
                 if (!SteamAPI.Init())
-                    Logger.Error("SteamAPI.Init() failed!");
+                    SLogger.Error("SteamAPI.Init() failed!");
                 else
-                    Logger.Msg("SteamAPI initialized.");
+                    SLogger.Msg("SteamAPI initialized.");
             }
 
             if (Input.GetKeyDown(KeyCode.H))
@@ -270,12 +305,16 @@ namespace SilkBound
             }
         }
 
-        public override void OnApplicationQuit()
+        public
+#if MELON
+        override
+#endif
+            void OnApplicationQuit()
         {
             NetworkUtils.Disconnect();
         }
 
-#if DEBUG 
+#if DEBUG
         /// <summary>
         /// https://github.com/Bigfootmech/Silksong_Skipintro/blob/master/Mod.cs - dont wanna install a seperate dll just for testing this so im including this in debug builds - should be removed in public releases that are built under Release
         /// </summary>
@@ -296,7 +335,8 @@ namespace SilkBound
         {
             [HarmonyPrefix]
             [HarmonyPatch("SetValueState")]
-            public static bool blehhh(CacheObjectBase __instance, CacheObjectCell cell, CacheObjectBase.ValueStateArgs args)
+            public static bool blehhh(CacheObjectBase __instance, CacheObjectCell cell,
+                CacheObjectBase.ValueStateArgs args)
             {
                 if (cell is not CacheListEntryCell listEntry)
                     return true;
@@ -306,12 +346,12 @@ namespace SilkBound
                 {
                     AccessTools.Property(typeof(CacheObjectBase), "ValueLabelText")
                         .SetValue(
-                            __instance, 
+                            __instance,
                             UniverseLib.Utility.ToStringUtility.ToStringWithType(
-                                __instance.Value, 
-                                __instance.FallbackType, 
+                                __instance.Value,
+                                __instance.FallbackType,
                                 true
-                                )
+                            )
                             + $" - <i><color=#b0edff>{name}</color></i>"
                         );
                 }
@@ -334,4 +374,4 @@ namespace SilkBound
         }
 #endif
     }
-}
+} 

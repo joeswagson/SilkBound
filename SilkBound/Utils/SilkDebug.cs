@@ -1,4 +1,9 @@
-﻿using MelonLoader.Utils;
+﻿#if MELON
+using MelonLoader.Utils;
+#elif BEPIN
+using System.IO;
+using System.Diagnostics;
+#endif
 using System;
 #if DEBUG
 using System.Runtime.InteropServices;
@@ -13,7 +18,12 @@ namespace SilkBound.Utils
     {
         public static int GetClientNumber()
         {
-            string exeName = MelonEnvironment.GameExecutableName;
+            string exeName = 
+                #if MELON
+                MelonEnvironment.GameExecutableName;
+                #elif BEPIN
+                Path.GetFileName(Process.GetCurrentProcess().MainModule!.FileName);
+                #endif
             //Logger.Msg(exeName);
             if (exeName.Equals("Hollow Knight Silksong", StringComparison.OrdinalIgnoreCase))
                 return 1;

@@ -5,8 +5,6 @@ VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SilkBound", "SilkBound\SilkBound.csproj", "{A801FEB0-A30E-4775-9F1F-222A67B41D53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityLauncher", "UnityLauncher\UnityLauncher.csproj", "{6A9D939F-1992-4E58-8C99-422871CA8241}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -28,14 +26,6 @@ Global
 		{A801FEB0-A30E-4775-9F1F-222A67B41D53}.MelonLoader Release|Any CPU.Build.0 = MelonLoader Release|Any CPU
 		{A801FEB0-A30E-4775-9F1F-222A67B41D53}.MelonLoader|Any CPU.ActiveCfg = MelonLoader|Any CPU
 		{A801FEB0-A30E-4775-9F1F-222A67B41D53}.MelonLoader|Any CPU.Build.0 = MelonLoader|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.BepInEx Release|Any CPU.ActiveCfg = BepInEx Release|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.BepInEx Release|Any CPU.Build.0 = BepInEx Release|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.BepInEx|Any CPU.ActiveCfg = BepInEx|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.BepInEx|Any CPU.Build.0 = BepInEx|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.MelonLoader Release|Any CPU.ActiveCfg = MelonLoader Release|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.MelonLoader Release|Any CPU.Build.0 = MelonLoader Release|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.MelonLoader|Any CPU.ActiveCfg = MelonLoader|Any CPU
-		{6A9D939F-1992-4E58-8C99-422871CA8241}.MelonLoader|Any CPU.Build.0 = MelonLoader|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

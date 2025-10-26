@@ -1,11 +1,20 @@
 ﻿using System.IO;
+#if MELON
 using MelonLoader.Utils;
+#elif BEPIN
+using BepInEx;
+#endif
 
 namespace SilkBound.Utils
 {
     internal static class ModFolder
     {
-        private static readonly string _rootFolderPath = MelonEnvironment.MelonBaseDirectory + "/Silkbound";
+        private static readonly string _rootFolderPath = 
+            #if MELON
+            MelonEnvironment.MelonBaseDirectory + "/Silkbound";
+            #elif BEPIN
+            Paths.PluginPath + "/Silkbound";
+            #endif
         private static readonly string _pluginsFolderPath = _rootFolderPath + "/Addons";
         private static readonly string _savesFolderPath = _rootFolderPath + "/Saves";
         internal static DirectoryInfo Root
