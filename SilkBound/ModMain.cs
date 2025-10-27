@@ -18,6 +18,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+using SilkBound.Types.Language;
 #if DEBUG
 using UnityExplorer.CacheObject;
 using UnityExplorer.CacheObject.Views;

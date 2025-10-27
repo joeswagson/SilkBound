@@ -14,6 +14,9 @@ namespace UnityLauncher
 #endif
         static void Main(string[] args)
         {
+            string props = File.ReadAllText("../../../../Silkbound/local.props");
+            string offline = props.Split("<SilksongPath_Offline>")[1].Split("</SilksongPath_Offline>")[0].Trim();
+            string steam = props.Split("<SilksongPath_Steam>")[1].Split("</SilksongPath_Steam>")[0].Trim();
             _ = ModMain.TypeName;
 
             bool killed = false;
@@ -34,7 +37,7 @@ namespace UnityLauncher
             if (killed)
                 Thread.Sleep(100);
 
-            string procPath = $"{(DEBUG ? "F:\\! GAMES\\silksong\\NoInstanceCheck\\Hollow Knight Silksong" : "F:\\SteamLibrary\\steamapps\\common\\Hollow Knight Silksong")}\\Hollow Knight Silksong.exe";
+            string procPath = $"{(DEBUG ? offline : steam)}\\Hollow Knight Silksong.exe";//"F:\\! GAMES\\silksong\\NoInstanceCheck\\Hollow Knight Silksong" : "F:\\SteamLibrary\\steamapps\\common\\Hollow Knight Silksong")}\\Hollow Knight Silksong.exe";
             Process.Start(procPath);
             if (DEBUG)
             {
