@@ -131,32 +131,34 @@ namespace SilkBound
 #if DEBUG
         System.Collections.IEnumerator DelayedWindowPosition()
         {
-            int cW = 500;
+            int cW = 0;// 500;
             int w = SilkConstants.TEST_CLIENTS <= 2
                 ? 1
                 : 2; // SilkConstants.TEST_CLIENTS - (SilkConstants.TEST_CLIENTS % 1);
             SilkDebug.PositionConsoleWindow(
-                new Vector2Int(50, 15),
-                new Vector2Int(1200 + cW, 680),
+                new Vector2Int(5, 15),
+                new Vector2Int(950 + cW, 500),
                 w
             );
 
             yield return new WaitForSeconds(0.5f);
 
             SilkDebug.PositionGameWindow(
-                new Vector2Int(((int)Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (1200 + cW)) + 50, 15),
-                new Vector2Int(1600, 680),
+                new Vector2Int(((int)Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (950 + cW)) + 5, 15),
+                new Vector2Int(950, 500),
                 w
             );
 
             if (SilkDebug.GetClientNumber() == 1)
             {
+                //Server.ConnectPipe("pipetest", "host");
                 Server.ConnectTCP("127.0.0.1", "host");
                 Skin skin = SkinManager.GetOrDefault("purple");
                 NetworkUtils.LocalClient!.ChangeSkin(skin);
             }
             else
             {
+                //NetworkUtils.ConnectPipe("pipetest", $"client{SilkDebug.GetClientNumber() - 1}");
                 NetworkUtils.ConnectTCP(CONNECT_IP, $"client{SilkDebug.GetClientNumber() - 1}");
                 NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () =>
                 {
@@ -168,6 +170,7 @@ namespace SilkBound
                         _ => SkinManager.Default
                     };
                     NetworkUtils.LocalClient!.ChangeSkin(skin);
+                    ActionScope.Detach(NetworkUtils.ClientPacketHandler, nameof(NetworkUtils.ClientPacketHandler.HandshakeFulfilled));
                 };
 
                 //NetworkUtils.LocalClient!.AppliedSkin = SkinManager.GetOrDefault("blue");

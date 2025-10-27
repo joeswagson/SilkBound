@@ -15,7 +15,7 @@
                 false
             #endif
         ;
-        public const bool GETALLPOWERUPS = false;
+        public const bool GETALLPOWERUPS = true;
         #endregion
 
         public const bool CUSTOM_TITLE = true;

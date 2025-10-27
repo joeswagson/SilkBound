@@ -10,6 +10,7 @@
   <!-- Configuration -->
   <PropertyGroup>
     <UseUnityExplorerPatches>true</UseUnityExplorerPatches>
+    <DefineConstants></DefineConstants>
   </PropertyGroup>
 
   <!-- Import Game Paths -->
