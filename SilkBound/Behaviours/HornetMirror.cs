@@ -1,4 +1,5 @@
 ﻿using GlobalEnums;
+using Newtonsoft.Json.Linq;
 using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network;
@@ -9,7 +10,10 @@ using SilkBound.Types.Language;
 using SilkBound.Types.Mirrors;
 using SilkBound.Utils;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 namespace SilkBound.Behaviours {
@@ -30,7 +34,8 @@ namespace SilkBound.Behaviours {
         public string Scene = string.Empty;
 
         private static tk2dSpriteAnimator? _cachedLocal;
-        public static tk2dSpriteAnimator ReferenceAnimator {
+        public static tk2dSpriteAnimator ReferenceAnimator
+        {
             get
             {
                 if (NetworkUtils.IsNullPtr(_cachedLocal))
@@ -40,7 +45,8 @@ namespace SilkBound.Behaviours {
             }
         }
 
-        public static HornetMirror AddComponent(GameObject go, bool local, Weaver? client = null, HeroControllerMirror? mirrorController = null, tk2dSprite? mirrorSprite = null, tk2dSpriteCollectionData? mirrorSpriteCollection = null, tk2dSpriteAnimation? mirrorLibrary = null, tk2dSpriteAnimator? mirrorAnimator = null, SimpleInterpolator? interpolator = null, float? layer = null) {
+        public static HornetMirror AddComponent(GameObject go, bool local, Weaver? client = null, HeroControllerMirror? mirrorController = null, tk2dSprite? mirrorSprite = null, tk2dSpriteCollectionData? mirrorSpriteCollection = null, tk2dSpriteAnimation? mirrorLibrary = null, tk2dSpriteAnimator? mirrorAnimator = null, SimpleInterpolator? interpolator = null, float? layer = null)
+        {
             HornetMirror mirror = go.AddComponent<HornetMirror>();
 
             mirror.IsLocal = local;
@@ -63,20 +69,25 @@ namespace SilkBound.Behaviours {
             return mirror;
         }
         // is a MIRROR and not a SYNC object
-        public static bool IsMirror(GameObject obj, out HornetMirror mirror) {
-            if (obj.TryGetComponent<HornetMirror>(out mirror)) {
+        public static bool IsMirror(GameObject obj, out HornetMirror mirror)
+        {
+            if (obj.TryGetComponent<HornetMirror>(out mirror))
+            {
                 return !mirror.IsLocal;
             }
 
             return false;
         }
-        public static bool IsMirror(GameObject obj) {
+        public static bool IsMirror(GameObject obj)
+        {
             return TransactionManager.Fetch<bool>(obj);
         }
-        public static string GetObjectName(Guid id) {
+        public static string GetObjectName(Guid id)
+        {
             return $"SilkBound Mirror {id}";
         }
-        public static HornetMirror CreateLocal() {
+        public static HornetMirror CreateLocal()
+        {
             GameObject mirrorObj = new();
             //mirrorObj.SetName($"SilkBound Hornet Sync");
             mirrorObj.SetName(GetObjectName(NetworkUtils.ClientID));
@@ -89,7 +100,8 @@ namespace SilkBound.Behaviours {
         public GameObject Dash = null!;
         public GameObject AirDash = null!;
         public GameObject WallDashKickoff = null!;
-        public void Init() {
+        public void Init()
+        {
             if (IsLocal) return;
 
             Root.AddComponent<HeroNailImbuement>();
@@ -123,7 +135,8 @@ namespace SilkBound.Behaviours {
             regionListener.enabled = false;
         }
 
-        public T? GetNailAttack<T>(string path) where T : NailAttackBase {
+        public T? GetNailAttack<T>(string path) where T : NailAttackBase
+        {
             if (IsLocal) return null;
             return Attacks.transform.Find(path).GetComponent<T>();
         }
@@ -138,12 +151,125 @@ namespace SilkBound.Behaviours {
         //    return Attacks.transform.Find(path).GetComponent<Downspike>();
         //}
 
-        public static tk2dSpriteAnimation CloneAnimationWithCollection(GameObject owner, tk2dSpriteAnimation source, tk2dSpriteCollectionData targetCollection) {
+        public static tk2dSpriteAnimation CloneAnimationWithCollection(GameObject owner, tk2dSpriteAnimation source, tk2dSpriteCollectionData targetCollection)
+        {
+            //export
+            //JObject obj = new JObject();
+            //var clips = obj["clips"] = new JObject();
+
+            //Dictionary<Texture2D, (Texture2D readableAtlas, Color32[] pixels)> atlasCache = new();
+
+            //int totalClips = source.clips.Length;
+            //int clipIndex = 0;
+
+            //foreach (var clip in source.clips)
+            //{
+            //    clipIndex++;
+            //    var clipEntry = clips[clip.name] = new JObject {
+            //        ["fps"] = clip.fps,
+            //        ["duration"] = clip.Duration,
+            //        ["wrapMode"] = clip.wrapMode.ToString(),
+            //        ["loopStart"] = clip.loopStart,
+            //        ["empty"] = clip.Empty
+            //    };
+
+            //    var frameArray = new JArray();
+            //    int totalFrames = clip.frames.Length;
+            //    int frameIndex = 0;
+
+            //    foreach (var f in clip.frames)
+            //    {
+            //        frameIndex++;
+            //        if (frameIndex % 10 == 0 || frameIndex == totalFrames)
+            //        {
+            //            // Log every 10 frames and on the last frame of the clip
+            //            Logger.Msg($"Processing clip {clipIndex}/{totalClips}: frame {frameIndex}/{totalFrames}");
+            //        }
+
+            //        var frameObj = new JObject {
+            //            ["spriteId"] = f.spriteId,
+            //            ["triggerEvent"] = f.triggerEvent,
+            //            ["eventInfo"] = f.eventInfo,
+            //            ["eventInt"] = f.eventInt,
+            //            ["eventFloat"] = f.eventFloat
+            //        };
+
+            //        var def = f.spriteCollection.spriteDefinitions[f.spriteId];
+            //        var bounds = def.GetBounds();
+            //        Texture2D tex = (Texture2D) def.materialInst.mainTexture;
+
+            //        if (!atlasCache.TryGetValue(tex, out var cached))
+            //        {
+            //            var readable = new Texture2D(tex.width, tex.height, TextureFormat.RGBA32, false);
+            //            RenderTexture rt = RenderTexture.GetTemporary(tex.width, tex.height, 0);
+            //            Graphics.Blit(tex, rt);
+            //            RenderTexture.active = rt;
+            //            readable.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            //            readable.Apply();
+            //            RenderTexture.active = null;
+            //            RenderTexture.ReleaseTemporary(rt);
+
+            //            var pixels = readable.GetPixels32();
+            //            atlasCache[tex] = (readable, pixels);
+            //            cached = (readable, pixels);
+            //        }
+            //        tex = cached.readableAtlas;
+
+            //        Vector2[] uvs = def.uvs; // four corners, usually BL, BR, TL, TR (or similar)
+            //        int texWidth = tex.width;
+            //        int texHeight = tex.height;
+
+            //        // get min/max in UV space
+            //        float uMin = Mathf.Min(uvs[0].x, uvs[1].x, uvs[2].x, uvs[3].x);
+            //        float uMax = Mathf.Max(uvs[0].x, uvs[1].x, uvs[2].x, uvs[3].x);
+            //        float vMin = Mathf.Min(uvs[0].y, uvs[1].y, uvs[2].y, uvs[3].y);
+            //        float vMax = Mathf.Max(uvs[0].y, uvs[1].y, uvs[2].y, uvs[3].y);
+
+            //        // convert UVs to pixel coordinates
+            //        int x = Mathf.Clamp(Mathf.FloorToInt(uMin * texWidth), 0, texWidth - 1);
+            //        int y = Mathf.Clamp(Mathf.FloorToInt(vMin * texHeight), 0, texHeight - 1);
+            //        int width = Mathf.Clamp(Mathf.CeilToInt((uMax - uMin) * texWidth), 1, texWidth - x);
+            //        int height = Mathf.Clamp(Mathf.CeilToInt((vMax - vMin) * texHeight), 1, texHeight - y);
+
+
+
+
+            //        var regionPixels = new Color32[width * height];
+            //        var src = cached.pixels;
+            //        int texW = tex.width;
+            //        for (int row = 0; row < height; row++)
+            //        {
+            //            Array.Copy(src, (y + row) * texW + x, regionPixels, row * width, width);
+            //        }
+
+            //        Texture2D tempTex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            //        tempTex.SetPixels32(regionPixels);
+            //        tempTex.Apply(false, false);
+            //        byte[] pngBytes = tempTex.EncodeToPNG();
+            //        UnityEngine.Object.DestroyImmediate(tempTex);
+
+            //        frameObj["image"] = Convert.ToBase64String(pngBytes);
+            //        frameArray.Add(frameObj);
+            //    }
+
+            //    clipEntry["frames"] = frameArray;
+            //}
+
+            //foreach (var (readableAtlas, _) in atlasCache.Values)
+            //    UnityEngine.Object.DestroyImmediate(readableAtlas);
+
+            //Logger.Msg("Finished processing all clips!");
+            //Logger.Msg("encoding string");
+            //var str = obj.ToString();
+            //File.WriteAllText($"{source.name}.c{SilkDebug.GetClientNumber()}.json", str);
+
+
             tk2dSpriteAnimation clone = owner.AddComponent<tk2dSpriteAnimation>();
             clone.name = source.name + "_Clone";
 
             clone.clips = new tk2dSpriteAnimationClip[source.clips.Length];
-            for (int i = 0; i < source.clips.Length; i++) {
+            for (int i = 0; i < source.clips.Length; i++)
+            {
                 var srcClip = source.clips[i];
                 if (srcClip == null)
                     continue;
@@ -155,9 +281,11 @@ namespace SilkBound.Behaviours {
                     wrapMode = srcClip.wrapMode
                 };
 
-                if (srcClip.frames != null) {
+                if (srcClip.frames != null)
+                {
                     dstClip.frames = new tk2dSpriteAnimationFrame[srcClip.frames.Length];
-                    for (int j = 0; j < srcClip.frames.Length; j++) {
+                    for (int j = 0; j < srcClip.frames.Length; j++)
+                    {
                         var srcFrame = srcClip.frames[j];
                         var dstFrame = new tk2dSpriteAnimationFrame {
                             spriteCollection = targetCollection,
@@ -172,21 +300,24 @@ namespace SilkBound.Behaviours {
 
             return clone;
         }
-        public static tk2dSpriteCollectionData CopyCollection(GameObject mirror, tk2dSpriteCollectionData source, Skin skin) {
+        public static tk2dSpriteCollectionData CopyCollection(GameObject mirror, tk2dSpriteCollectionData source, Skin skin)
+        {
             tk2dSpriteCollectionData collection = (tk2dSpriteCollectionData) source.CopyComponent(mirror, "inst", "platformSpecificData", "name", "spriteDefinitions", "materialInsts", "textureInsts", "materials", "textures");
 
             if (source.material != null)
                 collection.material = new Material(source.material);
 
             collection.materials = new Material[source.materials.Length];
-            for (int i = 0; i < source.materials.Length; i++) {
+            for (int i = 0; i < source.materials.Length; i++)
+            {
                 var material = source.materials[i];
                 collection.materials[i] = new Material(material);
             }
 
             collection.textures = new Texture[source.textures.Length];
             collection.textureInsts = new Texture2D[source.textureInsts.Length];
-            for (int i = 0; i < source.textures.Length; i++) {
+            for (int i = 0; i < source.textures.Length; i++)
+            {
                 var texture = (Texture2D) source.textures[i];
 
                 Texture2D copy = new(texture.width, texture.height, texture.format, false);
@@ -197,7 +328,8 @@ namespace SilkBound.Behaviours {
 
 
             collection.materialInsts = new Material[collection.materials.Length];
-            for (int i = 0; i < collection.materials.Length; i++) {
+            for (int i = 0; i < collection.materials.Length; i++)
+            {
                 collection.materialInsts[i] = new Material(collection.materials[i]);
             }
             collection.textureInsts = null;
@@ -208,7 +340,8 @@ namespace SilkBound.Behaviours {
             SkinManager.ApplySkin(collection, skin);
 
             collection.spriteDefinitions = new tk2dSpriteDefinition[source.spriteDefinitions.Length];
-            for (int i = 0; i < collection.spriteDefinitions.Length; i++) {
+            for (int i = 0; i < collection.spriteDefinitions.Length; i++)
+            {
                 var sourceDefinition = source.spriteDefinitions[i];
                 collection.spriteDefinitions[i] = new tk2dSpriteDefinition() // im sorry
                 {
@@ -255,15 +388,18 @@ namespace SilkBound.Behaviours {
                 };
             }
 
-            foreach (var sprite in collection.spriteDefinitions) {
+            foreach (var sprite in collection.spriteDefinitions)
+            {
                 sprite.material = collection.materials[sprite.materialId];
                 sprite.materialInst = collection.materialInsts![sprite.materialId];
             }
 
             return collection;
         }
-        public static HornetMirror? CreateMirror(UpdateWeaverPacket packet) {
-            using (new StackFlag<HornetMirror>()) {
+        public static HornetMirror? CreateMirror(UpdateWeaverPacket packet)
+        {
+            using (new StackFlag<HornetMirror>())
+            {
                 if (HeroController.instance == null)
                     return null;
 
@@ -310,7 +446,8 @@ namespace SilkBound.Behaviours {
 
         private EnviroRegionListener regionListener = null!;
         public EnvironmentTypes CurrentEnvironment { get; private set; } = EnvironmentTypes.Dust;
-        public void UpdateMirror(UpdateWeaverPacket packet) {
+        public void UpdateMirror(UpdateWeaverPacket packet)
+        {
             if (IsLocal) return;
             //Logger.Stacktrace();
 
@@ -327,44 +464,54 @@ namespace SilkBound.Behaviours {
             Interpolator.velocity = new Vector3(packet.VelocityX, packet.VelocityY, 0);
             //Logger.Msg("updating mirror:", packet.posX, packet.posY, packet.scaleX, packet.vX, packet.vY);
         }
-        public void PlayClip(PlayClipPacket packet) {
+        public void PlayClip(PlayClipPacket packet)
+        {
             if (IsLocal) return;
 
             MirrorAnimator.Play(MirrorLibrary.GetClipByName(packet.clipName), packet.clipStartTime, packet.overrideFps);
             //Mirror
         }
-        public void DoAirDashVFX(bool doGroundDash, bool doAirDash, bool wallSliding, bool dashDown, float scale) {
-            if (wallSliding) {
+        public void DoAirDashVFX(bool doGroundDash, bool doAirDash, bool wallSliding, bool dashDown, float scale)
+        {
+            if (wallSliding)
+            {
                 WallDashKickoff.SetActive(false);
                 WallDashKickoff.SetActive(true);
             }
 
             float num = scale;
-            if (doGroundDash) {
+            if (doGroundDash)
+            {
                 Dash.transform.localScale = new Vector3(-num, num, num);
                 Dash.SetActive(false);
                 Dash.SetActive(true);
                 return;
             }
-            if (dashDown) {
+            if (dashDown)
+            {
                 AirDash.transform.SetLocalRotation2D(90f);
-            } else {
+            } else
+            {
                 AirDash.transform.SetLocalRotation2D(0f);
             }
             AirDash.transform.localScale = new Vector3(num * -Math.Abs(Root.transform.localScale.x), num, num); // this works idk why
             AirDash.SetActive(false);
             AirDash.SetActive(true);
         }
-        public void Ghost() {
-            if (IsLocal) {
+        public void Ghost()
+        {
+            if (IsLocal)
+            {
                 Sprite.color = new Color(1, 1, 1, 0.5f);
                 return;
             }
 
             MirrorSprite.color = new Color(1, 1, 1, 0.5f); // so happy tk2d supports alpha
         }
-        public void EndGhost() {
-            if (IsLocal) {
+        public void EndGhost()
+        {
+            if (IsLocal)
+            {
                 Sprite.color = new Color(1, 1, 1, 1f);
                 return;
             }
@@ -372,30 +519,36 @@ namespace SilkBound.Behaviours {
             MirrorSprite.color = new Color(1, 1, 1, 1f);
         }
 
-        public void GhostRespawn() {
-            if (IsLocal) {
+        public void GhostRespawn()
+        {
+            if (IsLocal)
+            {
 
                 return;
             }
             //Transform targetBench;
             //MirrorController.Respawn();
         }
-        protected override void Start() {
+        protected override void Start()
+        {
 
         }
 
-        protected override void Reset() {
+        protected override void Reset()
+        {
 
         }
 
         EnviroRegionListener? _cached = null;
-        EnviroRegionListener CachedEnviro {
+        EnviroRegionListener CachedEnviro
+        {
             get
             {
                 return _cached ??= HeroController.instance.GetComponent<EnviroRegionListener>();
             }
         }
-        public UpdateWeaverPacket CraftPacket() {
+        public UpdateWeaverPacket CraftPacket()
+        {
             return new UpdateWeaverPacket(
                 SceneManager.GetActiveScene().name,
                 HeroController.instance.transform.position.x,
@@ -406,11 +559,13 @@ namespace SilkBound.Behaviours {
                 CachedEnviro?.CurrentEnvironmentType ?? EnvironmentTypes.Dust
             );
         }
-        protected override void Tick(float dt) {
+        protected override void Tick(float dt)
+        {
             if (Root)
                 Root.name = GetObjectName(Client.ClientID);
 
-            if (MirrorSprite?.Collection != MirrorSpriteCollection && !IsLocal) {
+            if (MirrorSprite?.Collection != MirrorSpriteCollection && !IsLocal)
+            {
                 MirrorAnimator.SetSprite(MirrorSpriteCollection, MirrorSprite!.spriteId);
                 MirrorAnimator.Sprite.collectionInst = MirrorSpriteCollection.inst;
                 Root!.GetComponent<Renderer>().material = MirrorSpriteCollection.spriteDefinitions[MirrorSprite.spriteId].material;

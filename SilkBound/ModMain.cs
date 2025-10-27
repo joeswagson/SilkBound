@@ -21,6 +21,7 @@ using UnityEngine;
 #if DEBUG
 using UnityExplorer.CacheObject;
 using UnityExplorer.CacheObject.Views;
+using SilkBound.Types.Language;
 #endif
 
 #if MELON
@@ -295,6 +296,7 @@ namespace SilkBound
                 NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () =>
                 {
                     NetworkUtils.LocalClient!.ChangeSkin(SkinManager.GetOrDefault("blue"));
+                    ActionScope.Detach(NetworkUtils.ClientPacketHandler, nameof(NetworkUtils.ClientPacketHandler.HandshakeFulfilled));
                 };
 
             }
