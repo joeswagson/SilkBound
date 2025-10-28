@@ -98,7 +98,7 @@ namespace SilkBound.Types.NetLayers
             if (data == null)
                 return;
 
-            Logger.Msg("presend"); 
+            //Logger.Msg("presend"); 
             try
             {
                 Stream.Write(data, 0, data.Length);
@@ -107,9 +107,9 @@ namespace SilkBound.Types.NetLayers
                 Logger.Warn($"NamedPipeServer send error: {e.Message} {e.GetType().Name}");
                 return;
             }
-            Logger.Msg("sent");
+            //Logger.Msg("sent");
             Stream.Flush();
-            Logger.Msg("flushed");
+            //Logger.Msg("flushed");
         }
 
 

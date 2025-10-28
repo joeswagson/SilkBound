@@ -4,7 +4,7 @@ using SilkBound.Types;
 using System.IO;
 using System.Linq;
 
-namespace SilkBound.Patches.Simple.Game {
+namespace SilkBound.Network.Packets.Impl.Sync.Entity {
     internal class EventRegisterPacket(string registerPath, string eventName) : Packet {
         public EventRegister? Register => UnityObjectExtensions.FindComponents<EventRegister>(registerPath)?.First(reg => reg.SubscribedEvent == eventName);
         public override Packet Deserialize(BinaryReader reader) {

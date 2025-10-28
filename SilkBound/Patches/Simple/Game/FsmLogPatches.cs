@@ -1,12 +1,14 @@
 ﻿using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using MelonLoader.Utils;
 using SilkBound.Behaviours;
 using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network.Packets.Impl.Sync.Entity;
 using SilkBound.Types.Language;
 using SilkBound.Utils;
+using System.Linq;
 using UnityEngine;
 
 namespace SilkBound.Patches.Simple.Game {
@@ -19,7 +21,8 @@ namespace SilkBound.Patches.Simple.Game {
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(PlayMakerFSM), nameof(PlayMakerFSM.Awake))]
-        public static bool PlayMakerFSM_Awake_Prefix(PlayMakerFSM __instance) {
+        public static bool PlayMakerFSM_Awake_Prefix(PlayMakerFSM __instance)
+        {
             if (NetworkUtils.Connected && __instance.gameObject.layer == LayerMask.NameToLayer("Enemies"))
                 new StackFlagPole<PlayMakerFSM>(__instance);
 
@@ -29,18 +32,27 @@ namespace SilkBound.Patches.Simple.Game {
         [HarmonyPrefix]
         [HarmonyPatch(nameof(FsmLog.LoggingEnabled), MethodType.Setter)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Compiler generated method name prefixes lowercause \"set_\"")]
-        public static bool set_LoggingEnabled(ref bool value) {
+        public static bool set_LoggingEnabled(ref bool value)
+        {
             if (NetworkUtils.Connected)
                 value = true;
 
             return true;
         }
 
-        public static Handler GetHandler(Fsm? fsm) {
+        public static Handler GetHandler(Fsm? fsm)
+        {
             if (fsm == null || !NetworkUtils.Connected)
                 return Handler.NONE;
 
-            if (!GameManager.instance.IsMenuScene() && fsm.FsmComponent.isActiveAndEnabled && fsm.GameObject.layer == LayerMask.NameToLayer("Enemies"))
+            //Logger.Msg(
+            //    "isMenu:", !GameManager.instance.IsMenuScene(),
+            //    "active:", (fsm.FsmComponent?.isActiveAndEnabled ?? false),
+            //    "layer:", fsm.GameObject != null ? LayerMask.LayerToName(fsm.GameObject.layer) : "null gameobj",
+            //    "isenemy:", fsm.GameObject != null ? fsm.GameObject?.layer == LayerMask.NameToLayer("Enemies") : "null gameobj");
+            if (!GameManager.instance.IsMenuScene()
+                && (fsm.FsmComponent?.isActiveAndEnabled ?? false)
+                && fsm.GameObject?.layer == LayerMask.NameToLayer("Enemies"))
                 return Handler.ENEMY;
 
             return Handler.NONE;
@@ -131,47 +143,62 @@ namespace SilkBound.Patches.Simple.Game {
         //}
 
         [HarmonyPrefix]
-        [HarmonyPatch(nameof(FsmLog.LogEvent))]
-        public static bool LogEvent(FsmLog __instance, FsmState state, FsmEvent fsmEvent) {
-            if (__instance.Fsm == null) return false;
+        //[HarmonyPatch(nameof(FsmLog.LogEvent))]
+        [HarmonyPatch(typeof(Fsm), nameof(Fsm.Event), [typeof(FsmEventTarget), typeof(FsmEvent)])]
+        public static bool LogEvent(Fsm __instance, FsmEventTarget eventTarget, FsmEvent fsmEvent)
+        {
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) goto GAME;
 
-            switch (GetHandler(__instance.Fsm)) {
-                case Handler.NONE: return false;
+            switch (GetHandler(__instance))
+            {
+                case Handler.NONE: goto GAME;
 
-                case Handler.ENEMY: {
-                    EntityMirror mirror = __instance.Fsm.FsmComponent.GetComponent<EntityMirror>();
+                case Handler.ENEMY:
+                {
+                    EntityMirror mirror = __instance.FsmComponent.GetComponent<EntityMirror>();
 
                     if (mirror == null || !mirror.IsLocalOwned)
-                        break;
+                        goto GAME;
 
-                    var goPath = __instance.Fsm.FsmComponent.transform.GetPath();
+                    var goPath = __instance.FsmComponent.transform.GetPath();
                     //FsmEvent.
-                    Logger.Msg("Firing", $"{__instance.Fsm.GameObjectName}::{__instance.Fsm.Name}.{fsmEvent.name}");
+                    Logger.Msg("FSM len:", ChunkedTransfer.Pack(__instance).Sum(x=>x.Length));
+                    Logger.Msg("Firing", $"{__instance.GameObjectName}::{__instance.Name}.{fsmEvent.name}");
                     NetworkUtils.SendPacket(new FSMEventPacket(
                         goPath,
-                        __instance.Fsm.Name,
+                        __instance.Name,
                         fsmEvent.name
                     ));
 
                     if (mirror.HealthManager.battleScene == null)
-                        SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMEvent), goPath, __instance.Fsm.Name, fsmEvent.name));
+                        SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMEvent), goPath, __instance.Name, fsmEvent.name));
 
                     break;
                 }
             }
 
+            goto NONE;
+
+        #region Control Labels
+        GAME:
+            return true;
+        NONE:
             return false;
+            #endregion
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(nameof(FsmLog.LogStart))]
-        public static bool LogStart(FsmLog __instance, FsmState startState) {
+        public static bool LogStart(FsmLog __instance, FsmState startState)
+        {
             if (__instance.Fsm == null) return false;
 
-            switch (GetHandler(__instance.Fsm)) {
+            switch (GetHandler(__instance.Fsm))
+            {
                 case Handler.NONE: return false;
 
-                case Handler.ENEMY: {
+                case Handler.ENEMY:
+                {
                     EntityMirror mirror = __instance.Fsm.FsmComponent.GetComponent<EntityMirror>();
 
                     if (mirror == null || !mirror.IsLocalOwned)
@@ -198,13 +225,16 @@ namespace SilkBound.Patches.Simple.Game {
 
         [HarmonyPrefix]
         [HarmonyPatch(nameof(FsmLog.LogStop))]
-        public static bool LogStop(FsmLog __instance) {
+        public static bool LogStop(FsmLog __instance)
+        {
             if (__instance.Fsm == null) return false;
 
-            switch (GetHandler(__instance.Fsm)) {
+            switch (GetHandler(__instance.Fsm))
+            {
                 case Handler.NONE: return false;
 
-                case Handler.ENEMY: {
+                case Handler.ENEMY:
+                {
                     EntityMirror mirror = __instance.Fsm.FsmComponent.GetComponent<EntityMirror>();
 
                     if (mirror == null || !mirror.IsLocalOwned)
@@ -231,7 +261,8 @@ namespace SilkBound.Patches.Simple.Game {
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(EventRegister), nameof(EventRegister.ReceiveEvent))]
-        public static bool EventRegister_ReceiveEvent_Prefix(EventRegister __instance) {
+        public static bool EventRegister_ReceiveEvent_Prefix(EventRegister __instance)
+        {
             if (!NetworkUtils.Connected) return true;
 
             if (__instance.GetComponent<EntityMirror>() is var mirror && mirror != null)
@@ -246,7 +277,8 @@ namespace SilkBound.Patches.Simple.Game {
         #region Mossbone Mother
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ObjectJitter), nameof(ObjectJitter.DoTranslate))]
-        public static bool DoTranslate(ObjectJitter __instance) {
+        public static bool DoTranslate(ObjectJitter __instance)
+        {
             if (!NetworkUtils.Connected) return true;
 
             if (__instance.Fsm.FsmComponent.GetComponent<EntityMirror>() is var mirror && mirror != null)
@@ -259,10 +291,12 @@ namespace SilkBound.Patches.Simple.Game {
         #region Generic
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Tk2dPlayAnimation), nameof(Tk2dPlayAnimation.DoPlayAnimation))]
-        public static bool DoPlayAnimation(Tk2dPlayAnimation __instance) {
+        public static bool DoPlayAnimation(Tk2dPlayAnimation __instance)
+        {
             if (!NetworkUtils.Connected) return true;
 
-            if (__instance.gameObject?.GameObject?.value?.GetComponent<EntityMirror>() is var mirror && mirror != null) {
+            if (__instance.gameObject?.GameObject?.value?.GetComponent<EntityMirror>() is var mirror && mirror != null)
+            {
                 Logger.Msg("Calling original:", mirror.IsLocalOwned);
                 return mirror.IsLocalOwned;
             }
