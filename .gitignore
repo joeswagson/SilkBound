@@ -5,6 +5,7 @@
 
 # SilkBound Specific
 local.props
+*.sln
 
 # User-specific files
 *.rsuser
