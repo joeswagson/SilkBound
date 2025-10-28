@@ -36,6 +36,8 @@ namespace SilkBound.Network.Packets
                     Subscribe(packetType.Name, (packet, connection) => packet.ClientHandler(connection));
                 else if (isServer && packetType.GetMethod(nameof(Packet.ServerHandler)).DeclaringType == packetType)
                     Subscribe(packetType.Name, (packet, connection) => packet.ServerHandler(connection));
+                else if (!isClient && !isServer && NetworkUtils.IsServer)
+                    Subscribe(packetType.Name, (packet, connection) => packet.RelayInternal(connection));
 
             foreach (var method in methods)
             {
