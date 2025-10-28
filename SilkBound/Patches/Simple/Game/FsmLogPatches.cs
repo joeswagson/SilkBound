@@ -162,7 +162,7 @@ namespace SilkBound.Patches.Simple.Game {
 
                     var goPath = __instance.FsmComponent.transform.GetPath();
                     //FsmEvent.
-                    Logger.Msg("FSM len:", ChunkedTransfer.Pack(__instance).Sum(x=>x.Length));
+                    //Logger.Msg("FSM len:", ChunkedTransfer.Pack(__instance).Sum(x=>x.Length));
                     Logger.Msg("Firing", $"{__instance.GameObjectName}::{__instance.Name}.{fsmEvent.name}");
                     NetworkUtils.SendPacket(new FSMEventPacket(
                         goPath,
