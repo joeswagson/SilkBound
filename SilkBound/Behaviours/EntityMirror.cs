@@ -4,6 +4,7 @@ using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Sync;
 using SilkBound.Types.Language;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -19,6 +20,12 @@ namespace SilkBound.Behaviours {
             }
         }
 
+
+        public static bool Exists(GameObject component, [NotNullWhen(true)] out EntityMirror mirror)
+        {
+            mirror = component.GetComponent<EntityMirror>();
+            return mirror != null;
+        }
 
         private HealthManager? _healthManager = null;
         public HealthManager HealthManager => _healthManager ??= Root.GetComponent<HealthManager>();

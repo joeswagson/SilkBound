@@ -7,11 +7,6 @@
     <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server</Configurations>
   </PropertyGroup>
 
-  <!-- Configuration -->
-  <PropertyGroup>
-    <UseUnityExplorerPatches>true</UseUnityExplorerPatches>
-    <DefineConstants></DefineConstants>
-  </PropertyGroup>
 
   <!-- Import Game Paths -->
   <Import Project="Local.props" Condition="Exists('Local.props')" />
@@ -56,6 +51,11 @@
         <TargetConfiguration>Release</TargetConfiguration>
         <OutputPath>bin\Server\</OutputPath>
     </PropertyGroup>
+  
+  <!-- Generic Configuration -->
+  <PropertyGroup Condition="'$(TargetConfiguration)' == 'Debug'">
+    <UseUnityExplorerPatches>true</UseUnityExplorerPatches>
+  </PropertyGroup>
     
   <!-- Resources -->
   <ItemGroup>
@@ -107,8 +107,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.10" />
     </ItemGroup>
 
-  <!-- UnityExplorer References (Debug Patches) 
-  <ItemGroup Condition="'$(TargetConfiguration)' == 'Debug'">
+  <ItemGroup Condition="'$(UseUnityExplorerPatches)' == 'true'">
     <Reference Include="UnityExplorer.ML.Mono">
       <HintPath>CompileOnly\UnityExplorer.ML.Mono.dll</HintPath>
     </Reference>
@@ -119,7 +118,6 @@
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; /IM &quot;Hollow Knight Silksong.Client2.exe&quot; /IM &quot;Hollow Knight Silksong.Client3.exe&quot; /IM &quot;Hollow Knight Silksong.Client4.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0" />
   </Target>
-  -->
 
   <!-- Post-build: copy built DLL to correct loader folder 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

@@ -30,6 +30,38 @@ namespace SilkBound.Patches.Simple.Game {
         }
 
         [HarmonyPrefix]
+        [HarmonyPatch(typeof(Fsm), nameof(Fsm.EnterState), [typeof(FsmState)])]
+        public static bool EnterState(Fsm __instance, FsmState state)
+        {
+            if (!NetworkUtils.Connected) goto GAME;
+
+            switch (GetHandler(__instance))
+            {
+                case Handler.NONE: goto NONE;
+                case Handler.ENEMY:
+                    if(!__instance.GetMirror(out EntityMirror? mirror))
+                        goto GAME;
+
+                    if(!mirror.IsLocalOwned)
+                        goto GAME;
+
+                    var packet = __instance.Construct(f=>new FSMStatePacket(f, FsmStateType.Enter, state.Name));
+                    if (packet == null)
+                        goto GAME;
+
+                    NetworkUtils.SendPacket(packet);
+
+                    break;
+            }
+
+            goto GAME;
+
+        GAME: return true;
+        NONE: return false;
+        }
+
+
+        [HarmonyPrefix]
         [HarmonyPatch(nameof(FsmLog.LoggingEnabled), MethodType.Setter)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Compiler generated method name prefixes lowercause \"set_\"")]
         public static bool set_LoggingEnabled(ref bool value)

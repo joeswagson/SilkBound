@@ -102,6 +102,7 @@ namespace SilkBound.Types.JsonConverters
 
             instance.m_RelativeVelocity = obj["RelativeVelocity"]?.ToObject<Vector2>(serializer) ?? Vector2.zero;
             instance.m_Enabled = obj["Enabled"]?.ToObject<int>() ?? 0;
+            Logger.Debug("Collider was serialized. New collider active state:", instance.m_Enabled);
             instance.m_ContactCount = obj["ContactCount"]?.ToObject<int>() ?? 0;
 
             if (obj["Contacts"] is JArray contacts)
