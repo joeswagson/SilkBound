@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 #if MELON
 using MelonLoader.Utils;
 #elif BEPIN
@@ -12,6 +13,8 @@ namespace SilkBound.Utils
         private static readonly string _rootFolderPath = 
             #if MELON
             MelonEnvironment.MelonBaseDirectory + "/Silkbound";
+            #elif SERVER
+            AppDomain.CurrentDomain.BaseDirectory;
             #elif BEPIN
             Paths.PluginPath + "/Silkbound";
             #endif

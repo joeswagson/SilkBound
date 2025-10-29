@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using SilkBound.Addons.AddonLoading;
 using SilkBound.Network.Packets.Impl.Steam;
 using SilkBound.Managers;
+using SilkBound.Network.Packets.Handlers;
 using UnityEngine.SceneManagement;
 
 namespace SilkBound.Types
@@ -67,7 +68,7 @@ namespace SilkBound.Types
             }
         }
 
-        public ServerSettings Settings { get; internal set; } = ModMain.Config.HostSettings;
+        public ServerSettings Settings { get; set; } = ModMain.Config.HostSettings;
         public Weaver Host { get; internal set; } = null!;
         public string Address { get; internal set; } = null!;
         public int? Port { get; internal set; }
@@ -82,19 +83,17 @@ namespace SilkBound.Types
         }
         public static Server ConnectTCP(string host, string name, int? port = null)
         {
-            return Connect(new TCPServer(host, port), name);
+            return Connect(new TCPServer(host, new ServerPacketHandler(), port), name);
         }
 
         public static Server Connect(NetworkServer connection, string name)
         {
             Weaver host = NetworkUtils.Connect(connection, name);
             NetworkUtils.LocalServer = connection;
-
             CurrentServer = new Server(connection);
             CurrentServer.Address = connection.Host!;
             CurrentServer.Port = connection.Port ?? CurrentServer.Port ?? SilkConstants.PORT;
             CurrentServer.Host = host;
-
             AddonManager.LoadAddons();
 
             return CurrentServer;

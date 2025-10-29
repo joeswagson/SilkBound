@@ -416,7 +416,13 @@ namespace SilkBound.Behaviours {
 
                 tk2dSprite source = Sprite!;
                 tk2dSpriteCollectionData collection = CopyCollection(mirrorObj, source.Collection, packet.Sender.AppliedSkin);
-                tk2dSprite mirrorSprite = tk2dSprite.AddComponent(mirrorObj, source!.Collection, UnityEngine.Random.Range(int.MinValue, int.MaxValue));
+                tk2dSprite mirrorSprite = tk2dSprite.AddComponent(mirrorObj, source!.Collection,
+#if !SERVER
+                    UnityEngine.Random.Range(int.MinValue, int.MaxValue)
+#else
+                    new System.Random().Next(int.MinValue, int.MaxValue)
+#endif
+                    );
 
                 mirrorSprite.color = new Color(1, 1, 1, 1);
 

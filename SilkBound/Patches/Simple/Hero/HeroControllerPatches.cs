@@ -41,7 +41,9 @@ namespace SilkBound.Patches.Simple.Hero
             Logger.Debug("hero spawned: " + __instance.name);
 
             NetworkUtils.LocalClient.Mirror = HornetMirror.CreateLocal();
+            #if !SERVER
             NetworkUtils.LocalClient.ChangeSkin(NetworkUtils.LocalClient.AppliedSkin);
+            #endif
             if (SilkConstants.DEBUG && SilkConstants.GETALLPOWERUPS) GameManager.instance.GetAllPowerups();
         }
 

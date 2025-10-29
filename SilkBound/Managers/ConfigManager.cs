@@ -67,11 +67,13 @@ namespace SilkBound.Managers
     {
         #region Config
 
+        
+        #if !SERVER
         /// <summary>
         /// Online username
         /// </summary>
         public string Username = "Weaver";
-
+        #endif 
         /// <summary>
         /// Default port for hosting/joining-(default, if not specified) servers.
         /// </summary>
@@ -114,8 +116,7 @@ namespace SilkBound.Managers
         {
             if (File.Exists(Resolve($"{fileName}.json")))
                 return JsonConvert.DeserializeObject<Config>(File.ReadAllText(Resolve($"{fileName}.json"))) ?? new Config();
-            else
-                return new Config();
+            return new Config();
         }
     }
 }

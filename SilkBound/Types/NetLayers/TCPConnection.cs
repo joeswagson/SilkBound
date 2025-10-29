@@ -2,10 +2,12 @@
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Utils;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SilkBound.Network.Packets.Impl.Communication;
 
 namespace SilkBound.Types.NetLayers
 {
@@ -22,7 +24,8 @@ namespace SilkBound.Types.NetLayers
         public bool HasConnection { get; private set; }
 
         public override bool IsConnected => _client != null && _client.Connected;
-        public TCPConnection(string host, int? port=null) : base(new ClientPacketHandler())
+
+        public TCPConnection(string host, int? port = null) : base(new ClientPacketHandler())
         {
             port = port ?? SilkConstants.PORT;
             _client = new TcpClient();
@@ -32,13 +35,14 @@ namespace SilkBound.Types.NetLayers
             Connect(host, port);
         }
 
-        internal TCPConnection(TcpClient client, string remoteId, bool isServerSide)
-            : base(isServerSide ? new ServerPacketHandler() : new ClientPacketHandler())
+        internal TCPConnection(TcpClient client, string remoteId, bool isServerSide, PacketHandler handler)
+            : base(handler)
         {
             _client = client;
             _remoteId = remoteId;
             _isServerSide = isServerSide;
-            ConnectImpl(null!, null); // i should make them null by default (especially since the 2nd param is already supposed to be) for bs like this but it looks cool on my ide with the minecraft font lol
+            ConnectImpl(null!,
+                null); // i should make them null by default (especially since the 2nd param is already supposed to be) for bs like this but it looks cool on my ide with the minecraft font lol
         }
 
         public override void ConnectImpl(string host, int? port)
@@ -55,6 +59,11 @@ namespace SilkBound.Types.NetLayers
 
                 HasConnection = true;
                 Logger.Msg($"[TCPConnection] Connected to {_remoteId}");
+#if SERVER
+                Send(new HandshakePacket(Guid.NewGuid(), "standaloneSilkServer"));
+#else
+                Send(new HandshakePacket(NetworkUtils.LocalClient.ClientID, NetworkUtils.LocalClient.ClientName));
+#endif
             }
             catch (Exception ex)
             {
@@ -123,7 +132,9 @@ namespace SilkBound.Types.NetLayers
                     }
                 }
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+            }
             catch (Exception ex)
             {
                 Logger.Warn($"[TCPConnection] Receive loop ended for {_remoteId}: {ex.Message}");
@@ -143,7 +154,14 @@ namespace SilkBound.Types.NetLayers
                 HasConnection = false;
 
                 _cts?.Cancel();
-                try { _recvTask?.Wait(500); } catch { }
+                try
+                {
+                    _recvTask?.Wait(500);
+                }
+                catch
+                {
+                }
+
                 _cts?.Dispose();
                 _cts = null;
 
@@ -168,7 +186,8 @@ namespace SilkBound.Types.NetLayers
                 return;
             }
 
-            byte[]? data = PacketProtocol.PackPacket(packet);
+            byte[]? data;
+            data = PacketProtocol.PackPacket(packet);
             if (data == null) return;
 
             try

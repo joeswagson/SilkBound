@@ -11,7 +11,8 @@ namespace SilkBound.Network
         //public AuthToken Token;
         public Guid ClientID = clientID ?? Guid.NewGuid();
         public string ClientName = name;
-        public Skin AppliedSkin = SkinManager.Default;
+        public string? AppliedSkinName;
+        public Skin AppliedSkin => SkinManager.GetOrDefault(AppliedSkinName ?? string.Empty);
         public bool IsLocal => NetworkUtils.ClientID == ClientID;
 
         // SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP SHUT UP GET OUT OF MY HEAD GAAAAGH
@@ -23,12 +24,11 @@ namespace SilkBound.Network
         {
             if (IsLocal)
                 NetworkUtils.SendPacket(new SkinUpdatePacket(skin.SkinName));
-
+            
             var collection = IsLocal ? HeroController.instance?.animCtrl?.animator?.Sprite?.collection : Mirror?.MirrorSpriteCollection;
             if (collection != null)
                 SkinManager.ApplySkin(collection, skin);
-
-            AppliedSkin = skin;
+            AppliedSkinName = skin.SkinName;
         }
         public int GetPlayersInScene() => Server.CurrentServer.GetPlayersInScene();
     }

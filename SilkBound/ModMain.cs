@@ -17,6 +17,7 @@ using Steamworks;
 using System;
 using System.Collections;
 using System.Linq;
+using SilkBound.Types.Language;
 using UnityEngine;
 using SilkBound.Types.Language;
 #if DEBUG
@@ -32,7 +33,7 @@ namespace SilkBound
 {
 #if MELON
     public partial class ModMain : MelonMod
-#else
+#elif BEPIN
     [BepInAutoPlugin("io.github.joeswagson", "SilkBound", "1.0.0")]
     [BepInProcess("Hollow Knight Silksong.exe")]
     public partial class ModMain : BaseUnityPlugin

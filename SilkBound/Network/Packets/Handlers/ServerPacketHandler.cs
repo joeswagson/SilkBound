@@ -94,7 +94,6 @@ namespace SilkBound.Network.Packets.Handlers
         public void OnSkinUpdatePacket(SkinUpdatePacket packet, NetworkConnection connection)
         {
             packet.Sender.ChangeSkin(SkinManager.GetOrDefault(packet.SkinName));
-
             //send to all clients except sender
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
@@ -103,7 +102,7 @@ namespace SilkBound.Network.Packets.Handlers
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
             Guid senderBefore = packet.Sender.ClientID;
-            (packet.Sender.Mirror ??= HornetMirror.CreateMirror(packet)!)?.UpdateMirror(packet);
+            packet.Sender.Mirror.UpdateMirror(packet);
 
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
             Guid senderAfter = packet.Sender.ClientID;

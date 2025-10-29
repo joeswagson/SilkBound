@@ -19,11 +19,13 @@ namespace SilkBound.Types.NetLayers
         private TcpListener? _listener;
         private CancellationTokenSource? _cts;
         private Task? _acceptTask;
+        private PacketHandler _handler;
 
         public override bool IsConnected => _connections.Count > 0;
-        public TCPServer(string host, int? port = null) : base(new ServerPacketHandler())
+        public TCPServer(string host, PacketHandler handler, int? port = null) : base(handler)
         {
             Connect(host, port ?? SilkConstants.PORT);
+            _handler = handler;
         }
         public override void ConnectImpl(string host, int? port)
         {
@@ -54,7 +56,7 @@ namespace SilkBound.Types.NetLayers
                     {
                         if (!_connections.ContainsKey(key))
                         {
-                            var conn = new TCPConnection(client, key, true);
+                            var conn = new TCPConnection(client, key, true, _handler);
                             _connections[key] = conn;
                             Logger.Msg($"[TCPServer] Connection accepted from {key}");
                         }

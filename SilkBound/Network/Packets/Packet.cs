@@ -62,7 +62,7 @@ namespace SilkBound.Network.Packets {
                 throw new UnauthorizedAccessException($"Packet of type {GetType().Name} cannot be sent by {PacketAuthority} authority.");
             }
 
-            Sender ??= NetworkUtils.LocalClient!;
+            Sender ??= NetworkUtils.LocalClient;
 
             Serialize(writer);
         }
@@ -74,8 +74,8 @@ namespace SilkBound.Network.Packets {
                 throw new UnauthorizedAccessException($"Packet of type {GetType().Name} cannot be sent by {PacketAuthority} authority.");
             }
 
-            Sender ??= Server.CurrentServer?.GetWeaver(clientId) ?? new Weaver("Unnamed" + UnityEngine.Random.Range(1000, 10000).ToString(), null, clientId);
-
+            Sender ??= Server.CurrentServer?.GetWeaver(clientId);
+            
             Packet packet = Deserialize(reader);
             packet.Sender = Sender;
 

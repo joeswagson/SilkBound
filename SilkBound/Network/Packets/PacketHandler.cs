@@ -56,7 +56,8 @@ namespace SilkBound.Network.Packets
                     }
                     else if (parameters.Length == 2 &&
                              typeof(Packet).IsAssignableFrom(parameters[0].ParameterType) &&
-                             (typeof(NetworkConnection).IsAssignableFrom(parameters[1].ParameterType) || typeof(NetworkServer).IsAssignableFrom(parameters[1].ParameterType)))
+                             (typeof(NetworkConnection).IsAssignableFrom(parameters[1].ParameterType) ||
+                              typeof(NetworkServer).IsAssignableFrom(parameters[1].ParameterType)))
                     {
                         method.Invoke(this, [packet, conn]);
                     }
@@ -86,40 +87,55 @@ namespace SilkBound.Network.Packets
         {
             if (packet == null) return;
 
-            void process() {
+            void process()
+            {
                 string packetName = packet.GetType().Name;
-                try {
+                try
+                {
                     if (connection is NetworkServer)
                         EventManager.CallEvent(new C2SPacketReceivedEvent(packet, connection));
                     else
                         EventManager.CallEvent(new S2CPacketReceivedEvent(packet, connection));
-                } catch (Exception ex) {
+                }
+                catch (Exception ex)
+                {
                     Logger.Error($"Error firing events for {packetName}: {ex}");
                 }
 
-                if (TransactionManager.Fetch<bool>(packet) == true) {
+                if (TransactionManager.Fetch<bool>(packet) == true)
+                {
                     Logger.Debug("Packet was cancelled.");
                     return;
                 }
 
-                if (Handlers.TryGetValue(packetName, out List<Action<Packet, NetworkConnection>> handlers)) {
-                    foreach (var handler in handlers.ToList()) {
-                        try {
+                if (Handlers.TryGetValue(packetName, out List<Action<Packet, NetworkConnection>> handlers))
+                {
+                    foreach (var handler in handlers.ToList())
+                    {
+                        try
+                        {
                             using (new StackFlag<PacketHandlerContext>(
-                                new() {
-                                    Packet = packet,
-                                    Sender = packet.Sender,
-                                    Connection = connection
-                                }))
+                                       new()
+                                       {
+                                           Packet = packet,
+                                           Sender = packet.Sender,
+                                           Connection = connection
+                                       }))
                                 handler(packet, connection);
-                        } catch (Exception ex) {
+                        }
+                        catch (Exception ex)
+                        {
                             Logger.Error($"Error in handler for {packetName}: {ex}");
                         }
                     }
                 }
             }
 
+#if SERVER
+            process();
+#else
             CoreLoop.InvokeOnGameThread(process);
+#endif
             //ModMain.MainThreadDispatcher.Instance.Enqueue(process);
         }
 

@@ -16,7 +16,9 @@ namespace SilkBound.Network
             {
                 ClientID = weaver.ClientID,
                 ClientName = weaver.ClientName,
+                #if !SERVER
                 AppliedSkin = weaver.AppliedSkin.SkinName
+                #endif
             };
         }
 

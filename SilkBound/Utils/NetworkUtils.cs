@@ -37,16 +37,16 @@ namespace SilkBound.Utils
             }
         }
 
-        public static event Action? OnConnected;
+        public static event EventHandler OnConnected = delegate { };
 
         public static Guid ClientID => LocalClient?.ClientID ?? Guid.Empty;
         public static bool SendPacket(Packet packet)
         {
+            Logger.Msg("send packet in nw utils");
             if (LocalConnection == null || !Connected) return false;
             LocalConnection.Send(packet);
             return true;
         }
-
         public static Weaver ConnectPipe(string host, string name)
         {
             return Connect(new NamedPipeConnection(host), name);
@@ -61,21 +61,15 @@ namespace SilkBound.Utils
         }
         public static Weaver Connect(NetworkConnection connection, string name)
         {
+            Server.CurrentServer = new Server(LocalConnection);
+        
             if (LocalConnection != null)
                 LocalConnection.Disconnect();
-
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
-            LocalClient = LocalClient ?? new LocalWeaver(name, connection);
-
-            Server.CurrentServer = new Server(LocalConnection);
-            if(connection is not NetworkServer)
-                SendPacket(new HandshakePacket(LocalClient.ClientID, LocalClient.ClientName));
-
+            LocalClient ??= new LocalWeaver(name, connection);
+            
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
-
-            OnConnected?.Invoke();
-
             return LocalClient;
         }
         public static void Disconnect(string reason="Unspecified", Weaver? target=null)
@@ -129,7 +123,7 @@ namespace SilkBound.Utils
             }
             return false;
         }
-
+        
         public static bool IsNullPtr([NotNullWhen(false)] UnityEngine.Object? obj) => obj == null || !Object.IsNativeObjectAlive(obj);
     }
 }
