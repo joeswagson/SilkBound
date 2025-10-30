@@ -18,6 +18,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 namespace SilkBound.Behaviours {
     public class HornetMirror : GenericSync {
+        public static Dictionary<Guid, HornetMirror> Mirrors = [];
         public static tk2dSprite Sprite => HeroController.instance?.GetComponent<tk2dSprite>()!;
 
         public bool IsLocal = true;
@@ -51,7 +52,7 @@ namespace SilkBound.Behaviours {
 
             mirror.IsLocal = local;
             mirror.Root = go;
-            mirror.Client = client ?? NetworkUtils.LocalClient!;
+            mirror.Client = client ?? NetworkUtils.LocalClient;
             mirror.MirrorSprite = mirrorSprite!;
             mirror.MirrorSpriteCollection = mirrorSpriteCollection!;
             mirror.MirrorLibrary = mirrorLibrary!;
@@ -63,9 +64,9 @@ namespace SilkBound.Behaviours {
                 mirror.Layer = layer.Value;
 
             mirror.Init();
-
             TransactionManager.Revoke(go);
 
+            Mirrors.Add(mirror.Client.ClientID, mirror);
             return mirror;
         }
         // is a MIRROR and not a SYNC object
@@ -92,6 +93,7 @@ namespace SilkBound.Behaviours {
             //mirrorObj.SetName($"SilkBound Hornet Sync");
             mirrorObj.SetName(GetObjectName(NetworkUtils.ClientID));
             mirrorObj.transform.SetParent(HeroController.instance.transform);
+            mirrorObj.transform.localPosition = Vector3.zero;
 
             return AddComponent(mirrorObj, true, NetworkUtils.LocalClient); // not gunna do object comparisons js as a precaution
         }
@@ -103,6 +105,7 @@ namespace SilkBound.Behaviours {
         public void Init()
         {
             if (IsLocal) return;
+
 
             Root.AddComponent<HeroNailImbuement>();
 
@@ -133,6 +136,8 @@ namespace SilkBound.Behaviours {
 
             regionListener = Root.AddComponentIfNotPresent<EnviroRegionListener>();
             regionListener.enabled = false;
+
+            //Mirrors.Add(Client.ClientID, this);
         }
 
         public T? GetNailAttack<T>(string path) where T : NailAttackBase
@@ -524,7 +529,6 @@ namespace SilkBound.Behaviours {
 
             MirrorSprite.color = new Color(1, 1, 1, 1f);
         }
-
         public void GhostRespawn()
         {
             if (IsLocal)
@@ -535,6 +539,27 @@ namespace SilkBound.Behaviours {
             //Transform targetBench;
             //MirrorController.Respawn();
         }
+        public float GetDistance(Vector3? pointB, float rounding = 1f)
+        {
+            if (!IsInScene || !pointB.HasValue)
+                return float.NaN;
+
+            float result = (pointB.Value - Root.transform.position).sqrMagnitude;
+
+            if (rounding > 0f)
+            {
+                float factor = Mathf.Pow(10f, rounding);
+                result = Mathf.Round(result * factor) / factor;
+            } else if (rounding == 0)
+            {
+                result = Mathf.Round(result);
+            }
+
+            return result;
+        }
+
+        public float GetDistance(HornetMirror? other) => other == this ? 0f : GetDistance(other?.Root?.transform.position);
+        public float GetDistance(Weaver? other) => other == Client ? 0f : GetDistance(other?.Mirror);
         protected override void Start()
         {
 
@@ -542,7 +567,7 @@ namespace SilkBound.Behaviours {
 
         protected override void Reset()
         {
-
+            Mirrors.Remove(Client.ClientID);
         }
 
         EnviroRegionListener? _cached = null;
@@ -553,6 +578,15 @@ namespace SilkBound.Behaviours {
                 return _cached ??= HeroController.instance.GetComponent<EnviroRegionListener>();
             }
         }
+
+        public float? Health
+        {
+            get
+            {
+                throw new NotImplementedException("TODO: Implement client health acknowledgements.");
+            }
+        }
+
         public UpdateWeaverPacket CraftPacket()
         {
             return new UpdateWeaverPacket(

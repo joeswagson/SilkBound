@@ -8,7 +8,7 @@
 
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
 
-    <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release</Configurations>
+    <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Standalone</Configurations>
   </PropertyGroup>
 
   <!-- MelonLoader Configurations -->

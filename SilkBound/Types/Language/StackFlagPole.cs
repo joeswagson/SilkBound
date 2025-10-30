@@ -15,6 +15,7 @@ namespace SilkBound.Types.Language
         public static bool HasValue => Value != null;
         public static T? Value;
         public static bool Raised => depth.Value > 0;
+        public static bool RaisedWithValue => Raised && HasValue;
 
         public StackFlag(T? value = default)
         {

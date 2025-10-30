@@ -1,6 +1,5 @@
 ﻿global using Logger = SilkBound.Utils.Logger;
 global using Object = UnityEngine.Object;
-using SLogger = SilkBound.Utils.Logger;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 #if MELON
@@ -54,16 +53,16 @@ namespace SilkBound
 #endif
         {
             MainThreadId = Environment.CurrentManagedThreadId;
-            SLogger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
+            Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
                 "| Unity Thread ID:", MainThreadId);
             var method = AccessTools.Method(typeof(HealthManager), "TakeDamage", [typeof(HitInstance)]);
-            SLogger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
+            Logger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
 
             if (SilkConstants.DEBUG)
             {
                 if (SilkDebug.GetClientNumber() > SilkConstants.TEST_CLIENTS)
                 {
-                    SLogger.Error("Client number exceeds TEST_CLIENTS constant. Quitting.");
+                    Logger.Error("Client number exceeds TEST_CLIENTS constant. Quitting.");
                     Application.Quit();
                     return;
                 }
@@ -103,10 +102,11 @@ namespace SilkBound
 
             #endregion
 
-            //foreach (var skin in SkinManager.Library)
-            //{
-            //    skin.Value.WriteToFile($"{skin.Key}.skin");
-            //}
+            foreach (var skin in SkinManager.Library)
+            {
+                Logger.Msg("skin:", skin.Key);
+                //skin.Value.WriteToFile($"{skin.Key}.skin");
+            }
             //TickManager.OnTick += () =>
             //{
             //    Logger.Msg("Tick");
@@ -138,15 +138,15 @@ namespace SilkBound
                 : 2; // SilkConstants.TEST_CLIENTS - (SilkConstants.TEST_CLIENTS % 1);
             SilkDebug.PositionConsoleWindow(
                 new Vector2Int(5, 15),
-                new Vector2Int(950 + cW, 500),
+                new Vector2Int(1200 + cW, 600),
                 w
             );
 
             yield return new WaitForSeconds(0.5f);
 
             SilkDebug.PositionGameWindow(
-                new Vector2Int(((int)Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (950 + cW)) + 5, 15),
-                new Vector2Int(950, 500),
+                new Vector2Int(((int)Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (1200 + cW)) + 5, 15),
+                new Vector2Int(1200, 600),
                 w
             );
 
@@ -263,7 +263,7 @@ namespace SilkBound
             if (Input.GetKeyDown(KeyCode.Minus))
             {
                 NetworkUtils.LocalClient?.Shaw();
-                SLogger.Msg("SHAW!");
+                Logger.Msg("SHAW!");
 
                 //Logger.Msg("Sending test transfer");
                 //TransferManager.Send(new TestTransfer(new Dictionary<string, string>
@@ -281,9 +281,9 @@ namespace SilkBound
             if (Input.GetKeyDown(KeyCode.RightBracket))
             {
                 if (!SteamAPI.Init())
-                    SLogger.Error("SteamAPI.Init() failed!");
+                    Logger.Error("SteamAPI.Init() failed!");
                 else
-                    SLogger.Msg("SteamAPI initialized.");
+                    Logger.Msg("SteamAPI initialized.");
             }
 
             if (Input.GetKeyDown(KeyCode.H))

@@ -22,6 +22,26 @@ namespace SilkBound.Managers
             if (NetworkObjects.Contains(obj))
                 NetworkObjects.Remove(obj);
         }
+        public static void Flush(bool flushActive=false)
+        {
+            if (flushActive)
+            {
+                NetworkObjects.Clear();
+                return;
+            }
+
+            NetworkObjects.RemoveAll(obj => !obj.Active);
+        }
+        public static NetworkObject? Get(string id)
+        {
+            NetworkObjects.RemoveAll(obj => !obj.Active);
+            return NetworkObjects.Find(o => o.NetworkId == id);
+        }
+        public static T? Get<T>(string id) where T : NetworkObject
+        {
+            NetworkObjects.RemoveAll(obj => !obj.Active);
+            return NetworkObjects.Find(o => o.NetworkId == id) as T;
+        }
 
         public static bool TryGet(string id, [NotNullWhen(true)] out NetworkObject netObj)
         {
@@ -31,6 +51,7 @@ namespace SilkBound.Managers
             netObj = found;
             return found != null;
         }
+
         public static bool TryGet<T>(string id, [NotNullWhen(true)] out T netObj) where T : NetworkObject
         {
             bool found = TryGet(id, out NetworkObject intermediate);

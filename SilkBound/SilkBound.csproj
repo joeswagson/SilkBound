@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
-    <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server</Configurations>
+    <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server;Standalone</Configurations>
   </PropertyGroup>
 
 
@@ -56,6 +56,11 @@
   <PropertyGroup Condition="'$(TargetConfiguration)' == 'Debug'">
     <UseUnityExplorerPatches>true</UseUnityExplorerPatches>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Types\NewFolder\**" />
+    <EmbeddedResource Remove="Types\NewFolder\**" />
+    <None Remove="Types\NewFolder\**" />
+  </ItemGroup>
     
   <!-- Resources -->
   <ItemGroup>
@@ -119,10 +124,8 @@
     <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; /IM &quot;Hollow Knight Silksong.Client2.exe&quot; /IM &quot;Hollow Knight Silksong.Client3.exe&quot; /IM &quot;Hollow Knight Silksong.Client4.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0" />
   </Target>
 
-  <!-- Post-build: copy built DLL to correct loader folder 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Message Text="Deploying to $(TargetLoader) → $(SilksongPath_Output)" Importance="high" />
     <Exec Command="xcopy /y /d &quot;$(TargetPath)&quot; &quot;$(SilksongPath_Output)&quot;" />
   </Target>
-  -->
 </Project>

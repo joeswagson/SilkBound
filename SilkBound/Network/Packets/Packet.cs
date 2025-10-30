@@ -1,6 +1,10 @@
-﻿using SilkBound.Types;
+﻿using Newtonsoft.Json;
+using SilkBound.Types;
+using SilkBound.Types.Data;
+using SilkBound.Types.Language;
 using SilkBound.Utils;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace SilkBound.Network.Packets {
@@ -75,7 +79,7 @@ namespace SilkBound.Network.Packets {
             }
 
             Sender ??= Server.CurrentServer?.GetWeaver(clientId);
-            
+
             Packet packet = Deserialize(reader);
             packet.Sender = Sender;
 
@@ -84,7 +88,7 @@ namespace SilkBound.Network.Packets {
 
         public virtual void ServerHandler(NetworkConnection connection) { }
         public virtual void ClientHandler(NetworkConnection connection) { }
-        protected virtual void Relay(NetworkConnection connection) { }
+        protected virtual void Relay(NetworkConnection connection) => NetworkUtils.LocalServer?.SendExcept(this, connection);
         public void RelayInternal(NetworkConnection connection)
         {
             if (!NetworkUtils.IsServer)
@@ -106,5 +110,218 @@ namespace SilkBound.Network.Packets {
             if (NetworkUtils.IsServer)
                 NetworkUtils.LocalServer.SendExcept(this, connection);
         }
+
+        #region Binary IO Shortcuts
+
+        public static bool GetDeserializer([NotNullWhen(true)] out BinaryReader? reader)
+        {
+            reader = StackFlag<SerializerContext>.Value.Reader;
+            if (StackFlag<SerializerContext>.RaisedWithValue && reader != null)
+                return true;
+
+            return false;
+        }
+
+        public static bool GetSerializer([NotNullWhen(true)] out BinaryWriter? writer)
+        {
+            writer = StackFlag<SerializerContext>.Value.Writer;
+            if (StackFlag<SerializerContext>.RaisedWithValue && writer != null)
+                return true;
+
+            return false;
+        }
+
+        // ENUM
+        public static void Write(Enum obj)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(Convert.ToInt32(obj));
+        }
+
+        public static T ReadEnum<T>() where T : struct, Enum
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            int raw = reader.ReadInt32();
+            return (T) Enum.ToObject(typeof(T), raw);
+        }
+
+        // BOOL
+        public static void Write(bool value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value);
+        }
+
+        public static bool ReadBool()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            return reader.ReadBoolean();
+        }
+
+        // BYTE
+        public static void Write(byte value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value);
+        }
+
+        public static byte ReadByte()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            return reader.ReadByte();
+        }
+
+        // SHORT
+        public static void Write(short value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value);
+        }
+
+        public static short ReadShort()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            return reader.ReadInt16();
+        }
+
+        // INT
+        public static void Write(int value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value);
+        }
+
+        public static int ReadInt()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            return reader.ReadInt32();
+        }
+
+        // LONG
+        public static void Write(long value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value);
+        }
+
+        public static long ReadLong()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            return reader.ReadInt64();
+        }
+
+        // FLOAT
+        public static void Write(float value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value);
+        }
+
+        public static float ReadFloat()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            return reader.ReadSingle();
+        }
+
+        // DOUBLE
+        public static void Write(double value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value);
+        }
+
+        public static double ReadDouble()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            return reader.ReadDouble();
+        }
+
+        // STRING
+        public static void Write(string? value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write(value ?? string.Empty);
+        }
+
+        public static string ReadString()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return string.Empty;
+
+            return reader.ReadString();
+        }
+
+        // GUID
+        public static void Write(Guid? value)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            writer.Write((value ?? Guid.Empty).ToByteArray());
+        }
+
+        public static Guid ReadGuid()
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return Guid.Empty;
+
+            return new Guid(reader.ReadBytes(16));
+        }
+
+        // GENERIC
+        public static void Write(object? value, params JsonConverter[] converters)
+        {
+            if (!GetSerializer(out BinaryWriter? writer))
+                return;
+
+            var data = ChunkedTransfer.Serialize(value, converters);
+            writer.Write(data.Length);
+            writer.Write(data);
+        }
+        public static T? Read<T>(params JsonConverter[] converters)
+        {
+            if (!GetDeserializer(out BinaryReader? reader))
+                return default;
+
+            var len = reader.ReadInt32();
+            return ChunkedTransfer.Deserialize<T>(reader.ReadBytes(len));
+        }
+
+        #endregion
+
     }
 }

@@ -15,11 +15,23 @@ namespace SilkBound.Utils
         {
             NullValueHandling = NullValueHandling.Include,
             MissingMemberHandling = MissingMemberHandling.Ignore,
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+#if DEBUG // swallow json serialization errors
+            Error = (sender, args) => {
+                Logger.Debug("Error at JSON prop:", args.ErrorContext.Path);
+                args.ErrorContext.Handled = true;
+            }
+#endif
         };
         public static JsonSerializer CreateSerializer(params JsonConverter[] converters)
         {
             SerializerSettings.Converters = converters;
             return JsonSerializer.Create(SerializerSettings);
+        }
+        public static string ToString(object? data, Formatting formatting=Formatting.Indented, params JsonConverter[] converters)
+        {
+            SerializerSettings.Converters = converters;
+            return JsonConvert.SerializeObject(data, formatting, SerializerSettings);
         }
         public static byte[] Serialize(object? data, params JsonConverter[] converters)
         {

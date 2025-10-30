@@ -14,7 +14,6 @@ using UnityEngine;
 using SilkBound.Extensions;
 using SilkBound.Sync;
 using SilkBound.Network.Packets.Impl.Sync.Mirror;
-using SilkBound.Patches.Simple.Attacks;
 using SilkBound.Network.Packets.Impl.Sync.Entity;
 using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
 
@@ -102,7 +101,7 @@ namespace SilkBound.Network.Packets.Handlers
         public void OnUpdateWeaverPacket(UpdateWeaverPacket packet, NetworkConnection connection)
         {
             Guid senderBefore = packet.Sender.ClientID;
-            packet.Sender.Mirror.UpdateMirror(packet);
+            (packet.Sender.Mirror ??= HornetMirror.CreateMirror(packet)!)?.UpdateMirror(packet);
 
             NetworkUtils.LocalServer!.SendExcept(packet, connection);
             Guid senderAfter = packet.Sender.ClientID;

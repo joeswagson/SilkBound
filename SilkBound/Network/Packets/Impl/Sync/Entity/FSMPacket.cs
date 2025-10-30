@@ -138,6 +138,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
         public Action<Fsm, FsmState>? Delegate => Delegates[state];
         public void Trigger()
         {
+            Logger.Msg("Trigger", FSM?.Name ?? "nullfsm", State?.Name ?? "nullst8");
             if(FSM == null || State == null)
             {
                 Logger.Msg("FSM or State was null:", FSM?.Name, State?.Name);

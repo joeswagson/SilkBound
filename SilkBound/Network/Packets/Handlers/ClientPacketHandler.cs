@@ -9,7 +9,6 @@ using SilkBound.Network.Packets.Impl.Sync.Entity;
 using SilkBound.Network.Packets.Impl.Sync.Mirror;
 using SilkBound.Network.Packets.Impl.Sync.World;
 using SilkBound.Network.Packets.Impl.World;
-using SilkBound.Patches.Simple.Attacks;
 using SilkBound.Sync;
 using SilkBound.Types;
 using SilkBound.Types.Transfers;

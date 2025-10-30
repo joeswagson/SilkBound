@@ -30,38 +30,6 @@ namespace SilkBound.Patches.Simple.Game {
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(Fsm), nameof(Fsm.EnterState), [typeof(FsmState)])]
-        public static bool EnterState(Fsm __instance, FsmState state)
-        {
-            if (!NetworkUtils.Connected) goto GAME;
-
-            switch (GetHandler(__instance))
-            {
-                case Handler.NONE: goto NONE;
-                case Handler.ENEMY:
-                    if(!__instance.GetMirror(out EntityMirror? mirror))
-                        goto GAME;
-
-                    if(!mirror.IsLocalOwned)
-                        goto GAME;
-
-                    var packet = __instance.Construct(f=>new FSMStatePacket(f, FsmStateType.Enter, state.Name));
-                    if (packet == null)
-                        goto GAME;
-
-                    NetworkUtils.SendPacket(packet);
-
-                    break;
-            }
-
-            goto GAME;
-
-        GAME: return true;
-        NONE: return false;
-        }
-
-
-        [HarmonyPrefix]
         [HarmonyPatch(nameof(FsmLog.LoggingEnabled), MethodType.Setter)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Compiler generated method name prefixes lowercause \"set_\"")]
         public static bool set_LoggingEnabled(ref bool value)
@@ -195,12 +163,13 @@ namespace SilkBound.Patches.Simple.Game {
                     var goPath = __instance.FsmComponent.transform.GetPath();
                     //FsmEvent.
                     //Logger.Msg("FSM len:", ChunkedTransfer.Pack(__instance).Sum(x=>x.Length));
-                    Logger.Msg("Firing", $"{__instance.GameObjectName}::{__instance.Name}.{fsmEvent.name}");
-                    NetworkUtils.SendPacket(new FSMEventPacket(
-                        goPath,
-                        __instance.Name,
-                        fsmEvent.name
-                    ));
+                    //Logger.Msg("Firing", $"{__instance.GameObjectName}::{__instance.Name}.{fsmEvent.name}");
+                    __instance.Send(f => new FSMEventPacket(f, fsmEvent.name));
+                    //NetworkUtils.SendPacket(new FSMEventPacket(
+                    //    goPath,
+                    //    __instance.Name,
+                    //    fsmEvent.name
+                    //));
 
                     if (mirror.HealthManager.battleScene == null)
                         SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMEvent), goPath, __instance.Name, fsmEvent.name));
@@ -209,7 +178,68 @@ namespace SilkBound.Patches.Simple.Game {
                 }
             }
 
-            goto NONE;
+            // oops
+            goto GAME;
+
+        #region Control Labels
+        GAME:
+            return true;
+        NONE:
+            return false;
+            #endregion
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Fsm), nameof(Fsm.EnterState), [typeof(FsmState)])]
+        public static bool EnterState(Fsm __instance, FsmState state)
+        {
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) goto GAME;
+
+            switch (GetHandler(__instance))
+            {
+                case Handler.NONE: goto GAME;
+                case Handler.ENEMY:
+                    if (!__instance.GetMirror(out EntityMirror? mirror))
+                        goto GAME;
+
+                    if (!mirror.IsLocalOwned)
+                        goto GAME;
+
+                    __instance.Send(f => new FSMStatePacket(f, FsmStateType.Enter, state.Name));
+                    break;
+            }
+
+            goto GAME;
+
+        #region Control Labels
+        GAME:
+            return true;
+        NONE:
+            return false;
+            #endregion
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Fsm), nameof(Fsm.ExitState), [typeof(FsmState)])]
+        public static bool ExitState(Fsm __instance, FsmState state)
+        {
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) goto GAME;    
+
+            switch (GetHandler(__instance))
+            {
+                case Handler.NONE: goto GAME;
+                case Handler.ENEMY:
+                    if (!__instance.GetMirror(out EntityMirror? mirror))
+                        goto GAME;
+
+                    if (!mirror.IsLocalOwned)
+                        goto GAME;
+
+                    __instance.Send(f => new FSMStatePacket(f, FsmStateType.Exit, state.Name));
+                    break;
+            }
+
+            goto GAME;
 
         #region Control Labels
         GAME:
@@ -238,12 +268,13 @@ namespace SilkBound.Patches.Simple.Game {
 
                     var goPath = __instance.Fsm.FsmComponent.transform.GetPath();
                     //FsmEvent.
-                    Logger.Msg("Firing", $"{__instance.Fsm.GameObjectName}::{__instance.Fsm.Name}.START({startState.Name})");
-                    NetworkUtils.SendPacket(new FSMStatusPacket(
-                        goPath,
-                        __instance.Fsm.Name,
-                        true
-                    ));
+                    //Logger.Msg("Firing", $"{__instance.Fsm.GameObjectName}::{__instance.Fsm.Name}.START({startState.Name})");
+                    __instance.Fsm.Send(f => new FSMStatusPacket(f, true));
+                    //NetworkUtils.SendPacket(new FSMStatusPacket(
+                    //    goPath,
+                    //    __instance.Fsm.Name,
+                    //    true
+                    //));
 
                     if (mirror.HealthManager.battleScene == null)
                         SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMStatus), goPath, __instance.Fsm.Name, true));
@@ -274,12 +305,13 @@ namespace SilkBound.Patches.Simple.Game {
 
                     var goPath = __instance.Fsm.FsmComponent.transform.GetPath();
                     //FsmEvent.
-                    Logger.Msg("Firing", $"{__instance.Fsm.GameObjectName}::{__instance.Fsm.Name}.STOP");
-                    NetworkUtils.SendPacket(new FSMStatusPacket(
-                        goPath,
-                        __instance.Fsm.Name,
-                        false
-                    ));
+                    //Logger.Msg("Firing", $"{__instance.Fsm.GameObjectName}::{__instance.Fsm.Name}.STOP");
+                    __instance.Fsm.Send(f => new FSMStatusPacket(f, false));
+                    //NetworkUtils.SendPacket(new FSMStatusPacket(
+                    //    goPath,
+                    //    __instance.Fsm.Name,
+                    //    false
+                    //));
 
                     if (mirror.HealthManager.battleScene == null)
                         SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMStatus), goPath, __instance.Fsm.Name, false));

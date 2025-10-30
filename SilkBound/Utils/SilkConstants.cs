@@ -10,7 +10,7 @@
         #region debug cheats
         public const bool INVULNERABILITY =
             #if DEBUG
-                true
+                false
             #else
                 false
             #endif

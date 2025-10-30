@@ -1,7 +1,7 @@
 ﻿using SilkBound.Network.Packets;
 using System.IO;
 
-namespace SilkBound.Patches.Simple.Attacks
+namespace SilkBound.Network.Packets.Impl.Sync.Entity
 {
     public class UpdateHealthPacket(string path, int health) : Packet
     {
