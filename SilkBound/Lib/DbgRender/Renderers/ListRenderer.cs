@@ -21,9 +21,8 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             return $"{entry.Key}: {NormalizeObject(entry.Value)}";
         }
 
-        private readonly float lineHeight = 30f;
         private readonly float linePadding = 5f;
-
+        public Color bgColor = new Color(0, 0, 0, 0.75f);
         public override void Draw(DrawAnchor origin)
         {
             if (list.Count == 0)
@@ -36,20 +35,35 @@ namespace SilkBound.Lib.DbgRender.Renderers {
                 .DefaultIfEmpty(0)
                 .Max() + 5;
 
+            float lineHeights = entries
+                .Select(t => GUI.skin.label.CalcHeight(new GUIContent(t), maxWidth))
+                .DefaultIfEmpty(0)
+                .Sum();
+
             float paddedWidth = maxWidth + (linePadding * 2);
-            float totalHeight = (lineHeight * entries.Length) + (linePadding * 2);
+            float totalHeight = (lineHeights) + (linePadding * 2);
 
             var root = RenderUtils.GetWindowPosition(origin, paddedWidth, totalHeight);
 
-            var bgRect = new Rect(root.x, root.y, paddedWidth, totalHeight);
-            var prevColor = GUI.color;
-            GUI.color = new Color(0, 0, 0, 0.5f);
-            GUI.Box(bgRect, GUIContent.none);
-            GUI.color = prevColor;
+            var bgRect = new Rect(root.x, root.y, root.width, root.height);
+            //var prevColor = GUI.color;
+            //GUI.color = new Color(1, 0, 0, 0.5f);
+            //GUI.backgroundColor = new Color(1, 0, 0, 0.5f);
+            GUI.DrawTexture(
+                bgRect,
+                Texture2D.whiteTexture,
+                ScaleMode.StretchToFill,
+                true,
+                1,
+                bgColor,
+                0, 0
+            );
+            //GUI.color = prevColor;
 
             float y = root.y + linePadding;
             foreach (var line in entries)
             {
+                var lineHeight = GUI.skin.label.CalcHeight(new GUIContent(line), maxWidth);
                 GUI.Label(new Rect(root.x + linePadding, y, maxWidth, lineHeight), line);
                 y += lineHeight;
             }

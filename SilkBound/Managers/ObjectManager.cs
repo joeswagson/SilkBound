@@ -30,7 +30,7 @@ namespace SilkBound.Managers {
     }
     public class ObjectManager {
         private const int ENTRIES_BEFORE_FLUSH = 100;
-        private static Dictionary<string, DisposableGameObject> Cache = [];
+        internal static Dictionary<string, DisposableGameObject> Cache = [];
 
         public static DisposableGameObject Register(GameObject target)
         {
@@ -44,12 +44,18 @@ namespace SilkBound.Managers {
             Cache.Remove(target.Path);
         }
 
-        public static DisposableGameObject Get(string path)
+        public static DisposableGameObject? Get(string path)
         {
             if (Cache.Count > ENTRIES_BEFORE_FLUSH)
                 Flush();
 
-            return Cache[path];
+            if(Cache.ContainsKey(path))
+                return Cache[path];
+
+            if(UnityObjectExtensions.FindObjectFromFullName(path) is var go && go != null)
+                return Register(go);
+
+            return null;
         }
 
         /// <summary>

@@ -23,9 +23,9 @@ using SilkBound.Lib.DbgRender;
 using SilkBound.Lib.DbgRender.Renderers;
 using System.Collections.Generic;
 #if DEBUG
-using UnityExplorer.CacheObject;
-using UnityExplorer.CacheObject.Views;
 using SilkBound.Types.Language;
+using System.Reflection;
+using System.Threading;
 #endif
 
 #if MELON
@@ -43,11 +43,12 @@ namespace SilkBound {
 
 
 
-        public ModMain Instance = null!;
+        public static ModMain Instance = null!;
         public string HOST_IP => Config.HostIP;
         public string CONNECT_IP => Config.ConnectIP;
 
         public static int MainThreadId;
+        public static Thread? ModThread;
 
 #if BEPIN
         public Harmony HarmonyInstance = new(Id);
@@ -61,6 +62,7 @@ namespace SilkBound {
         public void Awake()
 #endif
         {
+            ModThread = Thread.CurrentThread;
             Config.SaveToFile(clientNumber > 1 ? $"config{clientNumber}" : "config"); // ensure config exists
             Instance = this;
 
@@ -97,6 +99,21 @@ namespace SilkBound {
 
             //var overrideInstance = new HeroAnimationControllerOverrides();
 
+            var cacheObjectBase = AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .Select(a => a.GetType("UnityExplorer.CacheObject.CacheObjectBase", throwOnError: false))
+                    .FirstOrDefault(t => t != null);
+            //Logger.Msg("base:", cacheObjectBase);
+
+            if (cacheObjectBase != null)
+            {
+                var methodTarget = AccessTools.Method(cacheObjectBase, "SetValueState");
+                var met = AccessTools.Method(GetType(), nameof(lePrefixduCacheObjectBase));
+                //Logger.Msg("target:", methodTarget?.Name ?? "null");
+                //Logger.Msg("prefix:", met?.Name ?? "null");
+                HarmonyInstance.Patch(methodTarget, new HarmonyMethod(met));
+            }
+
             foreach (var t in AccessTools.AllTypes())
             {
                 if (typeof(IHitResponder).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
@@ -128,7 +145,35 @@ namespace SilkBound {
             #region Debug Renderer
             if (SilkConstants.DEBUG)
             {
-                listRendererData["TestKey"] = "Lorem ipsum bla bla bla.";
+                int clientCount = 0;
+                var clients = "";
+                listRendererData["Connected"] =
+                    new UpdatingHostVariable<Server>(
+                        Server.CurrentServer,
+                        () => Server.CurrentServer,
+                        c => c?.Connections?.Count.ToString() ?? "no server");
+                listRendererData["Clients"] =
+                    new UpdatingHostVariable<Server>(
+                        Server.CurrentServer,
+                        () => Server.CurrentServer,
+                        (c) => {
+                            if (c == null)
+                                return "no server";
+
+                            if (clientCount != c.Connections.Count)
+                            {
+                                var conns = c.Connections.Select(w => $"- {w.ClientName}");
+                                clientCount = conns.Count();
+                                clients = '\n' + conns.Join();
+                            }
+
+                            return clients;
+                        });
+                listRendererData["ObjectManager Cache"] =
+                    new UpdatingVariable<Dictionary<string, DisposableGameObject>>(
+                        ObjectManager.Cache,
+                        c => c.Count.ToString());
+
                 DbgRenderCore.RegisterRenderer(new ListRenderer(listRendererData));
             }
             #endregion
@@ -136,6 +181,7 @@ namespace SilkBound {
 
         public override void OnGUI()
         {
+            
             DbgRenderCore.OnGUI();
         }
 
@@ -156,21 +202,25 @@ namespace SilkBound {
 #if DEBUG
         System.Collections.IEnumerator DelayedWindowPosition()
         {
+            bool smallWindow = true;
+            int width = smallWindow ? 950 : 1200;
+            int height = smallWindow ? 500 : 600;
+
             int cW = 0;// 500;
             int w = SilkConstants.TEST_CLIENTS <= 2
                 ? 1
                 : 2; // SilkConstants.TEST_CLIENTS - (SilkConstants.TEST_CLIENTS % 1);
             SilkDebug.PositionConsoleWindow(
                 new Vector2Int(5, 15),
-                new Vector2Int(1200 + cW, 600),
+                new Vector2Int(width + cW, height),
                 w
             );
 
             yield return new WaitForSeconds(0.5f);
 
             SilkDebug.PositionGameWindow(
-                new Vector2Int(((int) Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (1200 + cW)) + 5, 15),
-                new Vector2Int(1200, 600),
+                new Vector2Int(((int) Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (width + cW)) + 5, 15),
+                new Vector2Int(width, height),
                 w
             );
 
@@ -344,7 +394,7 @@ namespace SilkBound {
                         NetworkUtils.ConnectPipe(CONNECT_IP, Config.Username);
                         break;
                 }
-                
+
                 NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
                     NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("purple"));
                 };
@@ -355,6 +405,39 @@ namespace SilkBound {
             {
                 NetworkUtils.Disconnect("Leaving.");
             }
+        }
+        static bool lePrefixduCacheObjectBase(object __instance, [HarmonyArgument("cell")] object cell, [HarmonyArgument("args")] object args)
+        {
+            var valueProp = AccessTools.Property(__instance.GetType(), "Value");
+            var value = valueProp?.GetValue(__instance);
+
+            var fallbackTypeProp = AccessTools.Property(__instance.GetType(), "FallbackType");
+            var fallbackType = fallbackTypeProp?.GetValue(__instance) as Type;
+
+            var labelProp = AccessTools.Property(__instance.GetType(), "ValueLabelText");
+            if (labelProp == null)
+                return true;
+
+            void Convert(string name)
+            {
+                var formatted = AccessTools.Method("UniverseLib.Utility.ToStringUtility:ToStringWithType").Invoke(null, [value, fallbackType, true]) + $" - <i><color=#b0edff>{name}</color></i>";
+                labelProp.SetValue(__instance, formatted);
+            }
+
+            switch (value)
+            {
+                case FsmState fsm: Convert(fsm.Name); break;
+                case FsmEvent fsm: Convert(fsm.Name); break;
+                case FsmStateAction fsm: Convert(fsm.Name); break;
+                case FsmVar fsm: Convert(fsm.NamedVar.Name); break;
+                case tk2dSprite tk2d: Convert(tk2d.Collection.spriteCollectionName); break;
+                case tk2dSpriteCollection tk2d: Convert(tk2d.spriteCollection.name); break;
+                case tk2dSpriteCollectionData tk2d: Convert(tk2d.name); break;
+                case tk2dSpriteAnimation tk2d: Convert(tk2d.name); break;
+                case tk2dSpriteAnimationClip tk2d: Convert(tk2d.name); break;
+            }
+
+            return true;
         }
 
         public
@@ -383,47 +466,10 @@ namespace SilkBound {
             }
         }
 
-        [HarmonyPatch(typeof(CacheObjectBase))]
-        public class CacheObjectBasePatches {
-            [HarmonyPrefix]
-            [HarmonyPatch("SetValueState")]
-            public static bool blehhh(CacheObjectBase __instance, CacheObjectCell cell,
-                CacheObjectBase.ValueStateArgs args)
-            {
-                if (cell is not CacheListEntryCell listEntry)
-                    return true;
-
-
-                void Convert(string name)
-                {
-                    AccessTools.Property(typeof(CacheObjectBase), "ValueLabelText")
-                        .SetValue(
-                            __instance,
-                            UniverseLib.Utility.ToStringUtility.ToStringWithType(
-                                __instance.Value,
-                                __instance.FallbackType,
-                                true
-                            )
-                            + $" - <i><color=#b0edff>{name}</color></i>"
-                        );
-                }
-
-                switch (__instance.Value)
-                {
-                    case FsmState fsm: Convert(fsm.Name); break;
-                    case FsmEvent fsm: Convert(fsm.Name); break;
-                    case FsmStateAction fsm: Convert(fsm.Name); break;
-                    case FsmVar fsm: Convert(fsm.NamedVar.Name); break;
-                    case tk2dSprite tk2d: Convert(tk2d.Collection.spriteCollectionName); break;
-                    case tk2dSpriteCollection tk2d: Convert(tk2d.spriteCollection.name); break;
-                    case tk2dSpriteCollectionData tk2d: Convert(tk2d.name); break;
-                    case tk2dSpriteAnimation tk2d: Convert(tk2d.name); break;
-                    case tk2dSpriteAnimationClip tk2d: Convert(tk2d.name); break;
-                }
-
-                return true;
-            }
-        }
+        //[HarmonyPatch]
+        //public static class CacheObjectBasePatches {
+            
+        //}
 #endif
     }
 }

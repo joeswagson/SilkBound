@@ -40,6 +40,7 @@ namespace SilkBound.Lib.DbgRender {
             if (registered) return;
 
             registered = true;
+            GUI.backgroundColor = new Color(1, 0, 0, 0.5f);
             GUI.color = Color.white;
             ApplySettings();
         }

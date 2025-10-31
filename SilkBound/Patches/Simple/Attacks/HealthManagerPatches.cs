@@ -2,24 +2,27 @@
 using GlobalSettings;
 using HarmonyLib;
 using SilkBound.Behaviours;
+using SilkBound.Patches.Simple.Game;
 using SilkBound.Utils;
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace SilkBound.Patches.Simple.Attacks
-{
+namespace SilkBound.Patches.Simple.Attacks {
     [HarmonyPatch(typeof(HealthManager))]
-    public class HealthManagerPatches
-    {
+    public class HealthManagerPatches {
         [HarmonyPostfix]
         [HarmonyPatch(nameof(HealthManager.Start))]
         public static void Start(HealthManager __instance)
         {
             if (!NetworkUtils.Connected) return;
 
-            if (__instance.gameObject.layer == LayerMask.NameToLayer("Enemies") && __instance.isActiveAndEnabled && __instance.gameObject.scene == SceneManager.GetActiveScene())
+            //if (__instance.gameObject.layer == LayerMask.NameToLayer("Enemies") && __instance.isActiveAndEnabled && __instance.gameObject.scene == SceneManager.GetActiveScene())
+            if(FsmLogPatches.IsHandled(__instance.gameObject.LocateMyFSM("Control")?.Fsm))
+            {
+                Tracker.Track(__instance.gameObject);
                 EntityMirror.Create(__instance.gameObject);
+            }
         }
 
         [HarmonyPrefix]
@@ -97,7 +100,7 @@ namespace SilkBound.Patches.Simple.Attacks
             }
             if (hitInstance.CriticalHit)
             {
-                hitInstance.DamageDealt = Mathf.RoundToInt((float)hitInstance.DamageDealt * Gameplay.WandererCritMultiplier);
+                hitInstance.DamageDealt = Mathf.RoundToInt((float) hitInstance.DamageDealt * Gameplay.WandererCritMultiplier);
                 hitInstance.MagnitudeMultiplier *= Gameplay.WandererCritMagnitudeMult;
                 GameObject wandererCritEffect = Gameplay.WandererCritEffect;
                 if (wandererCritEffect)
@@ -248,14 +251,12 @@ namespace SilkBound.Patches.Simple.Attacks
                             angleMin = num2 - 45f;
                             angleMax = num2 + 45f;
                             degrees = num2;
-                        }
-                        else if (__instance.flingSilkOrbsDown)
+                        } else if (__instance.flingSilkOrbsDown)
                         {
                             angleMin = 225f;
                             angleMax = 315f;
                             degrees = 270f;
-                        }
-                        else
+                        } else
                         {
                             switch (cardinalDirection)
                             {
@@ -284,8 +285,7 @@ namespace SilkBound.Patches.Simple.Attacks
                                     break;
                             }
                         }
-                        FlingUtils.SpawnAndFling(new FlingUtils.Config
-                        {
+                        FlingUtils.SpawnAndFling(new FlingUtils.Config {
                             Prefab = Gameplay.ReaperBundlePrefab,
                             AmountMin = num,
                             AmountMax = num,
@@ -349,8 +349,7 @@ namespace SilkBound.Patches.Simple.Attacks
                         if (!gameObject3.GetComponent<ActiveRecycler>())
                         {
                             GameObject closureEffect = gameObject3;
-                            RecycleResetHandler.Add(gameObject3, delegate ()
-                            {
+                            RecycleResetHandler.Add(gameObject3, delegate () {
                                 closureEffect.transform.localScale = initialScale;
                             });
                         }
@@ -365,15 +364,15 @@ namespace SilkBound.Patches.Simple.Attacks
                 switch (cardinalDirection)
                 {
                     case 0:
-                        gameObject4.transform.SetRotation2D((float)UnityEngine.Random.Range(340, 380));
+                        gameObject4.transform.SetRotation2D((float) UnityEngine.Random.Range(340, 380));
                         gameObject4.transform.localScale = new Vector3(num4, num4, num4);
                         break;
                     case 1:
-                        gameObject4.transform.SetRotation2D((float)UnityEngine.Random.Range(70, 110));
+                        gameObject4.transform.SetRotation2D((float) UnityEngine.Random.Range(70, 110));
                         gameObject4.transform.localScale = new Vector3(num4, num4, num4);
                         break;
                     case 2:
-                        gameObject4.transform.SetRotation2D((float)UnityEngine.Random.Range(340, 380));
+                        gameObject4.transform.SetRotation2D((float) UnityEngine.Random.Range(340, 380));
                         gameObject4.transform.localScale = new Vector3(-num4, num4, num4);
                         break;
                     case 3:
@@ -386,7 +385,7 @@ namespace SilkBound.Patches.Simple.Attacks
             {
                 __instance.hitEffectReceiver.ReceiveHitEffect(hitInstance);
             }
-            int num5 = Mathf.RoundToInt((float)hitInstance.DamageDealt * hitInstance.Multiplier);
+            int num5 = Mathf.RoundToInt((float) hitInstance.DamageDealt * hitInstance.Multiplier);
             if (__instance.damageOverride)
             {
                 num5 = 1;
@@ -398,8 +397,7 @@ namespace SilkBound.Patches.Simple.Attacks
                 {
                     num5 = 0;
                 }
-            }
-            else
+            } else
             {
                 num5 = int.MaxValue;
             }
@@ -408,8 +406,7 @@ namespace SilkBound.Patches.Simple.Attacks
             {
                 SetHP(__instance, Mathf.Max(__instance.hp - num5, -1000));
                 //__instance.hp = Mathf.Max(__instance.hp - num5, -1000);
-            }
-            else
+            } else
             {
                 SetHP(__instance.sendDamageTo, Mathf.Max(__instance.sendDamageTo.hp - num5, -1000));
                 //__instance.sendDamageTo.hp = Mathf.Max(__instance.sendDamageTo.hp - num5, -1000);
@@ -446,11 +443,10 @@ namespace SilkBound.Patches.Simple.Attacks
                 Transform root = hitInstance.Source.transform.root;
                 if (root.CompareTag("Player") && !hitInstance.UseCorpseDirection && num6.IsWithinTolerance(Mathf.Epsilon, 270f))
                 {
-                    num6 = (float)((root.lossyScale.x < 0f) ? 0 : 180);
+                    num6 = (float) ((root.lossyScale.x < 0f) ? 0 : 180);
                 }
                 disallowDropFling = hitInstance.Source.GetComponent<BreakItemsOnContact>();
-            }
-            else
+            } else
             {
                 disallowDropFling = false;
             }

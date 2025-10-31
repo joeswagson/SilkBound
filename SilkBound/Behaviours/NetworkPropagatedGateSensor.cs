@@ -184,7 +184,7 @@ namespace SilkBound.Behaviours
             else if (anyPlayerInRadius)
             {
                 //Logger.Msg("one player in rad");
-                Close(true);
+                Close();
             }
             else
             {

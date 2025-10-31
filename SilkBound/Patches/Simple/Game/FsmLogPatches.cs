@@ -23,8 +23,12 @@ namespace SilkBound.Patches.Simple.Game {
         [HarmonyPatch(typeof(PlayMakerFSM), nameof(PlayMakerFSM.Awake))]
         public static bool PlayMakerFSM_Awake_Prefix(PlayMakerFSM __instance)
         {
-            if (NetworkUtils.Connected && __instance.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+            //if (NetworkUtils.Connected && __instance?.gameObject?.layer == LayerMask.NameToLayer("Enemies")) {
+            if (GetHandler(__instance.Fsm) != Handler.NONE)
+            {
                 new StackFlagPole<PlayMakerFSM>(__instance);
+                Tracker.Track(__instance.gameObject);
+            }
 
             return true;
         }
@@ -39,7 +43,10 @@ namespace SilkBound.Patches.Simple.Game {
 
             return true;
         }
-
+        public static bool IsHandled(Fsm? fsm)
+        {
+            return GetHandler(fsm) != Handler.NONE;
+        }
         public static Handler GetHandler(Fsm? fsm)
         {
             if (fsm == null || !NetworkUtils.Connected)
@@ -50,7 +57,7 @@ namespace SilkBound.Patches.Simple.Game {
             //    "active:", (fsm.FsmComponent?.isActiveAndEnabled ?? false),
             //    "layer:", fsm.GameObject != null ? LayerMask.LayerToName(fsm.GameObject.layer) : "null gameobj",
             //    "isenemy:", fsm.GameObject != null ? fsm.GameObject?.layer == LayerMask.NameToLayer("Enemies") : "null gameobj");
-            if (!GameManager.instance.IsMenuScene()
+            if ((!GameManager.instance?.IsMenuScene() ?? false)
                 && (fsm.FsmComponent?.isActiveAndEnabled ?? false)
                 && fsm.GameObject?.layer == LayerMask.NameToLayer("Enemies"))
                 return Handler.ENEMY;
@@ -223,7 +230,7 @@ namespace SilkBound.Patches.Simple.Game {
         [HarmonyPatch(typeof(Fsm), nameof(Fsm.ExitState), [typeof(FsmState)])]
         public static bool ExitState(Fsm __instance, FsmState state)
         {
-            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) goto GAME;    
+            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) goto GAME;
 
             switch (GetHandler(__instance))
             {

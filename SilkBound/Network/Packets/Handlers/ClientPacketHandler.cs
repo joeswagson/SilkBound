@@ -109,7 +109,7 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(SkinUpdatePacket))]
         public void OnSkinUpdatePacket(SkinUpdatePacket packet, NetworkConnection connection)
         {
-            packet.Sender.ChangeSkin(SkinManager.GetOrDefault(packet.SkinName));
+            packet.Sender?.ChangeSkin(SkinManager.GetOrDefault(packet.SkinName));
         }
 
         [PacketHandler(typeof(ClientConnectionPacket))]

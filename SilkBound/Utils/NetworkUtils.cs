@@ -78,13 +78,14 @@ namespace SilkBound.Utils
         internal static void HandleDisconnection(NetworkConnection connection, string reason="Unspecified")
         {
             Weaver? client = Server.CurrentServer?.GetWeaver(connection);
-            if(client != null && NetworkUtils.IsServer)
+            if(client != null && IsServer)
                 NetworkObjectManager.RevokeOwnership(client);
 
             if (client?.Mirror != null)
-                UnityEngine.Object.Destroy(client.Mirror);
+                Object.Destroy(client.Mirror);
 
-            connection.Disconnect();
+            if(Connected)
+                connection.Disconnect();
 
             if(ModMain.Config.HostSettings.LogPlayerDisconnections)
                 Logger.Msg($"{client?.ClientName ?? $"Connection {connection.Host}{(connection.Port.HasValue ? ":"+connection.Port.Value : string.Empty)}"}");

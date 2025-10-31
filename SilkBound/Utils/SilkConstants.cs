@@ -4,18 +4,18 @@
 
     public class SilkConstants
     {
-        public const bool DEBUG = true;
-        public const bool DEBUG_COLLIDERS = false;
-        public const short TEST_CLIENTS = 2;
-        #region debug cheats
-        public const bool INVULNERABILITY =
+        public const bool DEBUG =
             #if DEBUG
-                false
+                true
             #else
                 false
             #endif
         ;
-        public const bool GETALLPOWERUPS = true;
+        public const bool DEBUG_COLLIDERS = false;
+        public const short TEST_CLIENTS = 2;
+        #region debug cheats
+        public const bool INVULNERABILITY = DEBUG;
+        public const bool GETALLPOWERUPS = DEBUG;
         #endregion
 
         public const bool CUSTOM_TITLE = true;
@@ -30,7 +30,7 @@
 
         public class Server
         {
-            public const bool REQUIRE_SERVER_NETENT_SYNC = true; // Server wont relay sync packets for NetworkEntities if the entity doent exist for the server.
+            public const bool REQUIRE_SERVER_NETENT_SYNC = false; // Server wont relay sync packets for NetworkEntities if the entity doent exist for the server.
         }
     }
 }
