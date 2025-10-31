@@ -1,4 +1,6 @@
-﻿using HutongGames.PlayMaker;
+﻿using AsmResolver.PE.File.Headers;
+using HutongGames.PlayMaker;
+using SilkBound.Extensions;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
@@ -30,6 +32,13 @@ namespace SilkBound.Managers {
         private const int ENTRIES_BEFORE_FLUSH = 100;
         private static Dictionary<string, DisposableGameObject> Cache = [];
 
+        public static DisposableGameObject Register(GameObject target)
+        {
+            var path = target.transform.GetPath();
+            var disp = new DisposableGameObject(path, target);
+            Cache[path] = disp;
+            return disp;
+        }
         public static void Unregister(DisposableGameObject target)
         {
             Cache.Remove(target.Path);

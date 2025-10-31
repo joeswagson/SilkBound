@@ -107,7 +107,9 @@ namespace SilkBound.Behaviours {
             if (IsLocal) return;
 
 
-            Root.AddComponent<HeroNailImbuement>();
+            var imbue = Root.AddComponent<HeroNailImbuement>();
+            imbue.enabled = false;
+            //imbue.
 
             var heroEffects = HeroController.instance.transform.Find("Effects").gameObject;
             heroEffects.SetActive(false);
@@ -123,7 +125,7 @@ namespace SilkBound.Behaviours {
             Attacks = Instantiate(HeroController.instance.transform.Find("Attacks").gameObject, Root.transform);
             Attacks.name = "Attacks";
 
-            //Attacks.GetComponentsInChildren<DamageEnemies>(true).ToList().ForEach(c => c.enabled = false); // position misalignments could cause damage inbalances. we will sync this from direct calls instead
+            Attacks.GetComponentsInChildren<DamageEnemies>(true).ToList().ForEach(c => c.enabled = false); // position misalignments could cause damage inbalances. we will sync this from direct calls instead
             Attacks.GetComponentsInChildren<AudioSource>(true).ToList().ForEach((source) =>                // audio falloffs
             {
                 source.rolloffMode = AudioRolloffMode.Linear;

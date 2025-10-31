@@ -11,7 +11,7 @@ namespace SilkBound.Patches.Simple.Hero
         [HarmonyPatch(nameof(HeroNailImbuement.SetElement))]
         public static bool SetElement_Prefix(HeroNailImbuement __instance, NailElements element)
         {
-            if (!NetworkUtils.Connected || HornetMirror.IsMirror(__instance.gameObject, out _)) return true;
+            if (!NetworkUtils.Connected || !HornetMirror.IsMirror(__instance.gameObject, out _)) return true;
 
             return false;
         }

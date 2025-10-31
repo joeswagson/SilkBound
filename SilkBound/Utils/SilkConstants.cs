@@ -5,7 +5,7 @@
     public class SilkConstants
     {
         public const bool DEBUG = true;
-        public const bool DEBUG_COLLIDERS = true;
+        public const bool DEBUG_COLLIDERS = false;
         public const short TEST_CLIENTS = 2;
         #region debug cheats
         public const bool INVULNERABILITY =

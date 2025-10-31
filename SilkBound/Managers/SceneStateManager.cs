@@ -24,7 +24,8 @@ namespace SilkBound.Managers {
 
         #region Breakables
         public List<string> BrokenObjects = [];
-        public bool RegisterBrokenObject(string path) {
+        public bool RegisterBrokenObject(string path)
+        {
             Logger.Msg("registering broken object:", path.Split('\\').Last());
             if (BrokenObjects.Contains(path))
                 return false;
@@ -48,7 +49,8 @@ namespace SilkBound.Managers {
         }
         public List<FSMEventData> QueuedEvents = [];
         public Dictionary<string, FSMStatusData> StatusUpdates = [];
-        public void RegisterFSMEvent(string goPath, string fsmName, string eventName) {
+        public void RegisterFSMEvent(string goPath, string fsmName, string eventName)
+        {
             FSMEventData data = new() {
                 goPath = goPath,
                 fsmName = fsmName,
@@ -58,7 +60,8 @@ namespace SilkBound.Managers {
 
             QueuedEvents.Add(data);
         }
-        public void RegisterFSMStatus(string goPath, string fsmName, bool started) {
+        public void RegisterFSMStatus(string goPath, string fsmName, bool started)
+        {
             FSMStatusData data = new() {
                 goPath = goPath,
                 fsmName = fsmName,
@@ -72,13 +75,17 @@ namespace SilkBound.Managers {
         }
         #endregion
 
-        public void Sync(Scene scene) {
+        public void Sync(Scene scene)
+        {
             #region StateChange flusher
 
             JsonSerializer methodSerializer = ChunkedTransfer.CreateSerializer([new GameObjectConverter(false)]);
             foreach (var change in CachedChanges)
-                switch (change.ChangeAction) {
-                    case StateChange.Action.FieldSet: {
+            {
+                switch (change.ChangeAction)
+                {
+                    case StateChange.Action.FieldSet:
+                    {
                         var field = GetType().GetField(change.TargetName) ?? throw new Exception($"Field {change.TargetName} not found on SceneState");
                         if (change.Args.Length != 1)
                             throw new Exception($"FieldSet requires exactly 1 argument, got {change.Args.Length}");
@@ -88,7 +95,8 @@ namespace SilkBound.Managers {
                         field.SetValue(this, change.Args[0]);
                         break;
                     }
-                    case StateChange.Action.PropertySet: {
+                    case StateChange.Action.PropertySet:
+                    {
                         var prop = GetType().GetProperty(change.TargetName) ?? throw new Exception($"Property {change.TargetName} not found on SceneState");
                         if (change.Args.Length != 1)
                             throw new Exception($"PropertySet requires exactly 1 argument, got {change.Args.Length}");
@@ -98,7 +106,8 @@ namespace SilkBound.Managers {
                         prop.SetValue(this, change.Args[0]);
                         break;
                     }
-                    case StateChange.Action.MethodCall: {
+                    case StateChange.Action.MethodCall:
+                    {
                         var method = GetType().GetMethod(change.TargetName) ?? throw new Exception($"Method {change.TargetName} not found on SceneState");
                         for (int i = 0; i < change.Args.Length; i++)
                             if (change.Args[i] is JArray deserialized)
@@ -106,7 +115,8 @@ namespace SilkBound.Managers {
                         method.Invoke(this, change.Args);
                         break;
                     }
-                    case StateChange.Action.Reset: {
+                    case StateChange.Action.Reset:
+                    {
                         BrokenObjects.Clear();
 
                         break;
@@ -128,11 +138,13 @@ namespace SilkBound.Managers {
                     //    }
                     #endregion
                 }
+            }
             CachedChanges.Clear();
             #endregion
 
             #region Breakables
-            foreach (string path in BrokenObjects) {
+            foreach (string path in BrokenObjects)
+            {
                 GameObject? go = UnityObjectExtensions.FindObjectFromFullName(path);
                 if (go == null)
                     continue;
@@ -146,7 +158,8 @@ namespace SilkBound.Managers {
             #endregion
 
             #region FSM Event Queue
-            for (int i = 0; i < QueuedEvents.Count; i++) {
+            for (int i = 0; i < QueuedEvents.Count; i++)
+            {
                 var eventData = QueuedEvents[i];
                 if (UnityObjectExtensions.FindComponents<PlayMakerFSM>(eventData.goPath)?.First(fsm => fsm.Fsm.name == eventData.fsmName)?.Fsm is var fsm && (fsm == null)) continue;
 
@@ -156,8 +169,10 @@ namespace SilkBound.Managers {
                 QueuedEvents[i] = eventData;
             }
 
-            foreach(var statusUpdate in StatusUpdates) {
-                if(FSMPacket.FindFSM(statusUpdate.Value.goPath, statusUpdate.Value.fsmName, out Fsm? fsm)) {
+            foreach (var statusUpdate in StatusUpdates)
+            {
+                if (FSMPacket.FindFSM(statusUpdate.Value.goPath, statusUpdate.Value.fsmName, out Fsm? fsm))
+                {
                     if (statusUpdate.Value.started && !fsm.Started)
                         fsm.Start();
                     else if (!statusUpdate.Value.started && !fsm.Started)
@@ -188,28 +203,32 @@ namespace SilkBound.Managers {
         public string TargetName;
         public object?[] Args;
 
-        public static StateChange Method(string name, params object?[] args) {
+        public static StateChange Method(string name, params object?[] args)
+        {
             return new StateChange() {
                 ChangeAction = Action.MethodCall,
                 TargetName = name,
                 Args = args
             };
         }
-        public static StateChange Field(string name, object? value) {
+        public static StateChange Field(string name, object? value)
+        {
             return new StateChange() {
                 ChangeAction = Action.FieldSet,
                 TargetName = name,
                 Args = [value]
             };
         }
-        public static StateChange Property(string name, object? value) {
+        public static StateChange Property(string name, object? value)
+        {
             return new StateChange() {
                 ChangeAction = Action.PropertySet,
                 TargetName = name,
                 Args = [value]
             };
         }
-        public static StateChange Reset() {
+        public static StateChange Reset()
+        {
             return new StateChange() {
                 ChangeAction = Action.Reset,
             };
@@ -218,17 +237,20 @@ namespace SilkBound.Managers {
 
     public class SceneStateManager {
         public static Dictionary<string, SceneState> States { get; internal set; } = [];
-        public static GuaranteedFetchResult<SceneState> Fetch(string sceneName) {
+        public static GuaranteedFetchResult<SceneState> Fetch(string sceneName)
+        {
             if (States.ContainsKey(sceneName))
                 return new(States[sceneName], false);
-            else {
+            else
+            {
                 SceneState state = new(sceneName);
                 States[sceneName] = state;
                 return new(state, true);
             }
         }
 
-        public bool TryAdd(SceneState state) {
+        public bool TryAdd(SceneState state)
+        {
             if (States.ContainsKey(state.SceneName))
                 return false;
 
@@ -237,27 +259,34 @@ namespace SilkBound.Managers {
             return true;
         }
 
-        public static void Register(SceneState state) {
+        public static void Register(SceneState state)
+        {
             States[state.SceneName] = state;
         }
 
-        public static SceneState GetCurrent() {
+        public static SceneState GetCurrent()
+        {
             return Fetch(SceneManager.GetActiveScene().name).Result;
         }
 
-        public static void ApplyChange(string sceneName, StateChange change) {
+        public static void ApplyChange(string sceneName, StateChange change)
+        {
             ApplyChanges(Fetch(sceneName).Result, [change]);
         }
-        public static void ApplyChanges(SceneState state, StateChange[] changes) {
+        public static void ApplyChanges(SceneState state, StateChange[] changes)
+        {
             state.CachedChanges.AddRange(changes);
         }
-        public static bool ProposeChanges(string sceneName, params StateChange[] change) {
+        public static bool ProposeChanges(string sceneName, params StateChange[] change)
+        {
             return ProposeChanges(Fetch(sceneName).Result, change);
         }
-        public static bool ProposeChanges(SceneState state, params StateChange[] changes) {
+        public static bool ProposeChanges(SceneState state, params StateChange[] changes)
+        {
             ApplyChanges(state, changes);
 
-            if (NetworkUtils.Connected) {
+            if (NetworkUtils.Connected)
+            {
                 TransferManager.Send(new SceneStateTransfer(state.SceneName, changes));
                 return true;
             }

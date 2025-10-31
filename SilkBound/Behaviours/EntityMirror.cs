@@ -5,6 +5,7 @@ using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Sync;
 using SilkBound.Types.Data;
 using SilkBound.Types.Language;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -61,6 +62,8 @@ namespace SilkBound.Behaviours {
 
             EntityMirror mirror = root.AddComponent<EntityMirror>();
             _mirrors.Add(mirror);
+
+            mirror.HealthManager.hp = mirror.HealthManager.initHp * (NetworkUtils.Server.Connections.Count + 1);
 
             return mirror;
         }

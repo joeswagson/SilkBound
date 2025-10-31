@@ -19,6 +19,9 @@ using System.Linq;
 using SilkBound.Types.Language;
 using UnityEngine;
 using SilkBound.Types.Language;
+using SilkBound.Lib.DbgRender;
+using SilkBound.Lib.DbgRender.Renderers;
+using System.Collections.Generic;
 #if DEBUG
 using UnityExplorer.CacheObject;
 using UnityExplorer.CacheObject.Views;
@@ -28,8 +31,7 @@ using SilkBound.Types.Language;
 #if MELON
 [assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
 #endif
-namespace SilkBound
-{
+namespace SilkBound {
 #if MELON
     public partial class ModMain : MelonMod
 #elif BEPIN
@@ -38,7 +40,12 @@ namespace SilkBound
     public partial class ModMain : BaseUnityPlugin
 #endif
     {
-        public const string CONNECT_IP = "127.0.0.1";
+
+
+
+        public ModMain Instance = null!;
+        public string HOST_IP => Config.HostIP;
+        public string CONNECT_IP => Config.ConnectIP;
 
         public static int MainThreadId;
 
@@ -46,12 +53,17 @@ namespace SilkBound
         public Harmony HarmonyInstance = new(Id);
 #endif
 
+        public Dictionary<string, object?> listRendererData = [];
+
 #if MELON
         public override void OnInitializeMelon()
 #elif BEPIN
         public void Awake()
 #endif
         {
+            Config.SaveToFile(clientNumber > 1 ? $"config{clientNumber}" : "config"); // ensure config exists
+            Instance = this;
+
             MainThreadId = Environment.CurrentManagedThreadId;
             Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
                 "| Unity Thread ID:", MainThreadId);
@@ -102,31 +114,43 @@ namespace SilkBound
 
             #endregion
 
-            foreach (var skin in SkinManager.Library)
-            {
-                Logger.Msg("skin:", skin.Key);
-                //skin.Value.WriteToFile($"{skin.Key}.skin");
-            }
+            //foreach (var skin in SkinManager.Library)
+            //{
+            //    Logger.Msg("skin:", skin.Key);
+            //    //skin.Value.WriteToFile($"{skin.Key}.skin");
+            //}
             //TickManager.OnTick += () =>
             //{
             //    Logger.Msg("Tick");
             //};
             //Screen.SetResolution(1200, 600, false);
 
+            #region Debug Renderer
+            if (SilkConstants.DEBUG)
+            {
+                listRendererData["TestKey"] = "Lorem ipsum bla bla bla.";
+                DbgRenderCore.RegisterRenderer(new ListRenderer(listRendererData));
+            }
+            #endregion
+        }
+
+        public override void OnGUI()
+        {
+            DbgRenderCore.OnGUI();
         }
 
 #if MELON
-      public override void OnLateInitializeMelon()
+        public override void OnLateInitializeMelon()
 #elif BEPIN
         public void Start()
 #endif
         {
 #if DEBUG
-    #if MELON
+#if MELON
             MelonCoroutines.Start(DelayedWindowPosition());
-    #elif BEPIN
+#elif BEPIN
             StartCoroutine(DelayedWindowPosition());
-    #endif
+#endif
 #endif
         }
 #if DEBUG
@@ -145,7 +169,7 @@ namespace SilkBound
             yield return new WaitForSeconds(0.5f);
 
             SilkDebug.PositionGameWindow(
-                new Vector2Int(((int)Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (1200 + cW)) + 5, 15),
+                new Vector2Int(((int) Math.Ceiling(SilkConstants.TEST_CLIENTS / 2.0) * (1200 + cW)) + 5, 15),
                 new Vector2Int(1200, 600),
                 w
             );
@@ -154,18 +178,16 @@ namespace SilkBound
             {
                 //Server.ConnectPipe("pipetest", "host");
                 Server.ConnectTCP("127.0.0.1", "host");
-                Skin skin = SkinManager.GetOrDefault("purple");
-                NetworkUtils.LocalClient!.ChangeSkin(skin);
-            }
-            else
+                NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
+                //Skin skin = SkinManager.GetOrDefault("blue");
+                //NetworkUtils.LocalClient!.ChangeSkin(skin);
+            } else
             {
                 //NetworkUtils.ConnectPipe("pipetest", $"client{SilkDebug.GetClientNumber() - 1}");
                 NetworkUtils.ConnectTCP(CONNECT_IP, $"client{SilkDebug.GetClientNumber() - 1}");
-                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () =>
-                {
-                    Skin skin = SilkDebug.GetClientNumber() switch
-                    {
-                        2 => SkinManager.GetOrDefault("blue"),
+                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
+                    Skin skin = SilkDebug.GetClientNumber() switch {
+                        2 => SkinManager.GetOrDefault("purple"),
                         3 => SkinManager.GetOrDefault("green"),
                         4 => SkinManager.GetOrDefault("red"),
                         _ => SkinManager.Default
@@ -225,7 +247,8 @@ namespace SilkBound
         //    }
         //}
 
-        public static readonly Config Config = ConfigurationManager.ReadFromFile("config");
+        private static readonly int clientNumber = SilkDebug.GetClientNumber();
+        public static readonly Config Config = ConfigurationManager.ReadFromFile(clientNumber > 1 ? $"config{clientNumber}" : "config");
         private static readonly System.Random random = new();
         public static string RandomString(int length)
         {
@@ -262,7 +285,7 @@ namespace SilkBound
 
             if (Input.GetKeyDown(KeyCode.Minus))
             {
-                NetworkUtils.LocalClient?.Shaw();
+                NetworkUtils.LocalClient.Shaw();
                 Logger.Msg("SHAW!");
 
                 //Logger.Msg("Sending test transfer");
@@ -289,7 +312,19 @@ namespace SilkBound
             if (Input.GetKeyDown(KeyCode.H))
             {
                 //Server.ConnectPipe("sb_dbg", "host");
-                Server.ConnectTCP("0.0.0.0", "host");
+                switch (Config.NetworkLayer)
+                {
+                    case NetworkingLayer.TCP:
+                        Server.ConnectTCP(HOST_IP, Config.Username);
+                        break;
+                    case NetworkingLayer.Steam:
+                        Server.ConnectP2P(Config.Username);
+                        break;
+                    case NetworkingLayer.NamedPipe:
+                        Server.ConnectPipe(HOST_IP, Config.Username);
+                        break;
+                }
+                NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
                 //Server.ConnectP2P("joe");
             }
 
@@ -297,11 +332,21 @@ namespace SilkBound
             {
                 //NetworkUtils.ConnectPipe("sb_dbg", "client");
 
-                NetworkUtils.ConnectTCP(CONNECT_IP, "client");
-                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () =>
+                switch (Config.NetworkLayer)
                 {
-                    NetworkUtils.LocalClient!.ChangeSkin(SkinManager.GetOrDefault("blue"));
-                    ActionScope.Detach(NetworkUtils.ClientPacketHandler, nameof(NetworkUtils.ClientPacketHandler.HandshakeFulfilled));
+                    case NetworkingLayer.TCP:
+                        NetworkUtils.ConnectTCP(CONNECT_IP, Config.Username);
+                        break;
+                    case NetworkingLayer.Steam:
+                        NetworkUtils.ConnectP2P(ulong.Parse(CONNECT_IP), Config.Username);
+                        break;
+                    case NetworkingLayer.NamedPipe:
+                        NetworkUtils.ConnectPipe(CONNECT_IP, Config.Username);
+                        break;
+                }
+                
+                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
+                    NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("purple"));
                 };
 
             }
@@ -318,7 +363,9 @@ namespace SilkBound
 #endif
             void OnApplicationQuit()
         {
-            NetworkUtils.Disconnect();
+            NetworkUtils.Disconnect("Game closing.");
+            DbgRenderCore.Dispose();
+            Config.SaveToFile(clientNumber > 1 ? $"config{clientNumber}" : "config");
         }
 
 #if DEBUG
@@ -326,8 +373,7 @@ namespace SilkBound
         /// https://github.com/Bigfootmech/Silksong_Skipintro/blob/master/Mod.cs - dont wanna install a seperate dll just for testing this so im including this in debug builds - should be removed in public releases that are built under Release
         /// </summary>
         [HarmonyPatch(typeof(StartManager), "Start")]
-        public class AtStart
-        {
+        public class AtStart {
             [HarmonyPostfix]
             static void Postfix(StartManager __instance,
                 IEnumerator __result,
@@ -338,8 +384,7 @@ namespace SilkBound
         }
 
         [HarmonyPatch(typeof(CacheObjectBase))]
-        public class CacheObjectBasePatches
-        {
+        public class CacheObjectBasePatches {
             [HarmonyPrefix]
             [HarmonyPatch("SetValueState")]
             public static bool blehhh(CacheObjectBase __instance, CacheObjectCell cell,
@@ -381,4 +426,4 @@ namespace SilkBound
         }
 #endif
     }
-} 
+}

@@ -171,8 +171,8 @@ namespace SilkBound.Patches.Simple.Game {
                     //    fsmEvent.name
                     //));
 
-                    if (mirror.HealthManager.battleScene == null)
-                        SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMEvent), goPath, __instance.Name, fsmEvent.name));
+                    //if (mirror.HealthManager.battleScene == null)
+                    //    SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMEvent), goPath, __instance.Name, fsmEvent.name));
 
                     break;
                 }
@@ -276,8 +276,8 @@ namespace SilkBound.Patches.Simple.Game {
                     //    true
                     //));
 
-                    if (mirror.HealthManager.battleScene == null)
-                        SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMStatus), goPath, __instance.Fsm.Name, true));
+                    //if (mirror.HealthManager.battleScene == null)
+                    //    SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMStatus), goPath, __instance.Fsm.Name, true));
 
                     break;
                 }
@@ -313,8 +313,8 @@ namespace SilkBound.Patches.Simple.Game {
                     //    false
                     //));
 
-                    if (mirror.HealthManager.battleScene == null)
-                        SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMStatus), goPath, __instance.Fsm.Name, false));
+                    //if (mirror.HealthManager.battleScene == null)
+                    //    SceneStateManager.ProposeChanges(SceneStateManager.GetCurrent(), StateChange.Method(nameof(SceneState.RegisterFSMStatus), goPath, __instance.Fsm.Name, false));
 
                     break;
                 }
