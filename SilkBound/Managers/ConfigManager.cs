@@ -4,38 +4,43 @@ using SilkBound.Utils;
 using System;
 using System.IO;
 
-namespace SilkBound.Managers
-{
+namespace SilkBound.Managers {
+    #region Enums
+    public enum ServerVisibility {
+        Public,
+        Private,
+        //FriendsOnly,
+    }
+    public enum BossTargetingMethod {
+        Nearest,
+        Farthest,
+        LowestHealth,
+        HighestHealth,
+        Random,
+
+        Default = Nearest
+    }
+    public enum RespawnMode {
+        Individual, // players go to their own benches
+        Shared, // players go to the last used bench by any player instantly
+        PartyDeath, // players go to their own last used bench after last living player dies - ignores GhostAfterDeath
+        SharedPartyDeath, // players go to the last bench used by any player after last living player dies - ignores GhostAfterDeath  
+
+        Default = Individual
+    }
+
+    public enum NetworkingLayer
+    {
+        TCP,
+        Steam,
+        NamedPipe,
+
+        Default=TCP
+    }
+    #endregion
+
     public struct ServerSettings()
     {
-        #region Enums
-        public enum ServerVisibility
-        {
-            Public,
-            Private,
-            //FriendsOnly,
-        }
-        public enum BossTargetingMethod
-        {
-            Nearest,
-            Furthest,
-            LowestHealth,
-            HighestHealth,
-            Random,
-
-            Default = Nearest
-        }
-        public enum RespawnMode
-        {
-            Individual, // players go to their own benches
-            Shared, // players go to the last used bench by any player instantly
-            PartyDeath, // players go to their own last used bench after last living player dies - ignores GhostAfterDeath
-            SharedPartyDeath, // players go to the last bench used by any player after last living player dies - ignores GhostAfterDeath  
-
-            Default = Individual
-        }
-        #endregion
-
         /// <summary>
         /// Send a message in console when a player disconnects
         /// </summary>
@@ -73,6 +78,11 @@ namespace SilkBound.Managers
         /// Online username
         /// </summary>
         public string Username = "Weaver";
+
+        public string HostIP = "0.0.0.0";
+        public string ConnectIP = "127.0.0.1";
+
+        public NetworkingLayer NetworkLayer = NetworkingLayer.Default;
         #endif 
         /// <summary>
         /// Default port for hosting/joining-(default, if not specified) servers.
@@ -89,7 +99,7 @@ namespace SilkBound.Managers
         #endregion
 
         #region QOL
-        public void SaveToFile(string filename = "cfg")
+        public void SaveToFile(string filename = "config")
         {
             ConfigurationManager.SaveToFile(this, filename);
         }
@@ -107,12 +117,12 @@ namespace SilkBound.Managers
             return Path.Combine(FileDirectory, path);
         }
 
-        public static void SaveToFile(Config instance, string fileName = "cfg")
+        public static void SaveToFile(Config instance, string fileName = "config")
         {
             File.WriteAllText(Resolve($"{fileName}.json"), JsonConvert.SerializeObject(instance, Formatting.Indented));
         }
 
-        public static Config ReadFromFile(string fileName = "cfg")
+        public static Config ReadFromFile(string fileName = "config")
         {
             if (File.Exists(Resolve($"{fileName}.json")))
                 return JsonConvert.DeserializeObject<Config>(File.ReadAllText(Resolve($"{fileName}.json"))) ?? new Config();

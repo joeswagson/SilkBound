@@ -99,25 +99,25 @@ namespace SilkBound.Types.Data {
             return bestItem;
         }
         #endregion
-        public HornetMirror Select(ServerSettings.BossTargetingMethod mode)
+        public HornetMirror Select(BossTargetingMethod mode)
         {
             HornetMirror? selected = null;
             var origin = Host?.Root?.transform.position;
             switch (mode)
             {
-                case ServerSettings.BossTargetingMethod.Nearest:
+                case BossTargetingMethod.Nearest:
                     selected = Min(f => f.GetDistance(origin));
                     break;
-                case ServerSettings.BossTargetingMethod.Furthest:
+                case BossTargetingMethod.Farthest:
                     selected = Max(f => f.GetDistance(origin));
                     break;
-                case ServerSettings.BossTargetingMethod.LowestHealth:
+                case BossTargetingMethod.LowestHealth:
                     selected = Min(f => f.Health);
                     break;
-                case ServerSettings.BossTargetingMethod.HighestHealth:
+                case BossTargetingMethod.HighestHealth:
                     selected = Max(f => f.Health);
                     break;
-                case ServerSettings.BossTargetingMethod.Random:
+                case BossTargetingMethod.Random:
                     selected = HornetMirror.Mirrors.ElementAt(new Random().Next(HornetMirror.Mirrors.Count)).Value;
                     break;
             }
