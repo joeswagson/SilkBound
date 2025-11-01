@@ -145,7 +145,7 @@ namespace SilkBound.Managers {
             #region Breakables
             foreach (string path in BrokenObjects)
             {
-                GameObject? go = UnityObjectExtensions.FindObjectFromFullName(path);
+                GameObject? go = ObjectManager.Get(path)?.GameObject;
                 if (go == null)
                     continue;
 

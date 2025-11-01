@@ -67,16 +67,16 @@ namespace SilkBound {
             Instance = this;
 
             MainThreadId = Environment.CurrentManagedThreadId;
-            Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
+            global::SilkBound.Utils.Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
                 "| Unity Thread ID:", MainThreadId);
             var method = AccessTools.Method(typeof(HealthManager), "TakeDamage", [typeof(HitInstance)]);
-            Logger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
+            global::SilkBound.Utils.Logger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
 
             if (SilkConstants.DEBUG)
             {
                 if (SilkDebug.GetClientNumber() > SilkConstants.TEST_CLIENTS)
                 {
-                    Logger.Error("Client number exceeds TEST_CLIENTS constant. Quitting.");
+                    global::SilkBound.Utils.Logger.Error("Client number exceeds TEST_CLIENTS constant. Quitting.");
                     Application.Quit();
                     return;
                 }
@@ -179,9 +179,13 @@ namespace SilkBound {
             #endregion
         }
 
-        public override void OnGUI()
+        public
+#if MELON
+        override
+#endif
+        void OnGUI()
         {
-            
+
             DbgRenderCore.OnGUI();
         }
 
@@ -202,7 +206,7 @@ namespace SilkBound {
 #if DEBUG
         System.Collections.IEnumerator DelayedWindowPosition()
         {
-            bool smallWindow = true;
+            bool smallWindow = false;
             int width = smallWindow ? 950 : 1200;
             int height = smallWindow ? 500 : 600;
 
@@ -336,7 +340,7 @@ namespace SilkBound {
             if (Input.GetKeyDown(KeyCode.Minus))
             {
                 NetworkUtils.LocalClient.Shaw();
-                Logger.Msg("SHAW!");
+                global::SilkBound.Utils.Logger.Msg("SHAW!");
 
                 //Logger.Msg("Sending test transfer");
                 //TransferManager.Send(new TestTransfer(new Dictionary<string, string>
@@ -354,9 +358,9 @@ namespace SilkBound {
             if (Input.GetKeyDown(KeyCode.RightBracket))
             {
                 if (!SteamAPI.Init())
-                    Logger.Error("SteamAPI.Init() failed!");
+                    global::SilkBound.Utils.Logger.Error("SteamAPI.Init() failed!");
                 else
-                    Logger.Msg("SteamAPI initialized.");
+                    global::SilkBound.Utils.Logger.Msg("SteamAPI initialized.");
             }
 
             if (Input.GetKeyDown(KeyCode.H))
@@ -468,7 +472,7 @@ namespace SilkBound {
 
         //[HarmonyPatch]
         //public static class CacheObjectBasePatches {
-            
+
         //}
 #endif
     }

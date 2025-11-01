@@ -1,4 +1,5 @@
 ﻿using SilkBound.Extensions;
+using SilkBound.Managers;
 using SilkBound.Types.JsonConverters;
 using SilkBound.Utils;
 using System.IO;
@@ -8,7 +9,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Attacks
     public class SyncHitPacket(HitInstance hitInstance, string? objectPath=null) : Packet
     {
         public HitInstance Hit => hitInstance;
-        public IHitResponder? Responder => objectPath != null ? UnityObjectExtensions.FindObjectFromFullName(objectPath)?.GetComponent<IHitResponder>() : null;
+        public IHitResponder? Responder => objectPath != null ? ObjectManager.Get(objectPath)?.GameObject?.GetComponent<IHitResponder>() : null;
         public MonoBehaviour? Component => Responder as MonoBehaviour;
         public override Packet Deserialize(BinaryReader reader)
         {

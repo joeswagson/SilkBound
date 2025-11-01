@@ -62,6 +62,7 @@ namespace SilkBound.Utils
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
             LocalClient ??= new LocalWeaver(name, connection);
+            Server.CurrentServer.Connections.Add(LocalClient);
             
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
             return LocalClient;

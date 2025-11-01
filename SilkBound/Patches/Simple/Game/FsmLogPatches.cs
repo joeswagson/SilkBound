@@ -1,7 +1,6 @@
 ﻿using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using MelonLoader.Utils;
 using SilkBound.Behaviours;
 using SilkBound.Extensions;
 using SilkBound.Managers;

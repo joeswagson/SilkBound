@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
-    <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server;Standalone</Configurations>
+    <Configurations>MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server</Configurations>
   </PropertyGroup>
 
 

@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using SilkBound.Behaviours;
 using SilkBound.Extensions;
+using SilkBound.Managers;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,7 @@ namespace SilkBound.Types.JsonConverters
 
             GameObject obj = createNew
                 ? new GameObject(name)
-                : UnityObjectExtensions.FindObjectFromFullName(name) ?? new GameObject(name);
+                : ObjectManager.Get(name)?.GameObject ?? new GameObject(name);
 
             obj.transform.position = position;
             obj.transform.rotation = rotation;

@@ -47,7 +47,7 @@ namespace SilkBound.Managers
             Buffer.BlockCopy(data, 16, path, 0, path.Length);
             Id = new Guid(guid);
             Path = Encoding.UTF8.GetString(path);
-            Instance = UnityObjectExtensions.FindObjectFromFullName(Path);
+            Instance = ObjectManager.Get(Path)?.GameObject;
             return new SerializedGameObjectManager(Id, Instance!);
         }
 

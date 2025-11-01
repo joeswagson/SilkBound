@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using UnityEngine;
 using SilkBound.Extensions;
+using SilkBound.Managers;
 
 namespace SilkBound.Network.Packets.Impl.World
 {
@@ -10,7 +11,7 @@ namespace SilkBound.Network.Packets.Impl.World
         public string PrefabName => prefabName;
         public Vector3 Position => position;
         public Quaternion Rotation => rotation;
-        public Transform? Parent => UnityObjectExtensions.FindObjectFromFullName(transformPath)?.transform;
+        public Transform? Parent => ObjectManager.Get(transformPath)?.GameObject?.transform;
         public bool Steal => steal;
 
         // serialization

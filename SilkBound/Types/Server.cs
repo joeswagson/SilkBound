@@ -24,13 +24,8 @@ namespace SilkBound.Types
         }
 
         public static Server CurrentServer = null!;
-        public static bool IsOnline
-        {
-            get
-            {
-                return CurrentServer != null;
-            }
-        }
+        public static bool IsOnline => CurrentServer != null;
+        public static bool Lonely => CurrentServer.Connections.Count <= 1;
 
         public List<Weaver> Connections = [];
 
@@ -90,7 +85,6 @@ namespace SilkBound.Types
         {
             Weaver host = NetworkUtils.Connect(connection, name);
             NetworkUtils.LocalServer = connection;
-            CurrentServer = new Server(connection);
             CurrentServer.Address = connection.Host!;
             CurrentServer.Port = connection.Port ?? CurrentServer.Port ?? SilkConstants.PORT;
             CurrentServer.Host = host;

@@ -222,7 +222,7 @@ namespace SilkBound.Network.Packets.Handlers
         public void OnUpdateHealthPacket(UpdateHealthPacket packet, NetworkConnection connection)
         {
             Logger.Msg($"Received UpdateHealthPacket (Server): Path={packet.Path}, Health={packet.Health}");
-            GameObject? obj = UnityObjectExtensions.FindObjectFromFullName(packet.Path);
+            GameObject? obj = ObjectManager.Get(packet.Path)?.GameObject;
             if (obj)
             {
                 HealthManager? healthManager = obj.GetComponent<HealthManager>();

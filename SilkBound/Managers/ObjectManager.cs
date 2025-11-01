@@ -44,8 +44,11 @@ namespace SilkBound.Managers {
             Cache.Remove(target.Path);
         }
 
-        public static DisposableGameObject? Get(string path)
+        public static DisposableGameObject? Get(string? path)
         {
+            if (path == null)
+                return null;
+
             if (Cache.Count > ENTRIES_BEFORE_FLUSH)
                 Flush();
 

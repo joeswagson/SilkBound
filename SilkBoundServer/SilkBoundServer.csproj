@@ -5,14 +5,14 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>12</LangVersion>
-        <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server;Standalone</Configurations>
+        <Configurations>MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server;</Configurations>
         <Platforms>AnyCPU</Platforms>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <PublishTrimmed>false</PublishTrimmed>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
       
-      <Configurations>Debug;Release;MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server</Configurations>
+      <Configurations>MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server</Configurations>
     </PropertyGroup>
     
     <ItemGroup>
