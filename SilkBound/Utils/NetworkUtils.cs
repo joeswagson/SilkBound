@@ -63,7 +63,10 @@ namespace SilkBound.Utils
             LocalPacketHandler = connection.PacketHandler;
             LocalClient ??= new LocalWeaver(name, connection);
             Server.CurrentServer.Connections.Add(LocalClient);
-            
+
+            Server.CurrentServer.Address = connection.Host!;
+            Server.CurrentServer.Port = connection.Port ?? ModMain.Config.Port;
+
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
             return LocalClient;
         }
