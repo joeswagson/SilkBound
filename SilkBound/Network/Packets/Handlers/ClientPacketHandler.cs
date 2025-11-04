@@ -34,6 +34,7 @@ namespace SilkBound.Network.Packets.Handlers
         }
 
         public event Action? HandshakeFulfilled;
+        public event Action<HandshakePacket>? HandshakePacketFulfilled;
 
         [PacketHandler(typeof(HandshakePacket))]
         public void OnHandshakePacket(HandshakePacket packet, NetworkConnection connection)
@@ -52,6 +53,7 @@ namespace SilkBound.Network.Packets.Handlers
                 TransactionManager.Revoke(packet.HandshakeId); // original packet now eligible for garbage collection as we have completed this transaction
 
                 HandshakeFulfilled?.Invoke();
+                HandshakePacketFulfilled?.Invoke(original);
             }
             else
             {

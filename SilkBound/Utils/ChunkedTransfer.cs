@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 
 namespace SilkBound.Utils
@@ -171,5 +172,13 @@ namespace SilkBound.Utils
             gzip.CopyTo(output);
             return Encoding.UTF8.GetString(output.ToArray());
         }
+
+        public static string[] NormalizeArray(object?[] input) => [.. input.Select(NormalizeObject)];
+        public static string NormalizeObject(object? input) =>
+            input switch {
+                null => "null",
+                object?[] array => $"{{{string.Join(",", array.Select(NormalizeObject))}}}",
+                _ => input.ToString() ?? "[object->string failure]"
+            };
     }
 }

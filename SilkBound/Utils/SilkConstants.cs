@@ -25,7 +25,7 @@
 
         public const ushort PORT = 5000;
         public const short PACKET_BUFFER = 512;
-        public const uint CONNECTION_TIMEOUT = 60;
+        public const int CONNECTION_TIMEOUT = 6000; // ms
         public const short CHUNK_TRANSFER = PACKET_BUFFER - byte.MaxValue - 16 - 1;
 
         public class Server

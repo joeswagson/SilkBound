@@ -1,4 +1,5 @@
 ﻿using HutongGames.Extensions;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,18 +8,9 @@ using UnityEngine;
 
 namespace SilkBound.Lib.DbgRender.Renderers {
     public class ListRenderer(Dictionary<string, object?> list) : Renderer {
-        private static string NormalizeObject(object? input) =>
-            input switch {
-                null => "null",
-                object?[] array => $"{{{string.Join(",", array.Select(NormalizeObject))}}}",
-                _ => input.ToString() ?? "[object->string failure]"
-            };
-
-        //private static string[] NormalizeArray(object?[] input) => [.. input.Select(NormalizeObject)];
-
         private string EntryToString(KeyValuePair<string, object?> entry)
         {
-            return $"{entry.Key}: {NormalizeObject(entry.Value)}";
+            return $"{entry.Key}: {ChunkedTransfer.NormalizeObject(entry.Value)}";
         }
 
         private readonly float linePadding = 5f;
