@@ -173,11 +173,16 @@ namespace SilkBound.Utils
             return Encoding.UTF8.GetString(output.ToArray());
         }
 
-        public static string[] NormalizeArray(object?[] input) => [.. input.Select(NormalizeObject)];
-        public static string NormalizeObject(object? input) =>
+        public static string[] NormalizeArray(object?[] input) => [.. input.Select(o=>NormalizeObject(o))];
+        public static string FormatArray(object?[] elements, string separator=",", bool brackets = true)
+        {
+            var contents = string.Join(separator, elements.Select(o=>NormalizeObject(o)));
+            return brackets ? $"{{{contents}}}" : contents;
+        }
+        public static string NormalizeObject(object? input, bool arrayBrackets=true) =>
             input switch {
                 null => "null",
-                object?[] array => $"{{{string.Join(",", array.Select(NormalizeObject))}}}",
+                object?[] array => FormatArray(array, brackets: arrayBrackets),
                 _ => input.ToString() ?? "[object->string failure]"
             };
     }

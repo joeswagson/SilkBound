@@ -175,11 +175,13 @@ namespace SilkBound {
                         c => c.Count.ToString());
 
                 DbgRenderCore.RegisterRenderer(new ListRenderer(listRendererData));
-                DbgRenderCore.RegisterRenderer(new ConnectionMenuRenderer());
+
+                ConnectionMenu = new ConnectionMenuRenderer();
+                DbgRenderCore.RegisterRenderer(ConnectionMenu);
             }
             #endregion
         }
-
+        internal static ConnectionMenuRenderer? ConnectionMenu;
         public
 #if MELON
         override
@@ -239,7 +241,8 @@ namespace SilkBound {
             } else
             {
                 //NetworkUtils.ConnectPipe("pipetest", $"client{SilkDebug.GetClientNumber() - 1}");
-                NetworkUtils.ConnectTCP(CONNECT_IP, $"client{SilkDebug.GetClientNumber() - 1}");
+                //NetworkUtils.ConnectTCP(CONNECT_IP, $"client{SilkDebug.GetClientNumber() - 1}");
+                _ = ConnectionManager.Client(NetworkingLayer.TCP, CONNECT_IP);
                 NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
                     Skin skin = SilkDebug.GetClientNumber() switch {
                         2 => SkinManager.GetOrDefault("purple"),

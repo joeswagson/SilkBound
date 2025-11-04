@@ -5,43 +5,42 @@ using System.Text;
 using UnityEngine;
 
 namespace SilkBound.Lib.DbgRender.Renderers {
-    internal class ConnectionMenuRenderer() : Renderer(DrawAnchor.BottomLeft) {
-        #region Status Objects
-        public struct Status(string body, Color color)
-        {
-            private static GUIContent StatusLabel = new GUIContent("Status: ");
+    #region Status Objects
+    public struct ConnectionStatus(string body, Color color) {
+        private static GUIContent StatusLabel = new GUIContent("Status: ");
 
-            #region Impl
-            static readonly Color _stall = new(0.5f, 0.5f, 0.5f);
-            static readonly Color _waiting = new(0.7f, 0.7f, 0.7f);
-            static readonly Color _orange = new(1f, 0.75f, 0f);
+        #region Impl
+        static readonly Color _stall = new(0.5f, 0.5f, 0.5f);
+        static readonly Color _waiting = new(0.7f, 0.7f, 0.7f);
+        static readonly Color _orange = new(1f, 0.75f, 0f);
 
-            public static Status NotReady = new("N/A", _stall);
-            public static Status Waiting = new("Waiting", _waiting);
-            public static Status Connected = new("Connected", Color.green);
-            public static Status Connecting = new("Connecting...", _orange);
-            public static Status Disconnected = new("Disconnected", Color.red);
-            #endregion
-
-            public string Body = body;
-            public Color Color = color;
-
-            public void Render(Renderer renderer, Rect pos)
-            {
-                var slideFactor = GUI.skin.label.CalcSize(StatusLabel).x; // how far the cursor needs to slide to render the body accurately
-                GUI.Label(pos, StatusLabel); // "Status:"
-
-                var prevColor = GUI.color;
-                GUI.color = Color;
-
-                GUI.Label(renderer.Slide(slideFactor), Body); // status body
-                GUI.color = prevColor;
-
-                renderer.Slide(-slideFactor); // reset cursor x offset
-            }
-        }
+        public static ConnectionStatus NotReady = new("N/A", _stall);
+        public static ConnectionStatus Waiting = new("Waiting", _waiting);
+        public static ConnectionStatus Connected = new("Connected", Color.green);
+        public static ConnectionStatus Connecting = new("Connecting...", _orange);
+        public static ConnectionStatus Disconnected = new("Disconnected", Color.red);
         #endregion
-        private void SetStatus(Status status)
+
+        public string Body = body;
+        public Color Color = color;
+
+        public void Render(Renderer renderer, Rect pos)
+        {
+            var slideFactor = GUI.skin.label.CalcSize(StatusLabel).x; // how far the cursor needs to slide to render the body accurately
+            GUI.Label(pos, StatusLabel); // "Status:"
+
+            var prevColor = GUI.color;
+            GUI.color = Color;
+
+            GUI.Label(renderer.Slide(slideFactor), Body); // status body
+            GUI.color = prevColor;
+
+            renderer.Slide(-slideFactor); // reset cursor x offset
+        }
+    }
+    #endregion
+    internal class ConnectionMenuRenderer() : Renderer(DrawAnchor.BottomLeft) {
+        public void SetStatus(ConnectionStatus status)
         {
             _status = status;
         }
@@ -61,16 +60,16 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             GUI.skin.textField.fixedHeight = 20;
 
             if (init)
-                SetStatus(Status.Waiting);
+                SetStatus(ConnectionStatus.Waiting);
         }
         const float WIDTH = 200;
         const float HEIGHT = 145;
         const float MARGIN = 5f;
 
         bool connecting = false;
-        
-        Status _status = Status.NotReady;
-        public Status CurrentStatus => _status;
+
+        ConnectionStatus _status = ConnectionStatus.NotReady;
+        public ConnectionStatus CurrentStatus => _status;
         public override void Draw(DrawAnchor origin)
         {
             SetCursorReference(DrawBox(WIDTH, HEIGHT, frameBgColor, 5)); // draw and center cursor around frame
@@ -91,7 +90,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             {
                 Logger.Msg("host");
                 connecting = true;
-                SetStatus(Status.Connecting);
+                SetStatus(ConnectionStatus.Connecting);
 
 
             }
@@ -101,7 +100,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             {
                 Logger.Msg("join");
                 connecting = true;
-                SetStatus(Status.Connecting);
+                SetStatus(ConnectionStatus.Connecting);
             }
         }
     }

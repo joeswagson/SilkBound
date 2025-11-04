@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SilkBound.Network.Packets.Impl.Communication;
 using System.Runtime.CompilerServices;
+using SilkBound.Managers;
 
 namespace SilkBound.Types.NetLayers
 {
@@ -49,8 +50,8 @@ namespace SilkBound.Types.NetLayers
         {
             try
             {
-                if (!_client.Connected && host != null && port != null)
-                    await _client.ConnectAsync(host, port.Value);
+                if (_client.Client == null || !_client.Client.Connected)
+                    await _client.ConnectAsync(host, port ?? ConnectionManager.Port);
 
                 _stream = _client.GetStream();
 

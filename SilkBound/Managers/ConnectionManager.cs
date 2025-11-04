@@ -1,5 +1,6 @@
 ﻿using HutongGames.PlayMaker.Actions;
 using MelonLoader.Utils;
+using SilkBound.Lib.DbgRender.Renderers;
 using SilkBound.Network;
 using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
@@ -32,6 +33,7 @@ namespace SilkBound.Managers {
         public NetworkConnection Connection;
     }
     public class ConnectionManager {
+        public static ushort Port => ModMain.Config.Port;
         public static ConnectionRequest Promise(NetworkingLayer networkingLayer, string ip, int? port = null) => new() {
             Address = ip,
             Port = port,
@@ -59,9 +61,10 @@ namespace SilkBound.Managers {
             EXPIREDTOKEN = 9,
             SPOOFEDTOKEN = 10,
         }
-        private static string FormatError(params object[] reasons) => $"Connection Failed: {Logger.Msg}";
+        private static string FormatError(params object[] reasons) => $"Connection Failed: {ChunkedTransfer.NormalizeObject(reasons, false)}";
         private static void ConnectionFailed(ConnectionRequest request, ConnectionError error)
         {
+            UpdateMenuStatus(ConnectionStatus.Disconnected);
             Logger.Warn(error switch {
                 ConnectionError.NONE => FormatError("No error to report. This message is unintended behaviour."),
                 ConnectionError.UNKNOWN => FormatError("Unknown."),
@@ -96,6 +99,8 @@ namespace SilkBound.Managers {
                 };
 
                 request.Succeeded = true;
+
+                UpdateMenuStatus(ConnectionStatus.Connected);
             } else
             {
                 ConnectionFailed(request, ConnectionError.UNKNOWN);
@@ -114,8 +119,14 @@ namespace SilkBound.Managers {
             else
                 ConnectionFailed(request, ConnectionError.TIMEOUT);
         }
+        internal static void UpdateMenuStatus(ConnectionStatus status)
+        {
+            ModMain.ConnectionMenu?.SetStatus(status);
+        }
         public static async Task<ConnectionRequest> Client(NetworkingLayer networkingLayer, string ip, int? port = null, string? name = null)
         {
+            UpdateMenuStatus(ConnectionStatus.Connecting);
+
             name ??= ModMain.Config.Username;
             ConnectionRequest request = Promise(networkingLayer, ip, port);
 
