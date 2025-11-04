@@ -17,6 +17,11 @@ namespace SilkBound.Types.Language
         public static bool Raised => depth.Value > 0;
         public static bool RaisedWithValue => Raised && HasValue;
 
+        ~StackFlag()
+        {
+            Dispose();
+        }
+
         public StackFlag(T? value = default)
         {
             Value = value;
@@ -27,6 +32,8 @@ namespace SilkBound.Types.Language
         {
             depth.Value--;
             Value = default;
+
+            GC.SuppressFinalize(this);
         }
     }
     /// <summary>

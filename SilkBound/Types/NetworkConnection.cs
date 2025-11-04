@@ -1,4 +1,5 @@
-﻿using SilkBound.Network.Packets;
+﻿using SilkBound.Extensions;
+using SilkBound.Network.Packets;
 using SilkBound.Utils;
 using System;
 using System.Threading.Tasks;
@@ -17,21 +18,32 @@ namespace SilkBound.Types
         public string? Host { get; private set; }
         public int? Port { get; private set; }
 
-        public void Connect(string host, int? port)
+        public async Task Connect(string host, int? port)
         {
             this.Host = host;
             this.Port = port;
 
-            Task.Run(() => // TODO: ENSURE THAT THIS DOESNT CRASH!!!
-            {
-                ConnectImpl(Host, Port);
-            });
+            await ConnectImpl(Host, Port);
         }
 
-        public abstract void ConnectImpl(string host, int? port);
+        public abstract Task ConnectImpl(string host, int? port);
         public abstract void Disconnect();
 
-        public abstract void Send(Packet packet);
+        /// <summary>
+        /// Inform the network layer to schedule a packet send.
+        /// </summary>
+        /// <param name="packetData">The serialized packet data. Acquired through <see cref="PacketProtocol.PackPacket(Packet)"/> or an equivalent extension.</param>
+        public abstract void Send(byte[] packetData);
+
+        /// <summary>
+        /// Pack and send a packet over the network. Note that using this method on seperate connections does not prevent reserializing the packet. To avoid reserialization, preprocess the packet with <see cref="PacketProtocol.PackPacket(Packet)"/> or an extension and call <see cref="Send(byte[]?)"/> directly.
+        /// </summary>
+        /// <param name="packet">The packet instance to send.</param>
+        public void Send(Packet packet)
+        {
+            if(packet.TryPack(out var packetData))
+                Send(packetData);
+        }
 
 
         public (string?, Guid?, Packet?) HandlePacket(byte[] data)

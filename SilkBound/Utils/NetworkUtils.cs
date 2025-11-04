@@ -9,11 +9,10 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Threading.Tasks;
 
-namespace SilkBound.Utils
-{
-    public class NetworkUtils
-    {
+namespace SilkBound.Utils {
+    public class NetworkUtils {
         public static LocalWeaver LocalClient = null!;
         public static Server Server => Server.CurrentServer;
         public static ServerSettings ServerSettings => Server.Settings;
@@ -41,6 +40,45 @@ namespace SilkBound.Utils
         public static event EventHandler OnConnected = delegate { };
 
         public static Guid ClientID => LocalClient?.ClientID ?? Guid.Empty;
+
+        #region Async Connectors
+        public static async Task<Weaver> ConnectPipeAsync(string host, string name)
+        {
+            return await ConnectAsync(new NamedPipeConnection(host), name);
+        }
+        public static async Task<Weaver> ConnectP2PAsync(ulong steamId, string name)
+        {
+            return await ConnectAsync(new SteamConnection(steamId.ToString()), name);
+        }
+        public static async Task<Weaver> ConnectTCPAsync(string host, string name, int? port = null)
+        {
+            return await ConnectAsync(new TCPConnection(host, port ?? ModMain.Config.Port), name);
+        }
+        public static async Task<Weaver> ConnectAsync(NetworkConnection connection, string name)
+        {
+            Server.CurrentServer = new Server(LocalConnection);
+
+            if (LocalConnection != null)
+                LocalConnection.Disconnect();
+
+            LocalConnection = connection;
+            LocalPacketHandler = connection.PacketHandler;
+            LocalClient ??= new LocalWeaver(name, connection);
+            Server.CurrentServer.Connections.Add(LocalClient);
+
+            Server.CurrentServer.Address = connection.Host!;
+            Server.CurrentServer.Port = connection.Port ?? ModMain.Config.Port;
+
+            await connection.Connect(
+                Server.CurrentServer.Address,
+                Server.CurrentServer.Port
+            );
+
+            Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
+            return LocalClient;
+        }
+        #endregion
+        #region Synchronized Connectors
         public static Weaver ConnectPipe(string host, string name)
         {
             return Connect(new NamedPipeConnection(host), name);
@@ -49,14 +87,14 @@ namespace SilkBound.Utils
         {
             return Connect(new SteamConnection(steamId.ToString()), name);
         }
-        public static Weaver ConnectTCP(string host, string name, int? port=null)
+        public static Weaver ConnectTCP(string host, string name, int? port = null)
         {
             return Connect(new TCPConnection(host, port), name);
         }
         public static Weaver Connect(NetworkConnection connection, string name)
         {
             Server.CurrentServer = new Server(LocalConnection);
-        
+
             if (LocalConnection != null)
                 LocalConnection.Disconnect();
             LocalConnection = connection;
@@ -67,10 +105,16 @@ namespace SilkBound.Utils
             Server.CurrentServer.Address = connection.Host!;
             Server.CurrentServer.Port = connection.Port ?? ModMain.Config.Port;
 
+            _ = connection.Connect(
+                Server.CurrentServer.Address,
+                Server.CurrentServer.Port
+            );
+
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
             return LocalClient;
         }
-        public static void Disconnect(string reason="Unspecified", Weaver? target=null)
+        #endregion
+        public static void Disconnect(string reason = "Unspecified", Weaver? target = null)
         {
             target ??= LocalClient;
 
@@ -79,20 +123,20 @@ namespace SilkBound.Utils
 
             HandleDisconnection(LocalConnection, reason);
         }
-        internal static void HandleDisconnection(NetworkConnection connection, string reason="Unspecified")
+        internal static void HandleDisconnection(NetworkConnection connection, string reason = "Unspecified")
         {
             Weaver? client = Server.CurrentServer?.GetWeaver(connection);
-            if(client != null && IsServer)
+            if (client != null && IsServer)
                 NetworkObjectManager.RevokeOwnership(client);
 
             if (client?.Mirror != null)
                 Object.Destroy(client.Mirror);
 
-            if(Connected)
+            if (Connected)
                 connection.Disconnect();
 
-            if(ModMain.Config.HostSettings.LogPlayerDisconnections)
-                Logger.Msg($"{client?.ClientName ?? $"Connection {connection.Host}{(connection.Port.HasValue ? ":"+connection.Port.Value : string.Empty)}"}");
+            if (ModMain.Config.HostSettings.LogPlayerDisconnections)
+                Logger.Msg($"{client?.ClientName ?? $"Connection {connection.Host}{(connection.Port.HasValue ? ":" + connection.Port.Value : string.Empty)}"}");
         }
         public static bool IsPacketThread()
         {

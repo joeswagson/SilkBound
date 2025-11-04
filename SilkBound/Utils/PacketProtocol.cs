@@ -8,31 +8,34 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace SilkBound.Utils
-{
-    public class PacketProtocol
-    {
-        public static byte[]? PackPacket(Packet packet, Guid? sender = null)
+namespace SilkBound.Utils {
+    public class PacketProtocol {
+        /// <summary>
+        /// Takes an instance of a packet and returns a serialized version in the format <c>[Frame Length - <see cref="int"/>] [Name Length - <see cref="int"/>] [Name - <see cref="byte"/>[] (UTF8 <see cref="string"/>)] [Sender ID -  <see cref="byte"/>[16] (<see cref="Guid"/>)] [Serialized Packet Data - <see cref="byte"/>[] (<see cref="Packet.Serialize(BinaryWriter)"/>)]</c>
+        /// </summary>
+        /// <param name="packet">Target packet.</param>
+        /// <returns>The serialized packet.</returns>
+        public static byte[]? PackPacket(Packet packet)
         {
             using MemoryStream ms = new();
             using BinaryWriter writer = new(ms, Encoding.UTF8);
-            
+
             //Guid clientId = packet.Sender?.ClientID ?? NetworkUtils.ClientID;
             int hash = packet.GetHashCode();
-            
+
             //Logger.Debug("CLIENT_ID:", hash, clientId);
             //if (clientId == NetworkUtils.ClientID)
             //    Logger.Stacktrace();
 
             packet.SerializeInternal(writer);
             byte[] serialized = ms.ToArray();
-            
+
             // encode packet name
             string packetName = packet.GetType().Name;
             byte[] packetNameEncoded = Encoding.UTF8.GetBytes(packetName);
-            
-            byte nameLength = (byte)packetNameEncoded.Length;
-            
+
+            byte nameLength = (byte) packetNameEncoded.Length;
+
             //Logger.Debug("CLIENT_ID:", hash, clientId);
             byte[] clientIdBytes = (packet.Sender?.ClientID ?? NetworkUtils.ClientID).ToByteArray();
 
@@ -42,7 +45,7 @@ namespace SilkBound.Utils
             Array.Copy(packetNameEncoded, 0, inner, 1, nameLength);
             Array.Copy(clientIdBytes, 0, inner, 1 + nameLength, clientIdBytes.Length);
             Array.Copy(serialized, 0, inner, 1 + nameLength + clientIdBytes.Length, serialized.Length);
-            
+
 
             // prepend size
             byte[] framed = new byte[4 + inner.Length];
@@ -51,6 +54,9 @@ namespace SilkBound.Utils
             return framed;
         }
 
+        /// <summary>
+        /// Search site for packets (recursive).
+        /// </summary>
         static readonly string[] validRoots =
         [
             "SilkBound.Network.Packets.Impl"
@@ -58,6 +64,10 @@ namespace SilkBound.Utils
 
         private static IEnumerable<Type>? CachedPacketTypes;
 
+        /// <summary>
+        /// Searches the entire current assembly's types for any deriving from <see cref="Packet"/>.
+        /// </summary>
+        /// <returns>Every registered packet's <see cref="Type"/>.</returns>
         public static Type[] GetPacketTypes()
         {
             return // nneeds to be neat it needs to be NEAT i nnnednd it neeDS it NENEDEDS to be NEAST AND CLEAN it CANT B E disGORGA RNIZED GDhf kh5ugv m5mkieu5c b6dmgjygke6 5k6ik ,5i7
@@ -75,6 +85,11 @@ namespace SilkBound.Utils
             ];
         }
 
+        /// <summary>
+        /// Finds a registered packet type from its class name.
+        /// </summary>
+        /// <param name="packetName">Target packet class name.</param>
+        /// <returns>The <see cref="Type"/> for the packet.</returns>
         public static Type GetPacketType(string packetName)
         {
             return GetPacketTypes().FirstOrDefault(t => string.Equals(
@@ -85,6 +100,11 @@ namespace SilkBound.Utils
             );
         }
 
+        /// <summary>
+        /// Converts a packets raw data and returns the corresponding packet data.
+        /// </summary>
+        /// <param name="data">The serialized packet</param>
+        /// <returns>A <see cref="Tuple"/> with the packets <c>Name</c>, <c>Sender</c> and an instance of the packet.</returns>
         public static (string?, Guid?, Packet?) UnpackPacket(byte[] data)
         {
             try
@@ -102,7 +122,7 @@ namespace SilkBound.Utils
                 //Logger.Warn("Read clientid:", clientId);
 
                 // remaining payload
-                byte[] payload = reader.ReadBytes((int)(stream.Length - stream.Position));
+                byte[] payload = reader.ReadBytes((int) (stream.Length - stream.Position));
 
                 var type = GetPacketType(packetName);
 
@@ -112,13 +132,12 @@ namespace SilkBound.Utils
                     return (packetName, clientId, null);
                 }
 
-                var tmp = (Packet)FormatterServices.GetUninitializedObject(type)!;
+                var tmp = (Packet) FormatterServices.GetUninitializedObject(type)!;
 
                 using MemoryStream payloadStream = new(payload);
                 using BinaryReader payloadReader = new(payloadStream, Encoding.UTF8);
                 return (packetName, clientId, tmp.Deserialize(clientId, payloadReader));
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
                 Logger.Error("UnpackPacket", $"Failed to unpack: {ex}");
                 return (null, null, null);

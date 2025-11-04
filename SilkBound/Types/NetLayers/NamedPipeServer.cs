@@ -19,7 +19,7 @@ namespace SilkBound.Types.NetLayers
         public NamedPipeServerStream? Stream;
         public override bool IsConnected => Stream != null && Stream.IsConnected;
 
-        public override void ConnectImpl(string host, int? port)
+        public override async Task ConnectImpl(string host, int? port)
         {
             Stream = new NamedPipeServerStream(
                 host,
@@ -31,19 +31,10 @@ namespace SilkBound.Types.NetLayers
 
             Logger.Msg("NamedPipeServerStream object created.");
             Logger.Msg("Waiting for client connection...");
-            Stream.WaitForConnection();
+            await Stream.WaitForConnectionAsync();
             Logger.Msg("Client connected!");
 
-            Task.Run(() => ReceiveLoop());
-            Task.Run(() => ClientLoop());
-        }
-
-        private void ClientLoop()
-        {
-            while (true)
-            {
-
-            }
+            _ = ReceiveLoop();
         }
 
         private async Task ReceiveLoop()
@@ -86,7 +77,7 @@ namespace SilkBound.Types.NetLayers
         {
 
         }
-        public override void Send(Packet packet)
+        public override void Send(byte[] packetData)
         {
             if (Stream == null || !Stream.IsConnected)
             {
@@ -94,14 +85,10 @@ namespace SilkBound.Types.NetLayers
                 return;
             }
 
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null)
-                return;
-
             //Logger.Msg("presend"); 
             try
             {
-                Stream.Write(data, 0, data.Length);
+                Stream.Write(packetData, 0, packetData.Length);
             } catch(Exception e)
             {
                 Logger.Warn($"NamedPipeServer send error: {e.Message} {e.GetType().Name}");
@@ -114,13 +101,13 @@ namespace SilkBound.Types.NetLayers
 
 
         //we dont need these because pipe communication is bilateral
-        public override void SendIncluding(Packet packet, List<NetworkConnection> include)
+        public override void SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
         {
             Send(packet);
         }
         
         // if the pipe server wants to exclude a client, itll be the only one it can
-        public override void SendExcluding(Packet packet, List<NetworkConnection> exclude)
+        public override void SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
         {
             return;
         }

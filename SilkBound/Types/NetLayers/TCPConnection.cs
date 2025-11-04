@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using SilkBound.Network.Packets.Impl.Communication;
+using System.Runtime.CompilerServices;
 
 namespace SilkBound.Types.NetLayers
 {
@@ -32,7 +33,7 @@ namespace SilkBound.Types.NetLayers
             _remoteId = host + ":" + port;
             _isServerSide = false;
 
-            Connect(host, port);
+            //Connect(host, port);
         }
 
         internal TCPConnection(TcpClient client, string remoteId, bool isServerSide, PacketHandler handler)
@@ -41,16 +42,15 @@ namespace SilkBound.Types.NetLayers
             _client = client;
             _remoteId = remoteId;
             _isServerSide = isServerSide;
-            ConnectImpl(null!,
-                null); // i should make them null by default (especially since the 2nd param is already supposed to be) for bs like this but it looks cool on my ide with the minecraft font lol
+            _ = ConnectImpl(null!, null); // already running in async context
         }
 
-        public override void ConnectImpl(string host, int? port)
+        public override async Task ConnectImpl(string host, int? port)
         {
             try
             {
                 if (!_client.Connected && host != null && port != null)
-                    _client.Connect(host, port.Value);
+                    await _client.ConnectAsync(host, port.Value);
 
                 _stream = _client.GetStream();
 
@@ -60,7 +60,7 @@ namespace SilkBound.Types.NetLayers
                 HasConnection = true;
                 Logger.Msg($"[TCPConnection] Connected to {_remoteId}");
 #if SERVER
-                Send(new HandshakePacket(Guid.NewGuid(), "standaloneSilkServer"));
+                Send(new HandshakePacket(Guid.Empty, "server"));
 #else
                 Send(new HandshakePacket(NetworkUtils.LocalClient.ClientID, NetworkUtils.LocalClient.ClientName));
 #endif
@@ -178,24 +178,20 @@ namespace SilkBound.Types.NetLayers
         {
         }
 
-        public override void Send(Packet packet)
+        public override void Send(byte[] packetData)
         {
+            if (packetData == null) return;
             if (!HasConnection || _stream == null)
             {
                 Logger.Warn($"[TCPConnection] Send failed, no stream for {_remoteId}");
                 return;
             }
 
-            byte[]? data;
-            data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
-
             try
             {
-                _stream.Write(data, 0, data.Length);
-                _stream.Flush();
-            }
-            catch (Exception ex)
+                _stream.WriteAsync(packetData, 0, packetData.Length);
+                //_stream.Flush();
+            } catch (Exception ex)
             {
                 Logger.Warn($"[TCPConnection] Send error to {_remoteId}: {ex}");
             }

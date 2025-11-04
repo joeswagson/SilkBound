@@ -1,14 +1,14 @@
 ﻿using HarmonyLib;
+using HutongGames.PlayMaker;
 using SilkBound.Behaviours;
 using SilkBound.Extensions;
+using SilkBound.Types.Language;
 using SilkBound.Utils;
 using UnityEngine;
 
-namespace SilkBound.Network.Packets.Impl.Sync.World
-{
+namespace SilkBound.Network.Packets.Impl.Sync.World {
     [HarmonyPatch(typeof(BattleScene))]
-    public class BattleScenePatches
-    {
+    public class BattleScenePatches {
         [HarmonyPostfix]
         [HarmonyPatch(nameof(BattleScene.Start))]
         public static void Start(BattleScene __instance)
@@ -20,13 +20,16 @@ namespace SilkBound.Network.Packets.Impl.Sync.World
                 if (obj.GetComponent<PlayMakerFSM>() is var fsm && fsm != null)
                     NetworkPropagatedGateSensor.AddComponent(__instance, fsm);
         }
-        [HarmonyPostfix]
+        [HarmonyPrefix]
         [HarmonyPatch(nameof(BattleScene.StartBattle))]
-        public static void StartBattle(BattleScene __instance)
+        public static bool StartBattle(BattleScene __instance)
         {
-            if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) return;
-
-            NetworkUtils.SendPacket(new StartBattlePacket(__instance.transform.GetPath()));
+            if (StackFlag<BattleScene>.Raised || !NetworkUtils.Connected || NetworkUtils.IsPacketThread()) return true;
+            using (new StackFlag<BattleScene>())
+            {
+                NetworkUtils.SendPacket(new StartBattlePacket(__instance.transform.GetPath())); // ask KINDLY dickhead
+                return false;
+            }
         }
     }
 }

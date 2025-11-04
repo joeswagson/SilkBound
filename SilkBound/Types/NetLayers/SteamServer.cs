@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
 using SilkBound.Network.Packets.Handlers;
+using System.Linq;
 
 namespace SilkBound.Types.NetLayers
 {
@@ -179,7 +180,7 @@ namespace SilkBound.Types.NetLayers
 
         }
 
-        public override void Send(Packet packet)
+        public override void Send(byte[] packetData)
         {
             //byte[]? data = PacketProtocol.PackPacket(packet);
             //if (data == null) return;
@@ -188,7 +189,7 @@ namespace SilkBound.Types.NetLayers
             {
                 foreach (var conn in _connections.Values)
                 {
-                    try { conn.Send(packet); }
+                    try { conn.Send(packetData); }
                     catch (Exception e) { Logger.Warn($"[SteamServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
@@ -210,7 +211,7 @@ namespace SilkBound.Types.NetLayers
             }
         }
 
-        public override void SendIncluding(Packet packet, List<NetworkConnection> include)
+        public override void SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
         {
             //byte[]? data = PacketProtocol.PackPacket(packet);
             //if (data == null) return;
@@ -226,7 +227,7 @@ namespace SilkBound.Types.NetLayers
             }
         }
 
-        public override void SendExcluding(Packet packet, List<NetworkConnection> exclude)
+        public override void SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
         {
             //byte[]? data = PacketProtocol.PackPacket(packet);
             //if (data == null) return;

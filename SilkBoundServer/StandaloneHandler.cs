@@ -34,7 +34,7 @@ namespace SilkBoundServer
         [PacketHandler(typeof(Packet))]
         public void OnPacket(Packet packet, NetworkConnection connection)
         {
-            packet.RelayInternal(connection);
+            packet.Relay(connection);
         }
     }
 }

@@ -28,7 +28,7 @@ namespace SilkBound.Types.Data {
                 return false;
 
             _target = packet.Target.Mirror;
-            Host.UpdateHero(packet.Target);
+            Host.UpdateHero(_target);
 
             return true;
         }

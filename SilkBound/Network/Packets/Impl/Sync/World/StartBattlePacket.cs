@@ -1,4 +1,6 @@
 ﻿using SilkBound.Extensions;
+using SilkBound.Types;
+using SilkBound.Utils;
 using System.IO;
 
 namespace SilkBound.Network.Packets.Impl.Sync.World
@@ -17,5 +19,19 @@ namespace SilkBound.Network.Packets.Impl.Sync.World
         {
             writer.Write(battlePath);
         }
+
+        public override void ClientHandler(NetworkConnection connection)
+        {
+            
+        }
+
+        public override void ServerHandler(NetworkConnection connection)
+        {
+            Battle?.StartBattle();
+            
+            Relay(connection);
+        }
+
+        protected override void Tunnel(NetworkConnection connection) => this.Send(connection); // we dont let clients start battles so we'll have to send this to them aswell
     }
 }

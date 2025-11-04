@@ -175,6 +175,7 @@ namespace SilkBound {
                         c => c.Count.ToString());
 
                 DbgRenderCore.RegisterRenderer(new ListRenderer(listRendererData));
+                DbgRenderCore.RegisterRenderer(new ConnectionMenuRenderer());
             }
             #endregion
         }
@@ -334,8 +335,14 @@ namespace SilkBound {
             //    SceneStateManager.Fetch(scene.name).Value.Sync(scene);
             //}
 
+            if (Input.GetKeyDown(KeyCode.F8))
+            {
+                DbgRenderCore.Toggle();
+            }
+
             if (Cursor.visible && HeroController.instance != null)
                 return;
+
 
             if (Input.GetKeyDown(KeyCode.Minus))
             {

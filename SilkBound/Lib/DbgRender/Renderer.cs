@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using static UnityEngine.UI.Image;
 
 namespace SilkBound.Lib.DbgRender {
     public enum DrawAnchorX {
@@ -65,23 +66,112 @@ namespace SilkBound.Lib.DbgRender {
             if (registered) return false;
 
             registered = true;
-            GUI.backgroundColor = new Color(1, 0, 0, 0.5f);
-            GUI.color = Color.white;
-
-            ApplySettings();
 
             return true;
         }
 
+
+        private Rect reference = Rect.zero;
+        public Rect SetCursorReference(Rect rect) => reference = rect;
+        public float ElementWidth => reference.width;
+        public float ElementHeight => reference.height;
+        public Rect ElementBuffer(float? w = null, float? h = null)
+        {
+            if (w.HasValue)
+                reference.width = w.Value;
+            if (h.HasValue)
+                reference.height = h.Value;
+
+            return reference;
+        }
+
+        private Rect _cursor = Rect.zero;
+        public ref Rect Cursor => ref _cursor;
         /// <summary>
-        /// Called after <see cref="Register"/>. Use this to change settings via <see cref="GUI"/>
+        /// Resets the sub-anchor to <see cref="Rect.zero"/>.
         /// </summary>
+        /// <returns><see cref="Rect.zero"/></returns>
+        public Rect ResetCursor(Rect? reference = null)
+        {
+            Cursor = Rect.zero;
+            return reference ?? Rect.zero;
+        }
+        /// <summary>
+        /// Moves the sub-anchor.
+        /// </summary>
+        /// <param name="stepX">Horizontal offset.</param>
+        /// <param name="stepY">Vertical offset.</param>
+        /// <returns>The offset <see cref="Cursor"/>.</returns>
+        public Rect StepCursor(float stepX = 0, float stepY = 0)
+        {
+            Cursor.x += stepX;
+            Cursor.y += stepY;
+            return CursorToScreen();
+        }
+
+        /// <summary>
+        /// Returns the absolute position of the current <see cref="Cursor"/> to a reference <see cref="Rect"/>
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <returns></returns>
+        public Rect CursorToScreen() => new Rect(reference.x + Cursor.x, reference.y + Cursor.y, reference.width, reference.height);
+
+        /// <summary>
+        /// Transforms the sub-anchor vertically.
+        /// </summary>
+        /// <param name="scrollAmount">The magnitude of the vertical transformation.</param>
+        /// <returns>The screen space <see cref="Cursor"/>.</returns>
+        public Rect Scroll(float scrollAmount)
+        {
+            Cursor.y += scrollAmount;
+            return CursorToScreen();
+        }
+        /// <summary>
+        /// Transforms the sub-anchor horizonally.
+        /// </summary>
+        /// <param name="slideAmount">The magnitude of the horizonal transformation.</param>
+        /// <returns>The screen space <see cref="Cursor"/>.</returns>
+        public Rect Slide(float slideAmount)
+        {
+            Cursor.x += slideAmount;
+            return CursorToScreen();
+        }
+
+        /// <summary>
+        /// Returns a region at the sub-anchor with a specified <see cref="float"/> width and height.
+        /// </summary>
+        public Rect ScaleCursor(float width, float height)
+        {
+            var screenCursor = CursorToScreen();
+            return new Rect(screenCursor.x, screenCursor.y, width, height);
+        }
+
+        /// <summary>
+        /// Returns a region at the sub-anchor with a specified <see cref="Vector2"/> size.
+        /// </summary>
+        public Rect ScaleCursor(Vector2 size) => ScaleCursor(size.x, size.y);
+
+        /// <summary>
+        /// Called before <see cref="Draw(DrawAnchor)"/>. Use this to change settings via <see cref="GUI"/>
+        /// </summary>
+        /// <param name="init">Initialization flag. This will only be <see langword="true"/> once, and it will fire before anything besides <see cref="Register"/></param>
         /// <example>
         /// public override void ApplySettings() { 
         ///     GUI.color = Color.red; // Make renderer text color red.
         /// }
         /// </example>
-        public virtual void ApplySettings() { }
+        protected virtual void ApplySettings(bool init)
+        {
+            GUI.backgroundColor = new Color(0, 0, 0, 0.5f);
+            GUI.color = Color.white;
+        }
+
+        private bool init = true;
+        public void ApplySettings()
+        {
+            ApplySettings(init);
+            init = false;
+        }
 
         /// <summary>
         /// Wrapper for the OnGUI MonoBehaviour message. Draw elements via <see cref="GUI"/>.
@@ -93,5 +183,29 @@ namespace SilkBound.Lib.DbgRender {
         /// Optional method to dispose any resources used by the renderer. Called before application exit.
         /// </summary>
         public virtual void Dispose() { }
+
+        #region Helper Methods
+        static Color defaultBg = new Color(0, 0, 0, 0.75f);
+        public Rect Box(float width, float height)
+        {
+            return RenderUtils.GetWindowPosition(Origin, width, height);
+        }
+        public Rect DrawBox(float width, float height, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0) => DrawBox(Box(width, height), bgColor, borderRadius, borderWidth);
+        public Rect DrawBox(Rect box, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0)
+        {
+            GUI.DrawTexture(
+                box,
+                Texture2D.whiteTexture,
+                ScaleMode.StretchToFill,
+                true,
+                1,
+                bgColor ?? defaultBg,
+                borderWidth,
+                borderRadius
+
+            );
+            return box;
+        }
+        #endregion
     }
 }

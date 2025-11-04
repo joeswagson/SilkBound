@@ -33,7 +33,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
         public override void ServerHandler(NetworkConnection connection)
         {
             Mirror?.Target.ApplyTarget(this);
-            Relay(connection);
+            Tunnel(connection);
         }
     }
 }

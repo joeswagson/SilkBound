@@ -55,7 +55,7 @@ namespace SilkBound.Types
         /// Find a connected <see cref="Weaver"/> from a specified client ID.
         /// </summary>
         /// <param name="clientId">The target id of the client.</param>
-        /// <returns>A non-null <see cref="Weaver"/> if the client ID is found, otherwise <c>null</c></returns>
+        /// <returns>A non-null <see cref="Weaver"/> if the client ID is found, otherwise <see langword="null"/></returns>
         public Weaver? GetWeaver(Guid clientId)
         {
             return Connections.Find(c => c.ClientID == clientId);
@@ -64,7 +64,7 @@ namespace SilkBound.Types
         /// Find a connected <see cref="Weaver"/> from a specified NetworkConnection instance.
         /// </summary>
         /// <param name="connection">The same connection object stored on the client.</param>
-        /// <returns>A non-null <see cref="Weaver"/> if the <paramref name="connection"/> object reference matches <see cref="Weaver.Connection"/>, otherwise <c>null</c></returns>
+        /// <returns>A non-null <see cref="Weaver"/> if the <paramref name="connection"/> object reference matches <see cref="Weaver.Connection"/>, otherwise <see langword="null"/></returns>
         public Weaver? GetWeaver(NetworkConnection connection)
         {
             return Connections.Find(c => c.Connection == connection);
@@ -112,7 +112,7 @@ namespace SilkBound.Types
 
         /// <summary>
         /// Wrapper for the backing connections <see cref="NetworkConnection.Host"/> property.
-        /// If the underlying network layer does not require this field and doesn't implement it, it will be <c>null</c>.
+        /// If the underlying network layer does not require this field and doesn't implement it, it will be <see langword="null"/>.
         /// </summary>
         public string Address { get; internal set; } = null!;
 
@@ -120,7 +120,18 @@ namespace SilkBound.Types
         /// Wrapper for the backing connectsion <see cref="NetworkConnection.Port"/> property.
         /// </summary>
         public int? Port { get; internal set; }
+
+        /// <summary>
+        /// The network layer associated with the server.
+        /// </summary>
         public NetworkConnection Connection { get; internal set; } = null!;
+
+        /// <summary>
+        /// Connect to a server via Named Pipes (Local machine only).
+        /// </summary>
+        /// <param name="host">The pipes name.</param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static Server ConnectPipe(string host, string name)
         {
             return Connect(new NamedPipeServer(host), name);
@@ -154,7 +165,7 @@ namespace SilkBound.Types
             int count = 0;
             foreach (Weaver weaver in Connections)
             {
-                if (weaver.Mirror.Scene == sceneName)
+                if (weaver.Mirror?.Scene == sceneName)
                     count++;
             }
             return count;

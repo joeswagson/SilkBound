@@ -9,10 +9,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types.NetLayers
-{
-    public class TCPServer : NetworkServer
-    {
+namespace SilkBound.Types.NetLayers {
+    public class TCPServer : NetworkServer {
         private readonly Dictionary<string, TCPConnection> _connections = [];
         private readonly object _connLock = new();
 
@@ -27,7 +25,7 @@ namespace SilkBound.Types.NetLayers
             Connect(host, port ?? SilkConstants.PORT);
             _handler = handler;
         }
-        public override void ConnectImpl(string host, int? port)
+        public override async Task ConnectImpl(string host, int? port)
         {
             if (port == null)
             {
@@ -62,9 +60,7 @@ namespace SilkBound.Types.NetLayers
                         }
                     }
                 }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
+            } catch (OperationCanceledException) { } catch (Exception ex)
             {
                 Logger.Warn($"[TCPServer] AcceptLoop error: {ex}");
             }
@@ -90,8 +86,7 @@ namespace SilkBound.Types.NetLayers
 
                     _connections.Clear();
                 }
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
                 Logger.Warn($"[TCPServer] Disconnect error: {ex}");
             }
@@ -103,19 +98,13 @@ namespace SilkBound.Types.NetLayers
         {
         }
 
-        public override void Send(Packet packet)
+        public override void Send(byte[] packetData)
         {
             lock (_connLock)
             {
-                if (_connections.Values.Count == 0) return; // dont pack if no targets
-
-                //byte[]? data = PacketProtocol.PackPacket(packet);
-                //if (data == null) return;
-
                 foreach (var conn in _connections.Values)
                 {
-                    try { conn.Send(packet); }
-                    catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                    try { conn.Send(packetData); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
         }
@@ -136,38 +125,36 @@ namespace SilkBound.Types.NetLayers
             }
         }
 
-        public override void SendIncluding(Packet packet, List<NetworkConnection> include)
+        public override void SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
         {
             lock (_connLock)
             {
-                if (include.Count == 0) return; // dont pack if no targets
+                if (include.Count() == 0) return; // dont pack if no targets
 
-                //byte[]? data = PacketProtocol.PackPacket(packet);
-                //if (data == null) return;
+                byte[]? data = PacketProtocol.PackPacket(packet);
+                if (data == null) return;
 
                 foreach (TCPConnection conn in include)
                 {
                     Logger.Msg("Sending", packet.GetType().Name, "to", conn.RemoteId);
-                    try { conn.Send(packet); }
-                    catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                    try { conn.Send(data); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
         }
 
-        public override void SendExcluding(Packet packet, List<NetworkConnection> exclude)
+        public override void SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
         {
             lock (_connLock)
             {
                 NetworkConnection[] targets = [.. _connections.Values.Except(exclude)];
-                if(targets.Length == 0) return; // dont pack if no targets
+                if (targets.Length == 0) return; // dont pack if no targets
 
-                //byte[]? data = PacketProtocol.PackPacket(packet);
-                //if (data == null) return;
+                byte[]? data = PacketProtocol.PackPacket(packet);
+                if (data == null) return;
 
                 foreach (TCPConnection conn in targets)
                 {
-                    try { conn.Send(packet); }
-                    catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                    try { conn.Send(data); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
         }

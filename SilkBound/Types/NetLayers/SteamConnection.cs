@@ -137,7 +137,7 @@ namespace SilkBound.Types.NetLayers
 
         }
 
-        public override void Send(Packet packet)
+        public override void Send(byte[] packetData)
         {
             if (_remoteId == CSteamID.Nil)
             {
@@ -145,10 +145,7 @@ namespace SilkBound.Types.NetLayers
                 return;
             }
 
-            byte[]? data = PacketProtocol.PackPacket(packet);
-            if (data == null) return;
-
-            bool ok = SteamNetworking.SendP2PPacket(_remoteId, data, (uint)data.Length, EP2PSend.k_EP2PSendReliable);
+            bool ok = SteamNetworking.SendP2PPacket(_remoteId, packetData, (uint) packetData.Length, EP2PSend.k_EP2PSendReliable);
             if (!ok) Logger.Warn($"[SteamConnection] Send failed to {_remoteId}");
         }
 

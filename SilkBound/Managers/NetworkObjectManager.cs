@@ -22,31 +22,27 @@ namespace SilkBound.Managers
             if (NetworkObjects.Contains(obj))
                 NetworkObjects.Remove(obj);
         }
-        public static void Flush(bool flushActive=false)
-        {
-            if (flushActive)
-            {
-                NetworkObjects.Clear();
-                return;
-            }
+        //public static void Flush(bool flushActive=false)
+        //{
+        //    if (flushActive)
+        //    {
+        //        NetworkObjects.Clear();
+        //        return;
+        //    }
 
-            NetworkObjects.RemoveAll(obj => !obj.Active);
-        }
+        //    NetworkObjects.RemoveAll(obj => !obj.Active);
+        //}
         public static NetworkObject? Get(string id)
         {
-            NetworkObjects.RemoveAll(obj => !obj.Active);
             return NetworkObjects.Find(o => o.NetworkId == id);
         }
         public static T? Get<T>(string id) where T : NetworkObject
         {
-            NetworkObjects.RemoveAll(obj => !obj.Active);
             return NetworkObjects.Find(o => o.NetworkId == id) as T;
         }
 
         public static bool TryGet(string id, [NotNullWhen(true)] out NetworkObject netObj)
         {
-            NetworkObjects.RemoveAll(obj => !obj.Active);
-
             NetworkObject? found = NetworkObjects.Find(o => o.NetworkId == id);
             netObj = found;
             return found != null;
@@ -61,8 +57,9 @@ namespace SilkBound.Managers
 
         public static void RevokeOwnership(Weaver target)
         {
-            if(!NetworkUtils.IsServer)
-                throw new InvalidOperationException("Only the server can manage network ownership.");
+            // all roads lead to rome my friend
+            //if(!NetworkUtils.IsServer)
+            //    throw new InvalidOperationException("Only the server can manage network ownership.");
 
             foreach (var obj in NetworkObjects)
                 obj.TransferOwnership(NetworkUtils.LocalClient);

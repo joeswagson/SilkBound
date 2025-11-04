@@ -24,7 +24,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
         }
         public override void ServerHandler(NetworkConnection connection) {
             Register?.ReceiveEvent();
-            SendExcept(connection);
+            Relay(connection);
         }
     }
 }
