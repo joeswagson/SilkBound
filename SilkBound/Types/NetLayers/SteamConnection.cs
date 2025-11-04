@@ -31,7 +31,7 @@ namespace SilkBound.Types.NetLayers
             _isServerSide = isServerSide;
         }
 
-        public override void ConnectImpl(string host, int? port)
+        public override async Task ConnectImpl(string host, int? port)
         {
             if (!ulong.TryParse(host, out ulong steamIdUlong))
             {

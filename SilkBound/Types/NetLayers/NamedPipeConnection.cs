@@ -22,18 +22,18 @@ namespace SilkBound.Types.NetLayers
         private CancellationTokenSource? _recvCts;
         private Task? _recvTask;
 
-        public override void ConnectImpl(string host, int? port)
+        public override async Task ConnectImpl(string host, int? port)
         {
             Stream = new NamedPipeClientStream(
                 ".", host, PipeDirection.InOut,
                 PipeOptions.Asynchronous
             );
             Logger.Msg("Connecting to NamedPipeServer...");
-            Stream.Connect();
+            await Stream.ConnectAsync();
             Logger.Msg("Connected to server!");
 
             _recvCts = new CancellationTokenSource();
-            _recvTask = Task.Run(() => ReceiveLoopAsync(_recvCts.Token), _recvCts.Token);
+            _ = ReceiveLoopAsync(_recvCts.Token);
         }
 
         private async Task ReceiveLoopAsync(CancellationToken ct)

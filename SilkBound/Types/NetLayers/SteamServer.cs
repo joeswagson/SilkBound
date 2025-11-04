@@ -27,7 +27,7 @@ namespace SilkBound.Types.NetLayers
             Connect(string.Empty, null);
         }
 
-        public override void ConnectImpl(string host, int? port)
+        public override async Task ConnectImpl(string host, int? port)
         {
             Logger.Msg("[SteamServer] Starting up SteamServer...");
 
@@ -35,8 +35,7 @@ namespace SilkBound.Types.NetLayers
             _p2pSessionFail = Callback<P2PSessionConnectFail_t>.Create(OnP2PSessionFail);
 
             _recvCts = new CancellationTokenSource();
-            _recvTask = Task.Run(() => ReceiveLoopAsync(_recvCts.Token), _recvCts.Token);
-
+            _ = ReceiveLoopAsync(_recvCts.Token);
             Logger.Msg("[SteamServer] Ready for incoming Steam P2P connections.");
         }
 
