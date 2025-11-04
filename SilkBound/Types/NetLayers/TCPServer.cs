@@ -22,7 +22,7 @@ namespace SilkBound.Types.NetLayers {
         public override bool IsConnected => _connections.Count > 0;
         public TCPServer(string host, PacketHandler handler, int? port = null) : base(handler)
         {
-            Connect(host, port ?? SilkConstants.PORT);
+            //Connect(host, port ?? SilkConstants.PORT);
             _handler = handler;
         }
         public override async Task ConnectImpl(string host, int? port)

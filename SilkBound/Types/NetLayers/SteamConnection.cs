@@ -22,7 +22,7 @@ namespace SilkBound.Types.NetLayers
 
         public SteamConnection(string host) : base(new ClientPacketHandler())
         {
-            Connect(host, null);
+            //Connect(host, null);
         }
 
         public SteamConnection(CSteamID remoteId, bool isServerSide) : base(isServerSide ? new ServerPacketHandler() : new ClientPacketHandler())

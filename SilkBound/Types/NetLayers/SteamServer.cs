@@ -24,7 +24,7 @@ namespace SilkBound.Types.NetLayers
 
         public SteamServer() : base(new ServerPacketHandler())
         {
-            Connect(string.Empty, null);
+            //Connect(string.Empty, null);
         }
 
         public override async Task ConnectImpl(string host, int? port)

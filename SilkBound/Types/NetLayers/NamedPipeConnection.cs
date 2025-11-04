@@ -13,7 +13,7 @@ namespace SilkBound.Types.NetLayers
     {
         public NamedPipeConnection(string host) : base(new ClientPacketHandler())
         {
-            Connect(host, null);
+            //Connect(host, null);
         }
 
         public NamedPipeClientStream? Stream;
