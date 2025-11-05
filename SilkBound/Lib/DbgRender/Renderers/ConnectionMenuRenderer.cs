@@ -72,7 +72,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
 
         ConnectionStatus _status = ConnectionStatus.NotReady;
         public ConnectionStatus CurrentStatus => _status;
-        public override void Draw(DrawAnchor origin)
+        public override void Draw()
         {
             SetCursorReference(DrawBox(WIDTH, HEIGHT, frameBgColor, 5)); // draw and center cursor around frame
             ElementBuffer(ElementWidth - 2 * MARGIN, 20); // prevent overlap
