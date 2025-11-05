@@ -29,11 +29,11 @@ using System.Threading;
 #endif
 
 #if MELON
-[assembly: MelonInfo(typeof(ModMain), "SilkBound", "1.0.0", "@joeswanson.")]
+[assembly: MelonInfo(typeof(Silkbound), "SilkBound", "1.0.0", "@joeswanson.")]
 #endif
 namespace SilkBound {
 #if MELON
-    public partial class ModMain : MelonMod
+    public partial class Silkbound : MelonMod
 #elif BEPIN
     [BepInAutoPlugin("io.github.joeswagson", "SilkBound", "1.0.0")]
     [BepInProcess("Hollow Knight Silksong.exe")]
@@ -43,7 +43,7 @@ namespace SilkBound {
 
 
 
-        public static ModMain Instance = null!;
+        public static Silkbound Instance = null!;
         public string HOST_IP => Config.HostIP;
         public string CONNECT_IP => Config.ConnectIP;
 

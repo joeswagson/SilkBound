@@ -74,7 +74,7 @@ namespace SilkBound.Utils {
         }
         public static async Task<Weaver> ConnectTCPAsync(ConnectionRequest request, string host, string name, int? port = null)
         {
-            return await ConnectAsync(new TCPConnection(host, port ?? ModMain.Config.Port), name, request);
+            return await ConnectAsync(new TCPConnection(host, port ?? Silkbound.Config.Port), name, request);
         }
         public static async Task<Weaver> ConnectAsync(NetworkConnection connection, string name, ConnectionRequest? request = null)
         {
@@ -90,7 +90,7 @@ namespace SilkBound.Utils {
             Server.CurrentServer.Connections.Add(LocalClient);
 
             Server.CurrentServer.Address = connection.Host!;
-            Server.CurrentServer.Port = connection.Port ?? ModMain.Config.Port;
+            Server.CurrentServer.Port = connection.Port ?? Silkbound.Config.Port;
 
             await connection.Connect(
                 Server.CurrentServer.Address,
@@ -129,7 +129,7 @@ namespace SilkBound.Utils {
             Server.CurrentServer.Connections.Add(LocalClient);
 
             Server.CurrentServer.Address = connection.Host!;
-            Server.CurrentServer.Port = connection.Port ?? ModMain.Config.Port;
+            Server.CurrentServer.Port = connection.Port ?? Silkbound.Config.Port;
 
             connection.Connect(
                 Server.CurrentServer.Address,
@@ -175,7 +175,7 @@ namespace SilkBound.Utils {
 
             connection.Dispose();
 
-            if (ModMain.Config.HostSettings.LogPlayerDisconnections)
+            if (Silkbound.Config.HostSettings.LogPlayerDisconnections)
                 Logger.Msg($"{client?.ClientName ?? $"{connection.Host}{(connection.Port.HasValue ? ":" + connection.Port.Value : string.Empty)}"} disconnected: {reason}");
         }
         public static bool IsPacketThread()

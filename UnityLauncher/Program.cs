@@ -17,7 +17,7 @@ namespace UnityLauncher
             string props = File.ReadAllText("../../../../Silkbound/local.props");
             string offline = props.Split("<SilksongPath_Offline>")[1].Split("</SilksongPath_Offline>")[0].Trim();
             string steam = props.Split("<SilksongPath_Steam>")[1].Split("</SilksongPath_Steam>")[0].Trim();
-            _ = typeof(ModMain);
+            _ = typeof(Silkbound);
 
             bool killed = false;
             foreach (Process p in Process.GetProcessesByName("Hollow Knight Silksong"))

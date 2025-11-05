@@ -82,10 +82,10 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             RenderStatus();
 
             GUI.Label(Scroll(ElementHeight + MARGIN), HostHeader); // host label
-            ModMain.Config.HostIP = GUI.TextField(Scroll(ElementHeight), ModMain.Config.HostIP, 15); // host textfield
+            Silkbound.Config.HostIP = GUI.TextField(Scroll(ElementHeight), Silkbound.Config.HostIP, 15); // host textfield
 
             GUI.Label(Scroll(ElementHeight + MARGIN), ConnectHeader); // connect label
-            ModMain.Config.ConnectIP = GUI.TextField(Scroll(ElementHeight), ModMain.Config.ConnectIP, 15); // connect textfield
+            Silkbound.Config.ConnectIP = GUI.TextField(Scroll(ElementHeight), Silkbound.Config.ConnectIP, 15); // connect textfield
 
             ElementBuffer((WIDTH - 3 * MARGIN) / 2);
             if (GUI.Button(Scroll(ElementHeight + MARGIN), HostText) && !connecting)
@@ -94,7 +94,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
                 connecting = true;
                 SetStatus(ConnectionStatus.Connecting);
 
-                var host = ModMain.Config.HostIP;
+                var host = Silkbound.Config.HostIP;
                 int? port = null;
                 if (host.Contains(':') && ushort.TryParse(host.Split(":")[1], out ushort ushort_port))
                     port = ushort_port;
@@ -109,7 +109,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
                 connecting = true;
                 SetStatus(ConnectionStatus.Connecting);
 
-                var connect = ModMain.Config.ConnectIP;
+                var connect = Silkbound.Config.ConnectIP;
                 int? port = null;
                 if (connect.Contains(':') && ushort.TryParse(connect.Split(":")[1], out ushort ushort_port))
                     port = ushort_port;

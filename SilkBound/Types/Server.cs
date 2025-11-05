@@ -105,7 +105,7 @@ namespace SilkBound.Types
         /// <summary>
         /// The current servers settings, otherwise the default specified by <see cref="ServerSettings"/>.
         /// </summary>
-        public ServerSettings Settings { get; set; } = ModMain.Config.HostSettings;
+        public ServerSettings Settings { get; set; } = Silkbound.Config.HostSettings;
 
         /// <summary>
         /// Client hosting the current server.

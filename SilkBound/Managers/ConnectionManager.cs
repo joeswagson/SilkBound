@@ -121,10 +121,10 @@ namespace SilkBound.Managers {
 
 
     public class ConnectionManager {
-        public static ushort Port => ModMain.Config.Port;
+        public static ushort Port => Silkbound.Config.Port;
         internal static void UpdateMenuStatus(ConnectionStatus status)
         {
-            ModMain.ConnectionMenu?.SetStatus(status);
+            Silkbound.ConnectionMenu?.SetStatus(status);
         }
 
         public static void Disconnect(string reason = "Unspecified.")
@@ -192,17 +192,17 @@ namespace SilkBound.Managers {
         }
         public static async Task<ServerStart> Server()
         {
-            var config = ModMain.Config;
+            var config = Silkbound.Config;
             return await Server(config.NetworkLayer, config.ConnectIP, config.Port, config.Username);
         }
         public static async Task<ServerStart> Server(NetworkingLayer? networkingLayer = null, string? ip = null, int? port = null, string? name = null)
         {
             UpdateMenuStatus(ConnectionStatus.Connecting);
 
-            networkingLayer ??= ModMain.Config.NetworkLayer;
-            ip ??= ModMain.Config.HostIP;
-            port ??= ModMain.Config.Port;
-            name ??= ModMain.Config.Username;
+            networkingLayer ??= Silkbound.Config.NetworkLayer;
+            ip ??= Silkbound.Config.HostIP;
+            port ??= Silkbound.Config.Port;
+            name ??= Silkbound.Config.Username;
 
             ServerStart request = PromiseStartup(networkingLayer.Value, ip, port);
             Logger.Msg("handling layer");
@@ -289,14 +289,14 @@ namespace SilkBound.Managers {
         }
         public static async Task<ConnectionRequest> Client(NetworkingLayer? networkingLayer = null, string? ip = null, int? port = null, string? name = null)
         {
-            var config = ModMain.Config;
+            var config = Silkbound.Config;
             return await Client(networkingLayer ?? config.NetworkLayer, ip ?? config.ConnectIP, port ?? config.Port, name ?? config.Username);
         }
         public static async Task<ConnectionRequest> Client(NetworkingLayer networkingLayer, string ip, int? port = null, string? name = null)
         {
             UpdateMenuStatus(ConnectionStatus.Connecting);
 
-            name ??= ModMain.Config.Username;
+            name ??= Silkbound.Config.Username;
             ConnectionRequest request = Promise(networkingLayer, ip, port);
 
             switch (networkingLayer)

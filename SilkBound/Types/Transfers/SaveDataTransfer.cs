@@ -68,7 +68,7 @@ namespace SilkBound.Types.Transfers
             }
 
             //Logger.Msg(ModMain.Config.UseMultiplayerSaving, !Server.CurrentServer.Settings.ForceHostSaveData);
-            if(ModMain.Config.UseMultiplayerSaving && !Server.CurrentServer.Settings.ForceHostSaveData)
+            if(Silkbound.Config.UseMultiplayerSaving && !Server.CurrentServer.Settings.ForceHostSaveData)
                 NetworkUtils.LocalClient!.SaveGame = LocalSaveManager.SaveExists(Data.HostHash) ? LocalSaveManager.ReadFromFile(LocalSaveManager.GetSavePath(Data.HostHash))! : new MultiplayerSaveGameData(Data.SaveGame!);
             else
                 NetworkUtils.LocalClient!.SaveGame = new MultiplayerSaveGameData(Data.SaveGame!);
