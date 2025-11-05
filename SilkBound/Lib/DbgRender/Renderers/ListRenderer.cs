@@ -7,7 +7,7 @@ using System.Text;
 using UnityEngine;
 
 namespace SilkBound.Lib.DbgRender.Renderers {
-    public class ListRenderer(Dictionary<string, object?> list) : Renderer {
+    public class ListRenderer(Dictionary<string, object?> list, DrawAnchor? anchor=null) : Renderer(anchor) {
         private string EntryToString(KeyValuePair<string, object?> entry)
         {
             return $"{entry.Key}: {ChunkedTransfer.NormalizeObject(entry.Value)}";
@@ -15,7 +15,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
 
         private readonly float linePadding = 5f;
         public Color bgColor = new Color(0, 0, 0, 0.75f);
-        public override void Draw(DrawAnchor origin)
+        public override void Draw()
         {
             if (list.Count == 0)
                 return;
@@ -35,7 +35,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             float paddedWidth = maxWidth + (linePadding * 2);
             float totalHeight = (lineHeights) + (linePadding * 2);
 
-            var root = RenderUtils.GetWindowPosition(origin, paddedWidth, totalHeight);
+            var root = Box(paddedWidth, totalHeight);
 
             var bgRect = new Rect(root.x, root.y, root.width, root.height);
             //var prevColor = GUI.color;
