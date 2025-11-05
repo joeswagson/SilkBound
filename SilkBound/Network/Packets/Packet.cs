@@ -80,9 +80,14 @@ namespace SilkBound.Network.Packets {
         /// </summary>
         /// <param name="required">The required node for permission.</param>
         /// <returns>Whether <see cref="Sender"/> (or <see cref="NetworkUtils.LocalClient"/>) fits the required authority.</returns>
-        public bool HasAuthority(AuthorityNode required)
+        public bool HasAuthority(AuthorityNode required, Weaver? target = null)
         {
-            AuthorityNode senderAuthority = GetSenderAuthority(Sender ?? NetworkUtils.LocalClient);
+            AuthorityNode senderAuthority = GetSenderAuthority(target ?? Sender ?? NetworkUtils.LocalClient);
+            return required == AuthorityNode.Any || senderAuthority == required;
+        }
+        public bool ClientHasAuthority(AuthorityNode required, Weaver target)
+        {
+            AuthorityNode senderAuthority = GetSenderAuthority(target ?? Sender ?? NetworkUtils.LocalClient);
             return required == AuthorityNode.Any || senderAuthority == required;
         }
 
@@ -133,10 +138,10 @@ namespace SilkBound.Network.Packets {
         public abstract Packet Deserialize(BinaryReader reader);
         internal Packet Deserialize(Guid clientId, BinaryReader reader)
         {
-            Sender ??= Server.CurrentServer?.GetWeaver(clientId)!; // thank god i fixed this when the only authed packet was network ownership lol ANY client could send a packet of any auth with a modded client to bypass the serialize check
-            if (!HasAuthority(ReadAuthority))
+            Sender ??= Server.CurrentServer?.GetWeaver(clientId)!;
+            if (!ClientHasAuthority(ReadAuthority, NetworkUtils.LocalClient) || !ClientHasAuthority(SendAuthority, Sender))
             {
-                throw new UnauthorizedAccessException($"Packet of type {GetType().Name} cannot be sent by {PacketAuthority} authority.");
+                throw new UnauthorizedAccessException($"Packet of type {GetType().Name} does not allow authority {PacketAuthority}.");
             }
 
 
