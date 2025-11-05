@@ -50,7 +50,12 @@ namespace SilkBound.Types.Language
         public static T? Value;
         public static bool Raised => depth.Value > 0;
 
-        public int Index { get; private set; } = -1; 
+        public int Index { get; private set; } = -1;
+
+        ~StackFlagPole()
+        {
+            Dispose();
+        }
         public StackFlagPole(T? value = default)
         {
             Value = value;
@@ -64,6 +69,8 @@ namespace SilkBound.Types.Language
             flagPoles.Remove(this);
             depth.Value--;
             Value = default;
+
+            GC.SuppressFinalize(this);
         }
     }
 }
