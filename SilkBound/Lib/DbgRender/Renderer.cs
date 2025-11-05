@@ -34,6 +34,14 @@ namespace SilkBound.Lib.DbgRender {
         public DrawAnchorX AnchorX = anchorX;
         public DrawAnchorY AnchorY = anchorY;
 
+        public TextAnchor? _text;
+        public TextAnchor Text => _text ??= Enum.Parse<TextAnchor>(AnchorY switch {
+                DrawAnchorY.Top => "Upper",
+                DrawAnchorY.Center => "Middle",
+                DrawAnchorY.Bottom => "Lower",
+                _ => "Middle"
+            } + AnchorX.ToString());
+
         public Vector2 normalized = new Vector2(
             (((float) anchorX) + 1) / 2,
             (((float) anchorY) + 1) / 2
@@ -46,7 +54,7 @@ namespace SilkBound.Lib.DbgRender {
     /// Internal generic class for defining a custom renderer.
     /// </summary>
     public abstract class Renderer {
-        public DrawAnchor Origin;
+        public DrawAnchor Origin = DrawAnchor.TopLeft;
         /// <summary>
         /// Creates an uninitialized Renderer instance.
         /// </summary>
@@ -54,8 +62,14 @@ namespace SilkBound.Lib.DbgRender {
         public Renderer(DrawAnchor? anchor = null)
         {
             Origin = anchor ?? DrawAnchor.TopLeft;
+            Created();
         }
         bool registered = false;
+
+        /// <summary>
+        /// Fired in the constructor after <see cref="Origin"/> is set.
+        /// </summary>
+        public virtual void Created() { }
 
         /// <summary>
         /// Registers a renderer and applies its settings.
@@ -152,7 +166,7 @@ namespace SilkBound.Lib.DbgRender {
         public Rect ScaleCursor(Vector2 size) => ScaleCursor(size.x, size.y);
 
         /// <summary>
-        /// Called before <see cref="Draw(DrawAnchor)"/>. Use this to change settings via <see cref="GUI"/>
+        /// Called before <see cref="Draw()"/>. Use this to change settings via <see cref="GUI"/>
         /// </summary>
         /// <param name="init">Initialization flag. This will only be <see langword="true"/> once, and it will fire before anything besides <see cref="Register"/></param>
         /// <example>
@@ -164,6 +178,8 @@ namespace SilkBound.Lib.DbgRender {
         {
             GUI.backgroundColor = new Color(0, 0, 0, 0.5f);
             GUI.color = Color.white;
+
+            GUI.skin.label.alignment = Origin.Text;
         }
 
         private bool init = true;
@@ -177,7 +193,7 @@ namespace SilkBound.Lib.DbgRender {
         /// Wrapper for the OnGUI MonoBehaviour message. Draw elements via <see cref="GUI"/>.
         /// </summary>
         /// <param name="origin">Equivalent to <see cref="Origin"/></param>
-        public abstract void Draw(DrawAnchor origin);
+        public abstract void Draw();
 
         /// <summary>
         /// Optional method to dispose any resources used by the renderer. Called before application exit.
@@ -186,10 +202,7 @@ namespace SilkBound.Lib.DbgRender {
 
         #region Helper Methods
         static Color defaultBg = new Color(0, 0, 0, 0.75f);
-        public Rect Box(float width, float height)
-        {
-            return RenderUtils.GetWindowPosition(Origin, width, height);
-        }
+        public Rect Box(float width, float height) => RenderUtils.GetWindowPosition(Origin, width, height);
         public Rect DrawBox(float width, float height, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0) => DrawBox(Box(width, height), bgColor, borderRadius, borderWidth);
         public Rect DrawBox(Rect box, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0)
         {
