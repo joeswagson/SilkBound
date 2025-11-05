@@ -74,10 +74,12 @@ namespace SilkBound.Managers {
 
         
         #if !SERVER
+
         /// <summary>
         /// Online username
         /// </summary>
         public string Username = "Weaver";
+        public string SkinName = "red";
 
         public string HostIP = "0.0.0.0";
         public string ConnectIP = "127.0.0.1";
@@ -99,6 +101,8 @@ namespace SilkBound.Managers {
         #endregion
 
         #region QOL
+        public Skin Skin() => SkinManager.GetOrDefault(SkinName);
+
         public void SaveToFile(string filename = "config")
         {
             ConfigurationManager.SaveToFile(this, filename);
