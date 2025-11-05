@@ -179,7 +179,7 @@ namespace SilkBound.Types.NetLayers
         {
         }
 
-        public override void Send(byte[] packetData)
+        public override async Task Send(byte[] packetData)
         {
             if (packetData == null) return;
             if (!HasConnection || _stream == null)
@@ -191,7 +191,7 @@ namespace SilkBound.Types.NetLayers
 
             try
             {
-                _stream.WriteAsync(packetData, 0, packetData.Length);
+                await _stream.WriteAsync(packetData, 0, packetData.Length);
                 //_stream.Flush();
             } catch (Exception ex)
             {

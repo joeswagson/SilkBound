@@ -8,10 +8,8 @@ using System.IO;
 using SilkBound.Network.Packets.Handlers;
 using System.Linq;
 
-namespace SilkBound.Types.NetLayers
-{
-    public class SteamServer : NetworkServer
-    {
+namespace SilkBound.Types.NetLayers {
+    public class SteamServer : NetworkServer {
         private readonly Dictionary<CSteamID, SteamConnection> _connections = [];
         private readonly object _connLock = new();
 
@@ -98,8 +96,7 @@ namespace SilkBound.Types.NetLayers
                                             _connections[sender] = conn;
                                             Logger.Msg($"[SteamServer] Auto-accepted and created connection for {sender}");
                                         }
-                                    }
-                                    else
+                                    } else
                                     {
                                         Logger.Warn($"[SteamServer] Received packet from unknown sender {sender} and AcceptP2PSessionWithUser returned false — dropping.");
                                         continue;
@@ -115,24 +112,20 @@ namespace SilkBound.Types.NetLayers
                                     byte[] payload = br.ReadBytes(length);
 
                                     HandlePacket(payload);
-                                }
-                                catch (Exception ex)
+                                } catch (Exception ex)
                                 {
                                     Logger.Error($"[SteamServer] Error dispatching packet from {sender}: {ex}");
                                 }
                             }
                         }
-                    }
-                    catch (Exception inner)
+                    } catch (Exception inner)
                     {
                         Logger.Warn($"[SteamServer] Receive loop read error: {inner}");
                     }
 
                     await Task.Delay(10, ct).ConfigureAwait(false);
                 }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
+            } catch (OperationCanceledException) { } catch (Exception ex)
             {
                 Logger.Error($"[SteamServer] ReceiveLoop fatal: {ex}");
             }
@@ -155,8 +148,7 @@ namespace SilkBound.Types.NetLayers
                 {
                     foreach (var kv in _connections)
                     {
-                        try { SteamNetworking.CloseP2PSessionWithUser(kv.Key); }
-                        catch (Exception e) { Logger.Warn($"Error closing session for {kv.Key}: {e}"); }
+                        try { SteamNetworking.CloseP2PSessionWithUser(kv.Key); } catch (Exception e) { Logger.Warn($"Error closing session for {kv.Key}: {e}"); }
                     }
                     _connections.Clear();
                 }
@@ -165,8 +157,7 @@ namespace SilkBound.Types.NetLayers
                 _p2pSessionFail?.Unregister();
                 _p2pSessionRequest = null;
                 _p2pSessionFail = null;
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
                 Logger.Warn($"[SteamServer] Disconnect error: {ex}");
             }
@@ -179,20 +170,26 @@ namespace SilkBound.Types.NetLayers
 
         }
 
-        public override void Send(byte[] packetData)
+        public override async Task Send(byte[] packetData)
         {
-            //byte[]? data = PacketProtocol.PackPacket(packet);
-            //if (data == null) return;
-
+            IEnumerable<SteamConnection> conns;
             lock (_connLock)
             {
-                foreach (var conn in _connections.Values)
+                conns = _connections.Values;
+            }
+
+            foreach (var conn in conns)
+            {
+                try
                 {
-                    try { conn.Send(packetData); }
-                    catch (Exception e) { Logger.Warn($"[SteamServer] Failed send to {conn.RemoteId}: {e}"); }
+                    await conn.Send(packetData);
+                } catch (Exception e)
+                {
+                    Logger.Warn($"[SteamServer] Failed send to {conn.RemoteId}: {e}");
                 }
             }
         }
+
 
         public IReadOnlyCollection<CSteamID> GetPlayerList()
         {
@@ -220,8 +217,7 @@ namespace SilkBound.Types.NetLayers
                 foreach (var conn in _connections.Values)
                 {
                     if (include.Contains(conn))
-                        try { conn.Send(packet); }
-                        catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                        try { conn.Send(packet); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
         }
@@ -236,8 +232,7 @@ namespace SilkBound.Types.NetLayers
                 foreach (var conn in _connections.Values)
                 {
                     if (!exclude.Contains(conn))
-                        try { conn.Send(packet); }
-                        catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                        try { conn.Send(packet); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
                 }
             }
         }

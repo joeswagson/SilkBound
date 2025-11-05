@@ -7,10 +7,8 @@ using System.Threading;
 using System.IO;
 using SilkBound.Network.Packets.Handlers;
 
-namespace SilkBound.Types.NetLayers
-{
-    public class SteamConnection : NetworkConnection
-    {
+namespace SilkBound.Types.NetLayers {
+    public class SteamConnection : NetworkConnection {
         internal CSteamID _remoteId;
         internal bool _isServerSide;
 
@@ -75,29 +73,24 @@ namespace SilkBound.Types.NetLayers
                                         byte[] payload = br.ReadBytes(length);
 
                                         HandleIncoming(payload);
-                                    }
-                                    catch (Exception ex)
+                                    } catch (Exception ex)
                                     {
                                         Logger.Error($"[SteamConnection] Error handling packet from {sender}: {ex}");
                                     }
-                                }
-                                else
+                                } else
                                 {
                                     Logger.Warn($"[SteamConnection] Received packet from unexpected sender {sender} (expected {_remoteId}) — dropping.");
                                 }
                             }
                         }
-                    }
-                    catch (Exception inner)
+                    } catch (Exception inner)
                     {
                         Logger.Warn($"[SteamConnection] client receive loop read error: {inner}");
                     }
 
                     await Task.Delay(10, ct).ConfigureAwait(false);
                 }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
+            } catch (OperationCanceledException) { } catch (Exception ex)
             {
                 Logger.Error($"[SteamConnection] ClientReceiveLoop fatal: {ex}");
             }
@@ -125,8 +118,7 @@ namespace SilkBound.Types.NetLayers
                 }
 
                 SteamNetworking.CloseP2PSessionWithUser(_remoteId);
-            }
-            catch (Exception e)
+            } catch (Exception e)
             {
                 Logger.Warn($"[SteamConnection] Disconnect error: {e}");
             }
@@ -137,7 +129,7 @@ namespace SilkBound.Types.NetLayers
 
         }
 
-        public override void Send(byte[] packetData)
+        public override async Task Send(byte[] packetData)
         {
             if (_remoteId == CSteamID.Nil)
             {
@@ -145,8 +137,14 @@ namespace SilkBound.Types.NetLayers
                 return;
             }
 
-            bool ok = SteamNetworking.SendP2PPacket(_remoteId, packetData, (uint) packetData.Length, EP2PSend.k_EP2PSendReliable);
-            if (!ok) Logger.Warn($"[SteamConnection] Send failed to {_remoteId}");
+            await Task.Run(() => {
+                bool ok = SteamNetworking.SendP2PPacket(_remoteId, packetData, (uint) packetData.Length, EP2PSend.k_EP2PSendReliable);
+                if (!ok)
+                {
+                    Logger.Warn($"[SteamConnection] Send failed to {_remoteId}");
+                    throw new Exception($"Packet send to {_remoteId} failed.");
+                }
+            });
         }
 
         internal void HandleIncoming(byte[] data)
@@ -154,8 +152,7 @@ namespace SilkBound.Types.NetLayers
             try
             {
                 HandlePacket(data);
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
                 Logger.Error($"[SteamConnection] HandleIncoming failed for {_remoteId}: {ex}");
             }

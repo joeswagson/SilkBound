@@ -77,7 +77,7 @@ namespace SilkBound.Types.NetLayers
         {
 
         }
-        public override void Send(byte[] packetData)
+        public override async Task Send(byte[] packetData)
         {
             if (Stream == null || !Stream.IsConnected)
             {
@@ -88,14 +88,14 @@ namespace SilkBound.Types.NetLayers
             //Logger.Msg("presend"); 
             try
             {
-                Stream.Write(packetData, 0, packetData.Length);
+                await Stream.WriteAsync(packetData, 0, packetData.Length);
+                await Stream.FlushAsync();
             } catch(Exception e)
             {
                 Logger.Warn($"NamedPipeServer send error: {e.Message} {e.GetType().Name}");
                 return;
             }
             //Logger.Msg("sent");
-            Stream.Flush();
             //Logger.Msg("flushed");
         }
 

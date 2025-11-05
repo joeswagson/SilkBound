@@ -98,13 +98,20 @@ namespace SilkBound.Types.NetLayers {
         {
         }
 
-        public override void Send(byte[] packetData)
+        public override async Task Send(byte[] packetData)
         {
+            IEnumerable<TCPConnection> conns;
             lock (_connLock)
+                conns = _connections.Values;
+
+            foreach (var conn in _connections.Values)
             {
-                foreach (var conn in _connections.Values)
+                try
                 {
-                    try { conn.Send(packetData); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+                    await conn.Send(packetData);
+                } catch (Exception e)
+                {
+                    Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}");
                 }
             }
         }

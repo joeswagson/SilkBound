@@ -7,10 +7,8 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types.NetLayers
-{
-    public class NamedPipeConnection : NetworkConnection
-    {
+namespace SilkBound.Types.NetLayers {
+    public class NamedPipeConnection : NetworkConnection {
         public NamedPipeConnection(string host) : base(new ClientPacketHandler(), host)
         {
             //Connect(host, null);
@@ -49,20 +47,16 @@ namespace SilkBound.Types.NetLayers
                     {
                         byte[] data = new byte[read - 4];
                         Array.Copy(buffer, 4, data, 0, read - 4);
-                        try { HandlePacket(data); }
-                        catch (Exception ex)
+                        try { HandlePacket(data); } catch (Exception ex)
                         {
                             Logger.Error($"NamedPipeConnection HandlePacket failed: {ex}");
                         }
                     }
                 }
-            }
-            catch (OperationCanceledException) { }
-            catch (IOException e)
+            } catch (OperationCanceledException) { } catch (IOException e)
             {
                 Logger.Warn($"NamedPipeConnection receive loop ended: {e.Message}");
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
                 Logger.Error($"NamedPipeConnection receive loop fatal: {ex}");
             }
@@ -82,8 +76,7 @@ namespace SilkBound.Types.NetLayers
 
                 Stream?.Dispose();
                 Stream = null;
-            }
-            catch (Exception e)
+            } catch (Exception e)
             {
                 Logger.Warn($"NamedPipeConnection Disconnect error: {e}");
             }
@@ -104,8 +97,8 @@ namespace SilkBound.Types.NetLayers
 
             try
             {
-                _ = Stream.WriteAsync(packetData, 0, packetData.Length).ContinueWith(_=>NetworkStats.PacketDropped(packetData));
-                _ = Stream.FlushAsync();
+                await Stream.WriteAsync(packetData, 0, packetData.Length);
+                await Stream.FlushAsync();
             } catch (Exception e)
             {
                 Logger.Warn($"NamedPipeConnection send error: {e.Message} {e.GetType().Name}");
