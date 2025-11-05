@@ -47,7 +47,7 @@ namespace SilkBound.Lib.DbgRender {
             alive.ForEach(r => {
                 r.ResetCursor();
                 r.ApplySettings();
-                r.Draw(r.Origin);
+                r.Draw();
             });
         }
         public static void Dispose()
