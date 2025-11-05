@@ -9,6 +9,8 @@ using SilkBound.Network.Packets.Impl.Steam;
 using SilkBound.Managers;
 using SilkBound.Network.Packets.Handlers;
 using UnityEngine.SceneManagement;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace SilkBound.Types
 {
@@ -126,6 +128,39 @@ namespace SilkBound.Types
         /// </summary>
         public NetworkConnection Connection { get; internal set; } = null!;
 
+        public void Shutdown()
+        {
+            Logger.Msg("Shutting down server...");
+        }
+
+        #region Async Connectors
+
+        public static async Task<Server> ConnectPipeAsync(string host, string name)
+        {
+            return await ConnectAsync(new NamedPipeServer(host), name);
+        }
+        public static async Task<Server> ConnectP2PAsync(string name)
+        {
+            return await ConnectAsync(new SteamServer(), name);
+        }
+        public static async Task<Server> ConnectTCPAsync(string host, string name, int? port = null)
+        {
+            return await ConnectAsync(new TCPServer(host, new ServerPacketHandler(), port), name);
+        }
+
+        public static async Task<Server> ConnectAsync(NetworkServer connection, string name)
+        {
+            Weaver host = await NetworkUtils.ConnectAsync(connection, name);
+            NetworkUtils.LocalServer = connection;
+            CurrentServer.Host = host;
+            AddonManager.LoadAddons();
+
+            return CurrentServer;
+        }
+        #endregion
+
+        #region Synchronous Connectors
+
         /// <summary>
         /// Connect to a server via Named Pipes (Local machine only).
         /// </summary>
@@ -154,6 +189,7 @@ namespace SilkBound.Types
 
             return CurrentServer;
         }
+        #endregion
 
         #region game functions
         public int GetPlayersInScene()
@@ -170,6 +206,7 @@ namespace SilkBound.Types
             }
             return count;
         }
+
         #endregion
     }
 }

@@ -231,32 +231,34 @@ namespace SilkBound {
                 w
             );
 
-            if (SilkDebug.GetClientNumber() == 1)
-            {
-                //Server.ConnectPipe("pipetest", "host");
-                Server.ConnectTCP("127.0.0.1", "host");
-                NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
-                //Skin skin = SkinManager.GetOrDefault("blue");
-                //NetworkUtils.LocalClient!.ChangeSkin(skin);
-            } else
-            {
-                //NetworkUtils.ConnectPipe("pipetest", $"client{SilkDebug.GetClientNumber() - 1}");
-                //NetworkUtils.ConnectTCP(CONNECT_IP, $"client{SilkDebug.GetClientNumber() - 1}");
-                _ = ConnectionManager.Client(NetworkingLayer.TCP, CONNECT_IP);
-                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
-                    Skin skin = SilkDebug.GetClientNumber() switch {
-                        2 => SkinManager.GetOrDefault("purple"),
-                        3 => SkinManager.GetOrDefault("green"),
-                        4 => SkinManager.GetOrDefault("red"),
-                        _ => SkinManager.Default
-                    };
-                    NetworkUtils.LocalClient!.ChangeSkin(skin);
-                    ActionScope.Detach(NetworkUtils.ClientPacketHandler, nameof(NetworkUtils.ClientPacketHandler.HandshakeFulfilled));
-                };
+            //if (SilkDebug.GetClientNumber() == 1)
+            //{
+            //    //Server.ConnectPipe("pipetest", "host");
+            //    //Server.ConnectTCP("127.0.0.1", "host");
+            //    //ConnectionManager.Server(NetworkingLayer.TCP, HOST_IP, name: "host").ContinueWith(t => NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue")));
 
-                //NetworkUtils.LocalClient!.AppliedSkin = SkinManager.GetOrDefault("blue");
-                //NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
-            }
+            //    //NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
+            //    //Skin skin = SkinManager.GetOrDefault("blue");
+            //    //NetworkUtils.LocalClient!.ChangeSkin(skin);
+            //} else
+            //{
+            //    //NetworkUtils.ConnectPipe("pipetest", $"client{SilkDebug.GetClientNumber() - 1}");
+            //    //NetworkUtils.ConnectTCP(CONNECT_IP, $"client{SilkDebug.GetClientNumber() - 1}");
+            //    //_ = ConnectionManager.Client(NetworkingLayer.TCP, CONNECT_IP);
+            //    //NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
+            //    //    Skin skin = SilkDebug.GetClientNumber() switch {
+            //    //        2 => SkinManager.GetOrDefault("purple"),
+            //    //        3 => SkinManager.GetOrDefault("green"),
+            //    //        4 => SkinManager.GetOrDefault("red"),
+            //    //        _ => SkinManager.Default
+            //    //    };
+            //    //    NetworkUtils.LocalClient!.ChangeSkin(skin);
+            //    //    ActionScope.Detach(NetworkUtils.ClientPacketHandler, nameof(NetworkUtils.ClientPacketHandler.HandshakeFulfilled));
+            //    //};
+
+            //    //NetworkUtils.LocalClient!.AppliedSkin = SkinManager.GetOrDefault("blue");
+            //    //NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => NetworkUtils.LocalClient!.ChangeSkin(SkinManager.Library["blue"]);
+            //}
         }
 #endif
         //public class MainThreadDispatcher : MonoBehaviour
@@ -375,51 +377,53 @@ namespace SilkBound {
 
             if (Input.GetKeyDown(KeyCode.H))
             {
-                //Server.ConnectPipe("sb_dbg", "host");
-                switch (Config.NetworkLayer)
+                //    //Server.ConnectPipe("sb_dbg", "host");
+                //    switch (Config.NetworkLayer)
+                //    {
+                //        case NetworkingLayer.TCP:
+                //            Server.ConnectTCP(HOST_IP, Config.Username);
+                //            break;
+                //        case NetworkingLayer.Steam:
+                //            Server.ConnectP2P(Config.Username);
+                //            break;
+                //        case NetworkingLayer.NamedPipe:
+                //            Server.ConnectPipe(HOST_IP, Config.Username);
+                //            break;
+                //    }
+                //    NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
+                //    //Server.ConnectP2P("joe");
+                //}
+
+                //if (Input.GetKeyDown(KeyCode.J))
+                //{
+                //    //NetworkUtils.ConnectPipe("sb_dbg", "client");
+
+                //    switch (Config.NetworkLayer)
+                //    {
+                //        case NetworkingLayer.TCP:
+                //            NetworkUtils.ConnectTCP(CONNECT_IP, Config.Username);
+                //            break;
+                //        case NetworkingLayer.Steam:
+                //            NetworkUtils.ConnectP2P(ulong.Parse(CONNECT_IP), Config.Username);
+                //            break;
+                //        case NetworkingLayer.NamedPipe:
+                //            NetworkUtils.ConnectPipe(CONNECT_IP, Config.Username);
+                //            break;
+                //    }
+
+                //    NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
+                //        NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("purple"));
+                //    };
+
+                //}
+
+                if (Input.GetKeyDown(KeyCode.K))
                 {
-                    case NetworkingLayer.TCP:
-                        Server.ConnectTCP(HOST_IP, Config.Username);
-                        break;
-                    case NetworkingLayer.Steam:
-                        Server.ConnectP2P(Config.Username);
-                        break;
-                    case NetworkingLayer.NamedPipe:
-                        Server.ConnectPipe(HOST_IP, Config.Username);
-                        break;
+                    NetworkUtils.Disconnect("Leaving.");
                 }
-                NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
-                //Server.ConnectP2P("joe");
-            }
-
-            if (Input.GetKeyDown(KeyCode.J))
-            {
-                //NetworkUtils.ConnectPipe("sb_dbg", "client");
-
-                switch (Config.NetworkLayer)
-                {
-                    case NetworkingLayer.TCP:
-                        NetworkUtils.ConnectTCP(CONNECT_IP, Config.Username);
-                        break;
-                    case NetworkingLayer.Steam:
-                        NetworkUtils.ConnectP2P(ulong.Parse(CONNECT_IP), Config.Username);
-                        break;
-                    case NetworkingLayer.NamedPipe:
-                        NetworkUtils.ConnectPipe(CONNECT_IP, Config.Username);
-                        break;
-                }
-
-                NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
-                    NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("purple"));
-                };
-
-            }
-
-            if (Input.GetKeyDown(KeyCode.K))
-            {
-                NetworkUtils.Disconnect("Leaving.");
             }
         }
+
         static bool lePrefixduCacheObjectBase(object __instance, [HarmonyArgument("cell")] object cell, [HarmonyArgument("args")] object args)
         {
             var valueProp = AccessTools.Property(__instance.GetType(), "Value");

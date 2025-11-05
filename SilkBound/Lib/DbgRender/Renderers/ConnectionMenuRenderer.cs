@@ -1,4 +1,6 @@
 ﻿using Mono.Remoting.Channels.Unix;
+using SilkBound.Managers;
+using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -92,7 +94,12 @@ namespace SilkBound.Lib.DbgRender.Renderers {
                 connecting = true;
                 SetStatus(ConnectionStatus.Connecting);
 
+                var host = ModMain.Config.HostIP;
+                int? port = null;
+                if (host.Contains(':') && ushort.TryParse(host.Split(":")[1], out ushort ushort_port))
+                    port = ushort_port;
 
+                ConnectionManager.Server(ip: host, port: port).ContinueWith(t => t.Result.Dump());
             }
 
             Slide(ElementWidth + MARGIN);
@@ -101,6 +108,13 @@ namespace SilkBound.Lib.DbgRender.Renderers {
                 Logger.Msg("join");
                 connecting = true;
                 SetStatus(ConnectionStatus.Connecting);
+
+                var connect = ModMain.Config.ConnectIP;
+                int? port = null;
+                if (connect.Contains(':') && ushort.TryParse(connect.Split(":")[1], out ushort ushort_port))
+                    port = ushort_port;
+
+                ConnectionManager.Client(ip: connect, port: port).ContinueWith(t => t.Result.Dump());
             }
         }
     }

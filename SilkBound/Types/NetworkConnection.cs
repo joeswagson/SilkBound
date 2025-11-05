@@ -27,7 +27,12 @@ namespace SilkBound.Types
         }
 
         public abstract Task ConnectImpl(string host, int? port);
-        public abstract void Disconnect();
+        public abstract void Dispose();
+
+        public void Disconnect(string reason="Unspecified.")
+        {
+            NetworkUtils.Disconnect(reason);
+        }
 
         /// <summary>
         /// Inform the network layer to schedule a packet send.

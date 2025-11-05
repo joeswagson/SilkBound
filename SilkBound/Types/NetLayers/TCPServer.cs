@@ -19,7 +19,7 @@ namespace SilkBound.Types.NetLayers {
         private Task? _acceptTask;
         private PacketHandler _handler = handler;
 
-        public override bool IsConnected => _connections.Count > 0;
+        public override bool IsConnected => _acceptTask != null;
 
         public override async Task ConnectImpl(string host, int? port)
         {
@@ -37,6 +37,8 @@ namespace SilkBound.Types.NetLayers {
 
             _cts = new CancellationTokenSource();
             _acceptTask = AcceptLoopAsync(_cts.Token);
+
+            return;
         }
 
         private async Task AcceptLoopAsync(CancellationToken ct)
@@ -65,7 +67,7 @@ namespace SilkBound.Types.NetLayers {
         }
 
 
-        public override void Disconnect()
+        public override void Dispose()
         {
             try
             {

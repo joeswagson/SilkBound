@@ -52,6 +52,8 @@ namespace SilkBound.Network.Packets.Handlers
                 Logger.Msg("Handshake Fulfilled (Client):", packet.ClientId, packet.HandshakeId);
                 TransactionManager.Revoke(packet.HandshakeId); // original packet now eligible for garbage collection as we have completed this transaction
 
+                NetworkUtils.LocalClient.Acknowledged = true;
+
                 HandshakeFulfilled?.Invoke();
                 HandshakePacketFulfilled?.Invoke(original);
             }

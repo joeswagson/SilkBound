@@ -8,6 +8,8 @@ namespace SilkBound.Network
 {
     public class LocalWeaver(string name, NetworkConnection? connection = null, Guid? clientID = null) : Weaver(name, connection, clientID)
     {
+        public bool Acknowledged { get; internal set; }
+
         void ListenAnimationCompleted(ref Action<tk2dSpriteAnimator, tk2dSpriteAnimationClip> action, Action<tk2dSpriteAnimator, tk2dSpriteAnimationClip> listener)
         {
             if (action == null || !action.GetInvocationList().Contains(listener))

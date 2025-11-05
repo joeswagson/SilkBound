@@ -4,6 +4,7 @@ using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types;
+using SilkBound.Types.Language;
 using SilkBound.Types.NetLayers;
 using System;
 using System.Diagnostics;
@@ -41,22 +42,44 @@ namespace SilkBound.Utils {
 
         public static Guid ClientID => LocalClient?.ClientID ?? Guid.Empty;
 
+        public static void Handshake(ConnectionRequest? request, LocalWeaver? client)
+        {
+            if (client == null)
+            {
+                if (request != null)
+                    ConnectionManager.ConnectionFailed(request);
+
+                return;
+            }
+
+            if ((request?.HandshakeFulfilled ?? false) || client.Acknowledged)
+            {
+                if (request != null)
+                    ConnectionManager.ConnectionFailed(request, Error.Client.AMBIDEXTROUS);
+
+                return;
+            }
+
+            SendPacket(new HandshakePacket(client.ClientID, client.ClientName));
+        }
+
         #region Async Connectors
-        public static async Task<Weaver> ConnectPipeAsync(string host, string name)
+        public static async Task<Weaver> ConnectPipeAsync(ConnectionRequest request, string host, string name)
         {
-            return await ConnectAsync(new NamedPipeConnection(host), name);
+            return await ConnectAsync(new NamedPipeConnection(host), name, request);
         }
-        public static async Task<Weaver> ConnectP2PAsync(ulong steamId, string name)
+        public static async Task<Weaver> ConnectP2PAsync(ConnectionRequest request, ulong steamId, string name)
         {
-            return await ConnectAsync(new SteamConnection(steamId.ToString()), name);
+            return await ConnectAsync(new SteamConnection(steamId.ToString()), name, request);
         }
-        public static async Task<Weaver> ConnectTCPAsync(string host, string name, int? port = null)
+        public static async Task<Weaver> ConnectTCPAsync(ConnectionRequest request, string host, string name, int? port = null)
         {
-            return await ConnectAsync(new TCPConnection(host, port ?? ModMain.Config.Port), name);
+            return await ConnectAsync(new TCPConnection(host, port ?? ModMain.Config.Port), name, request);
         }
-        public static async Task<Weaver> ConnectAsync(NetworkConnection connection, string name)
+        public static async Task<Weaver> ConnectAsync(NetworkConnection connection, string name, ConnectionRequest? request = null)
         {
             Server.CurrentServer = new Server(LocalConnection);
+            Server.CurrentServer.Connection = connection;
 
             if (LocalConnection != null)
                 LocalConnection.Disconnect();
@@ -73,6 +96,9 @@ namespace SilkBound.Utils {
                 Server.CurrentServer.Address,
                 Server.CurrentServer.Port
             );
+
+            if(LocalConnection is not NetworkServer)
+                Handshake(request, LocalClient);
 
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
             return LocalClient;
@@ -105,10 +131,12 @@ namespace SilkBound.Utils {
             Server.CurrentServer.Address = connection.Host!;
             Server.CurrentServer.Port = connection.Port ?? ModMain.Config.Port;
 
-            _ = connection.Connect(
+            connection.Connect(
                 Server.CurrentServer.Address,
                 Server.CurrentServer.Port
-            );
+            ).Wait();
+
+            Handshake(null, LocalClient);
 
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
             return LocalClient;
@@ -116,12 +144,22 @@ namespace SilkBound.Utils {
         #endregion
         public static void Disconnect(string reason = "Unspecified", Weaver? target = null)
         {
+            if (LocalConnection == null) // sorry nix
+                return;
+
             target ??= LocalClient;
 
             if (Connected && target == LocalClient)
                 SendPacket(new ClientDisconnectionPacket(reason));
 
             HandleDisconnection(LocalConnection, reason);
+        }
+        public static void Disconnect(NetworkConnection connection, string reason = "Unspecified")
+        {
+            if (connection == LocalConnection)
+                SendPacket(new ClientDisconnectionPacket(reason));
+
+            HandleDisconnection(connection, reason);
         }
         internal static void HandleDisconnection(NetworkConnection connection, string reason = "Unspecified")
         {
@@ -132,11 +170,13 @@ namespace SilkBound.Utils {
             if (client?.Mirror != null)
                 Object.Destroy(client.Mirror);
 
-            if (Connected)
-                connection.Disconnect();
+            if (connection is NetworkServer server && server == LocalConnection)
+                Server.CurrentServer!.Shutdown();
+
+            connection.Dispose();
 
             if (ModMain.Config.HostSettings.LogPlayerDisconnections)
-                Logger.Msg($"{client?.ClientName ?? $"Connection {connection.Host}{(connection.Port.HasValue ? ":" + connection.Port.Value : string.Empty)}"}");
+                Logger.Msg($"{client?.ClientName ?? $"{connection.Host}{(connection.Port.HasValue ? ":" + connection.Port.Value : string.Empty)}"} disconnected: {reason}");
         }
         public static bool IsPacketThread()
         {

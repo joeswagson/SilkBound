@@ -139,7 +139,7 @@ namespace SilkBound.Types.NetLayers
         }
 
 
-        public override void Disconnect()
+        public override void Dispose()
         {
             try
             {

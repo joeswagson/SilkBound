@@ -104,7 +104,7 @@ namespace SilkBound.Types.NetLayers
         }
 
 
-        public override void Disconnect()
+        public override void Dispose()
         {
             if (NetworkUtils.LocalConnection != this) // prevent morons (me later) desyncing other players locally
             {

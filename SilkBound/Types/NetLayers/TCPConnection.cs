@@ -60,11 +60,11 @@ namespace SilkBound.Types.NetLayers
 
                 HasConnection = true;
                 Logger.Msg($"[TCPConnection] Connected to {_remoteId}");
-#if SERVER
-                Send(new HandshakePacket(Guid.Empty, "server"));
-#else
-                Send(new HandshakePacket(NetworkUtils.LocalClient.ClientID, NetworkUtils.LocalClient.ClientName));
-#endif
+//#if SERVER
+//                Send(new HandshakePacket(Guid.Empty, "server"));
+//#else
+//                Send(new HandshakePacket(NetworkUtils.LocalClient.ClientID, NetworkUtils.LocalClient.ClientName));
+//#endif
             }
             catch (Exception ex)
             {
@@ -148,7 +148,7 @@ namespace SilkBound.Types.NetLayers
 
 
 
-        public override void Disconnect()
+        public override void Dispose()
         {
             try
             {
@@ -184,7 +184,8 @@ namespace SilkBound.Types.NetLayers
             if (packetData == null) return;
             if (!HasConnection || _stream == null)
             {
-                Logger.Warn($"[TCPConnection] Send failed, no stream for {_remoteId}");
+                //Logger.Warn($"[TCPConnection] Send failed, no stream for {_remoteId}");
+                Dispose();
                 return;
             }
 
