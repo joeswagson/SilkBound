@@ -44,10 +44,10 @@ namespace SilkBound.Types
         /// Pack and send a packet over the network. Note that using this method on seperate connections does not prevent reserializing the packet. To avoid reserialization, preprocess the packet with <see cref="PacketProtocol.PackPacket(Packet)"/> or an extension and call <see cref="Send(byte[]?)"/> directly.
         /// </summary>
         /// <param name="packet">The packet instance to send.</param>
-        public void Send(Packet packet)
+        public async Task Send(Packet packet)
         {
             if(packet.TryPack(out var packetData))
-                Send(packetData);
+                await Send(packetData);
         }
 
 

@@ -1,12 +1,14 @@
-﻿using SilkBound.Network.Packets;
+﻿using MelonLoader.TinyJSON;
+using SilkBound.Network.Packets;
+using SilkBound.Network.Packets.Handlers;
+using SilkBound.Utils;
 using Steamworks;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Threading;
 using System.IO;
-using SilkBound.Network.Packets.Handlers;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SilkBound.Types.NetLayers {
     public class SteamServer : NetworkServer {
@@ -207,33 +209,33 @@ namespace SilkBound.Types.NetLayers {
             }
         }
 
-        public override void SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
+        public override async Task SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
         {
-            //byte[]? data = PacketProtocol.PackPacket(packet);
-            //if (data == null) return;
+            var targets = GetConnections().Intersect(include);
+            if (!targets.Any())
+                return;
 
-            lock (_connLock)
+            byte[]? data = PacketProtocol.PackPacket(packet);
+            if (data == null) return;
+
+            foreach (SteamConnection conn in targets)
             {
-                foreach (var conn in _connections.Values)
-                {
-                    if (include.Contains(conn))
-                        try { conn.Send(packet); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
-                }
+                try { await conn.Send(data); } catch (Exception e) { Logger.Warn($"[SteamServer] Failed send to {conn.RemoteId}: {e}"); }
             }
         }
 
-        public override void SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
+        public override async Task SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
         {
-            //byte[]? data = PacketProtocol.PackPacket(packet);
-            //if (data == null) return;
+            var targets = GetConnections().Except(exclude);
+            if (!targets.Any())
+                return;
 
-            lock (_connLock)
+            byte[]? data = PacketProtocol.PackPacket(packet);
+            if (data == null) return;
+
+            foreach (SteamConnection conn in targets.Cast<SteamConnection>())
             {
-                foreach (var conn in _connections.Values)
-                {
-                    if (!exclude.Contains(conn))
-                        try { conn.Send(packet); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
-                }
+                try { await conn.Send(data); } catch (Exception e) { Logger.Warn($"[SteamServer] Failed send to {conn.RemoteId}: {e}"); }
             }
         }
     }

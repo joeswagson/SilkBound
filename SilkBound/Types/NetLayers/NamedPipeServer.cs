@@ -101,15 +101,15 @@ namespace SilkBound.Types.NetLayers
 
 
         //we dont need these because pipe communication is bilateral
-        public override void SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
+        public override async Task SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
         {
-            Send(packet);
+            await Send(packet);
         }
         
         // if the pipe server wants to exclude a client, itll be the only one it can
-        public override void SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
+        public override Task SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
         {
-            return;
+            return Task.CompletedTask;
         }
     }
 }

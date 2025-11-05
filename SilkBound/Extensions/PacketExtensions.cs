@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SilkBound.Extensions {
     public static class PacketExtensions {
@@ -13,25 +14,25 @@ namespace SilkBound.Extensions {
             server = NetworkUtils.LocalServer;
             return NetworkUtils.IsServer;
         }
-        public static void Send(this Packet packet, NetworkConnection connection)
+        public static async Task Send(this Packet packet, NetworkConnection connection)
         {
             if (!HasLocalServer(out NetworkServer? server)) return;
 
-            server.Send(packet);
+            await server.Send(packet);
         }
-        public static void SendIncluding(this Packet packet, params NetworkConnection[] connections) => SendIncluding(packet, connections as IEnumerable<NetworkConnection>);
-        public static void SendIncluding(this Packet packet, IEnumerable<NetworkConnection> connections)
+        public static async Task SendIncluding(this Packet packet, params NetworkConnection[] connections) => await SendIncluding(packet, connections as IEnumerable<NetworkConnection>);
+        public static async Task SendIncluding(this Packet packet, IEnumerable<NetworkConnection> connections)
         {
             if (!HasLocalServer(out NetworkServer? server)) return;
 
-            server.SendIncluding(packet, connections);
+            await server.SendIncluding(packet, connections);
         }
-        public static void SendExcept(this Packet packet, params NetworkConnection[] connections) => SendExcept(packet, connections as IEnumerable<NetworkConnection>);
-        public static void SendExcept(this Packet packet, IEnumerable<NetworkConnection> connections)
+        public static async Task SendExcept(this Packet packet, params NetworkConnection[] connections) => await SendExcept(packet, connections as IEnumerable<NetworkConnection>);
+        public static async Task SendExcept(this Packet packet, IEnumerable<NetworkConnection> connections)
         {
             if (!HasLocalServer(out NetworkServer? server)) return;
 
-            server.SendExcluding(packet, connections);
+            await server.SendExcluding(packet, connections);
         }
 
         public static bool TryPack(this Packet packet, [NotNullWhen(true)] out byte[]? packetData)
