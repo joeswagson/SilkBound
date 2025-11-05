@@ -94,7 +94,7 @@ namespace SilkBound.Types.NetLayers
 
         }
 
-        public override async void Send(byte[] packetData)
+        public override async Task Send(byte[] packetData)
         {
             if (Stream == null || !Stream.IsConnected)
             {
@@ -104,8 +104,8 @@ namespace SilkBound.Types.NetLayers
 
             try
             {
-                await Stream.WriteAsync(packetData, 0, packetData.Length);
-                await Stream.FlushAsync();
+                _ = Stream.WriteAsync(packetData, 0, packetData.Length).ContinueWith(_=>NetworkStats.PacketDropped(packetData));
+                _ = Stream.FlushAsync();
             } catch (Exception e)
             {
                 Logger.Warn($"NamedPipeConnection send error: {e.Message} {e.GetType().Name}");

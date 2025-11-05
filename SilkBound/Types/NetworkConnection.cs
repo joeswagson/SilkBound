@@ -38,7 +38,7 @@ namespace SilkBound.Types
         /// Inform the network layer to schedule a packet send.
         /// </summary>
         /// <param name="packetData">The serialized packet data. Acquired through <see cref="PacketProtocol.PackPacket(Packet)"/> or an equivalent extension.</param>
-        public abstract void Send(byte[] packetData);
+        public abstract Task Send(byte[] packetData);
 
         /// <summary>
         /// Pack and send a packet over the network. Note that using this method on seperate connections does not prevent reserializing the packet. To avoid reserialization, preprocess the packet with <see cref="PacketProtocol.PackPacket(Packet)"/> or an extension and call <see cref="Send(byte[]?)"/> directly.
