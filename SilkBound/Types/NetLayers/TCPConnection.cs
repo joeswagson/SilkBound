@@ -27,7 +27,7 @@ namespace SilkBound.Types.NetLayers
 
         public override bool IsConnected => _client != null && _client.Connected;
 
-        public TCPConnection(string host, int? port = null) : base(new ClientPacketHandler())
+        public TCPConnection(string host, int? port = null) : base(new ClientPacketHandler(), host, port)
         {
             port = port ?? SilkConstants.PORT;
             _client = new TcpClient();
@@ -50,7 +50,7 @@ namespace SilkBound.Types.NetLayers
         {
             try
             {
-                if (_client.Client == null || !_client.Client.Connected)
+                if (host != null && (_client.Client == null || !_client.Client.Connected))
                     await _client.ConnectAsync(host, port ?? ConnectionManager.Port);
 
                 _stream = _client.GetStream();

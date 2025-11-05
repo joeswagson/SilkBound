@@ -11,7 +11,7 @@ namespace SilkBound.Types.NetLayers
 {
     public class NamedPipeConnection : NetworkConnection
     {
-        public NamedPipeConnection(string host) : base(new ClientPacketHandler())
+        public NamedPipeConnection(string host) : base(new ClientPacketHandler(), host)
         {
             //Connect(host, null);
         }

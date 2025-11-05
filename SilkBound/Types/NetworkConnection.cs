@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SilkBound.Types
 {
-    public abstract class NetworkConnection(PacketHandler packetHandler) {
+    public abstract class NetworkConnection(PacketHandler packetHandler, string? host=null, int? port=null) {
         public PacketHandler PacketHandler { get; private set; } = packetHandler;
         public abstract bool IsConnected { get; }
 
@@ -15,13 +15,13 @@ namespace SilkBound.Types
             
         });
 
-        public string? Host { get; private set; }
-        public int? Port { get; private set; }
+        public string? Host { get; private set; } = host;
+        public int? Port { get; private set; } = port;
 
         public async Task Connect(string host, int? port)
         {
-            this.Host = host;
-            this.Port = port;
+            Host = host;
+            Port = port;
 
             await ConnectImpl(Host, Port);
         }

@@ -20,7 +20,7 @@ namespace SilkBound.Types.NetLayers
         public bool HasConnection { get; private set; } = false;
         public override bool IsConnected => HasConnection;
 
-        public SteamConnection(string host) : base(new ClientPacketHandler())
+        public SteamConnection(string host) : base(new ClientPacketHandler(), host)
         {
             //Connect(host, null);
         }

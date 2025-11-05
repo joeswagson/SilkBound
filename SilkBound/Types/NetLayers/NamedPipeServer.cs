@@ -11,7 +11,7 @@ namespace SilkBound.Types.NetLayers
 {
     public class NamedPipeServer : NetworkServer
     {
-        public NamedPipeServer(string host) : base(new ServerPacketHandler())
+        public NamedPipeServer(string host) : base(new ServerPacketHandler(), host)
         {
             //Connect(host, null);
         }

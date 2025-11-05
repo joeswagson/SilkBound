@@ -10,32 +10,30 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SilkBound.Types.NetLayers {
-    public class TCPServer : NetworkServer {
+    public class TCPServer(string host, PacketHandler handler, int? port = null) : NetworkServer(handler, host, port) {
         private readonly Dictionary<string, TCPConnection> _connections = [];
         private readonly object _connLock = new();
 
         private TcpListener? _listener;
         private CancellationTokenSource? _cts;
         private Task? _acceptTask;
-        private PacketHandler _handler;
+        private PacketHandler _handler = handler;
 
         public override bool IsConnected => _connections.Count > 0;
-        public TCPServer(string host, PacketHandler handler, int? port = null) : base(handler)
-        {
-            //Connect(host, port ?? SilkConstants.PORT);
-            _handler = handler;
-        }
+
         public override async Task ConnectImpl(string host, int? port)
         {
-            if (port == null)
-            {
-                Logger.Error("[TCPServer] Port must be provided.");
-                return;
-            }
+            await Task.Run(() => {
+                if (port == null)
+                {
+                    Logger.Error("[TCPServer] Port must be provided.");
+                    return;
+                }
 
-            _listener = new TcpListener(IPAddress.Any, port.Value);
-            _listener.Start();
-            Logger.Msg($"[TCPServer] Listening on port {port.Value}...");
+                _listener = new TcpListener(IPAddress.Any, port.Value);
+                _listener.Start();
+                Logger.Msg($"[TCPServer] Listening on port {port.Value}...");
+            });
 
             _cts = new CancellationTokenSource();
             _acceptTask = AcceptLoopAsync(_cts.Token);
