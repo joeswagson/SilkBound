@@ -511,6 +511,7 @@ namespace SilkBound.Behaviours {
             AirDash.SetActive(false);
             AirDash.SetActive(true);
         }
+        public bool IsGhost => Sprite.color.a != 1;
         public void Ghost()
         {
             if (IsLocal)

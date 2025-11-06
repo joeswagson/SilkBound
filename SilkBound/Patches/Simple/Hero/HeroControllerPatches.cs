@@ -6,6 +6,7 @@ using SilkBound.Network.Packets.Impl.Sync.Mirror;
 using SilkBound.Types;
 using SilkBound.Types.Mirrors;
 using SilkBound.Utils;
+using System.Collections;
 using UnityEngine;
 namespace SilkBound.Patches.Simple.Hero
 {
@@ -65,7 +66,7 @@ namespace SilkBound.Patches.Simple.Hero
 
         [HarmonyPrefix]
         [HarmonyPatch(nameof(HeroController.Die))]
-        public static bool Die_Prefix(HeroController __instance)
+        public static bool Die_Prefix(HeroController __instance, ref IEnumerator __result)
         {
             if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread())
                 return true;
@@ -74,6 +75,8 @@ namespace SilkBound.Patches.Simple.Hero
             {
                 NetworkUtils.LocalClient.Mirror.Ghost();
                 NetworkUtils.SendPacket(new TransitionGhostPacket(true));
+
+                __result = Shallows.Coroutine();
                 return false;
             }
 

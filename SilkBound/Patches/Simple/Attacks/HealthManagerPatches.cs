@@ -30,6 +30,8 @@ namespace SilkBound.Patches.Simple.Attacks {
         public static bool TakeDamage_Prefix(HealthManager __instance, HitInstance hitInstance)
         {
             if (!NetworkUtils.Connected) return true;
+            if (NetworkUtils.LocalClient?.Mirror?.IsGhost ?? false)
+                return false;
 
             if (hitInstance.HitEffectsType == EnemyHitEffectsProfile.EffectsTypes.Full && __instance.hasBlackThreadState && __instance.blackThreadState.IsVisiblyThreaded)
             {
