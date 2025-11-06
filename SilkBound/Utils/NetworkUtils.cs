@@ -17,7 +17,7 @@ namespace SilkBound.Utils {
     public class NetworkUtils {
         public static LocalWeaver LocalClient = null!;
         private static HornetMirror? _lMirror;
-        public static HornetMirror? LocalMirror => _lMirror ??= LocalClient.Mirror;
+        public static HornetMirror? LocalMirror => _lMirror ??= LocalClient?.Mirror;
         public static Server Server => Server.CurrentServer;
         public static ServerSettings ServerSettings => Server.Settings;
         public static NetworkServer LocalServer = null!;

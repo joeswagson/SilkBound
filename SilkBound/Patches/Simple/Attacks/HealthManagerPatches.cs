@@ -18,7 +18,7 @@ namespace SilkBound.Patches.Simple.Attacks {
             if (!NetworkUtils.Connected) return;
 
             //if (__instance.gameObject.layer == LayerMask.NameToLayer("Enemies") && __instance.isActiveAndEnabled && __instance.gameObject.scene == SceneManager.GetActiveScene())
-            if(FsmLogPatches.IsHandled(__instance.gameObject.LocateMyFSM("Control")?.Fsm))
+            if (FsmLogPatches.IsHandled(__instance.gameObject.LocateMyFSM("Control")?.Fsm))
             {
                 Tracker.Track(__instance.gameObject);
                 EntityMirror.Create(__instance.gameObject);
@@ -30,7 +30,7 @@ namespace SilkBound.Patches.Simple.Attacks {
         public static bool TakeDamage_Prefix(HealthManager __instance, HitInstance hitInstance)
         {
             if (!NetworkUtils.Connected) return true;
-            if (NetworkUtils.LocalClient?.Mirror?.IsGhost ?? false)
+            if (NetworkUtils.LocalMirror?.IsGhost ?? false)
                 return false;
 
             if (hitInstance.HitEffectsType == EnemyHitEffectsProfile.EffectsTypes.Full && __instance.hasBlackThreadState && __instance.blackThreadState.IsVisiblyThreaded)
@@ -102,7 +102,7 @@ namespace SilkBound.Patches.Simple.Attacks {
             }
             if (hitInstance.CriticalHit)
             {
-                hitInstance.DamageDealt = Mathf.RoundToInt((float) hitInstance.DamageDealt * Gameplay.WandererCritMultiplier);
+                hitInstance.DamageDealt = Mathf.RoundToInt(hitInstance.DamageDealt * Gameplay.WandererCritMultiplier);
                 hitInstance.MagnitudeMultiplier *= Gameplay.WandererCritMagnitudeMult;
                 GameObject wandererCritEffect = Gameplay.WandererCritEffect;
                 if (wandererCritEffect)

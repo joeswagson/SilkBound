@@ -65,6 +65,16 @@ namespace SilkBound.Patches.Simple.Hero
         }
 
         [HarmonyPrefix]
+        [HarmonyPatch(typeof(HeroController), nameof(HeroController.TakeDamage))]
+        public static bool HeroTakeDamage_Prefix(HeroController __instance)
+        {
+            if (!NetworkUtils.Connected || __instance != HeroController.instance)
+                return true;
+
+            return !(NetworkUtils.LocalMirror?.IsGhost ?? false);
+        }
+
+        [HarmonyPrefix]
         [HarmonyPatch(nameof(HeroController.Die))]
         public static bool Die_Prefix(HeroController __instance, ref IEnumerator __result)
         {
