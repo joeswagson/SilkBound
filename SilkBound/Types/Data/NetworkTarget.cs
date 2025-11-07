@@ -41,10 +41,12 @@ namespace SilkBound.Types.Data {
             var old = _target;
             _target = target;
 
-            if (Host.IsLocalOwned)
+            var changed = old != _target;
+
+            if (Host.IsLocalOwned && changed)
                 NetworkUtils.SendPacket(new EntityTargetPacket(Host.NetworkId, target.Client.ClientID));
 
-            return old != _target;
+            return changed;
         }
 
         public bool SetTarget(Weaver? target) => SetTarget(target?.Mirror);
