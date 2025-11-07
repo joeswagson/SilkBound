@@ -13,7 +13,6 @@ namespace SilkBound.Network.Packets.Impl.Sync.World {
         [HarmonyPatch(nameof(BattleScene.Start))]
         public static void Start(BattleScene __instance)
         {
-            Logger.Stacktrace();
             if (!NetworkUtils.Connected || NetworkUtils.IsPacketThread()) return;
 
             foreach (Transform obj in __instance.gates.transform)
