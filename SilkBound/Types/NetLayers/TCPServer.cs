@@ -30,7 +30,7 @@ namespace SilkBound.Types.NetLayers {
                     return;
                 }
 
-                _listener = new TcpListener(IPAddress.Any, port.Value);
+                _listener = new TcpListener(IPAddress.Parse(host), port.Value);
                 _listener.Start();
                 Logger.Msg($"[TCPServer] Listening on port {port.Value}...");
             });
