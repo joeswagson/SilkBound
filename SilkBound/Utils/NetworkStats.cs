@@ -1,31 +1,160 @@
-﻿using SilkBound.Network.Packets;
+﻿using SilkBound.Managers;
+using SilkBound.Network.Packets;
 using SilkBound.Types;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SilkBound.Utils {
-    public struct NetworkStats(NetworkConnection connection) {
-        public NetworkConnection Connection = connection;
+    public struct NetworkData {
+        public void Reset() => this = default;
 
-        public int PacketsSent = 
-        public int PacketsDropped = 0;
+        #region Persistent counters
+        public uint PacketsSent;
+        public uint PacketsRead;
+        public uint PacketsSentDropped;
+        public uint PacketsReadDropped;
 
-        internal void HandlePacketTask(Task packetSend, byte[] data)
+        public uint BytesSent;
+        public uint BytesRead;
+
+        public uint BytesSentDropped;
+        public uint BytesReadDropped;
+
+        public uint Endpoints;
+        #endregion
+
+        #region Derived
+        public readonly uint PacketsDroppedTotal => PacketsReadDropped + PacketsSentDropped;
+        #endregion
+
+        #region Windowed rates (accurate 1-second average)
+        public float PacketsSentPerSecond;
+        public float PacketsReadPerSecond;
+        public float BytesSentPerSecond;
+        public float BytesReadPerSecond;
+        #endregion
+
+        public static string FormatMetric(float quantity, string unit = "", bool spaced = false)
+            => $"{quantity:F1}{(spaced ? " " : string.Empty)}{unit}/s";
+    }
+
+    public class NetworkStats {
+        private const double WindowSeconds = 1.0;
+
+        public NetworkConnection Connection { get; }
+        public NetworkData _data;
+        public NetworkData Data => _data;
+
+        // keep timestamps in real time (Stopwatch ticks)
+        private readonly Queue<(double time, uint packets, uint bytes)> _sentHistory = new();
+        private readonly Queue<(double time, uint packets, uint bytes)> _readHistory = new();
+
+        private uint _lastPacketsSent;
+        private uint _lastPacketsRead;
+        private uint _lastBytesSent;
+        private uint _lastBytesRead;
+
+        public NetworkStats(NetworkConnection connection)
+        {
+            Connection = connection;
+            Logger.Msg(connection.Host, connection.GetType().Name);
+            Logger.Stacktrace();
+            TickManager.OnTick += OnTick;
+        }
+
+        ~NetworkStats()
+        {
+            TickManager.OnTick -= OnTick;
+        }
+
+        internal void LogPacketSend(Task packetSend, byte[] data)
         {
             if (packetSend.IsCompletedSuccessfully)
-                Packents
+                LogPacketSent(data);
             else
-                        PacketDropped(data);
+                LogPacketSentDropped(data);
         }
-        public void PacketSent(byte[] data)
+
+        internal void LogPacketSent(byte[] data)
+        {
+            _data.PacketsSent++;
+            _data.BytesSent += (uint) data.Length;
+        }
+
+        internal void LogPacketSentDropped(byte[] data)
+        {
+            _data.PacketsSentDropped++;
+            _data.BytesSentDropped += (uint) data.Length;
+        }
+
+        internal void LogBytesRead(byte[] data)
+        {
+            _data.BytesRead += (uint) data.Length;
+        }
+
+        internal void LogPacketRead(byte[] data, Packet? packet)
+        {
+            if (packet == null)
+                LogPacketReadDropped(data);
+            else
+                _data.PacketsRead++;
+        }
+
+        internal void LogPacketReadDropped(byte[] data)
+        {
+            _data.PacketsReadDropped++;
+            _data.BytesReadDropped += (uint) data.Length;
+        }
+
+        public void LogEndpoints(IEnumerable<NetworkConnection> connections)
+        {
+            _data.Endpoints = (uint) connections.Count();
+        }
+
+        private void OnTick(float dt)
         {
 
-        }
-        public void PacketDropped(byte[] data)
-        {
+            double now = Stopwatch.GetTimestamp() / (double) Stopwatch.Frequency;
 
+            uint dPacketsSent = Math.Max(0, _data.PacketsSent - _lastPacketsSent);
+            uint dPacketsRead = Math.Max(0, _data.PacketsRead - _lastPacketsRead);
+            uint dBytesSent = Math.Max(0, _data.BytesSent - _lastBytesSent);
+            uint dBytesRead = Math.Max(0, _data.BytesRead - _lastBytesRead);
+            Logger.Debug($"ΔSent={dPacketsSent} ΔRead={dPacketsRead}");
+
+            if (dPacketsSent > 0 || dBytesSent > 0)
+                _sentHistory.Enqueue((now, dPacketsSent, dBytesSent));
+
+            if (dPacketsRead > 0 || dBytesRead > 0)
+                _readHistory.Enqueue((now, dPacketsRead, dBytesRead));
+
+            // prune anything older than the 1s window
+            while (_sentHistory.Count > 0 && now - _sentHistory.Peek().time > WindowSeconds)
+                _sentHistory.Dequeue();
+            while (_readHistory.Count > 0 && now - _readHistory.Peek().time > WindowSeconds)
+                _readHistory.Dequeue();
+
+            // compute sums
+            double sentSpan = _sentHistory.Count > 1 ? now - _sentHistory.Peek().time : WindowSeconds;
+            double readSpan = _readHistory.Count > 1 ? now - _readHistory.Peek().time : WindowSeconds;
+
+            uint sentPackets = (uint) _sentHistory.Sum(s => s.packets);
+            uint readPackets = (uint) _readHistory.Sum(s => s.packets);
+            uint sentBytes = (uint) _sentHistory.Sum(s => s.bytes);
+            uint readBytes = (uint) _readHistory.Sum(s => s.bytes);
+
+            _data.PacketsSentPerSecond = (float) (sentPackets / sentSpan);
+            _data.PacketsReadPerSecond = (float) (readPackets / readSpan);
+            _data.BytesSentPerSecond = (float) (sentBytes / sentSpan);
+            _data.BytesReadPerSecond = (float) (readBytes / readSpan);
+
+            _lastPacketsSent = _data.PacketsSent;
+            _lastPacketsRead = _data.PacketsRead;
+            _lastBytesSent = _data.BytesSent;
+            _lastBytesRead = _data.BytesRead;
         }
     }
 }
