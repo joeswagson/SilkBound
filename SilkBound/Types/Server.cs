@@ -11,11 +11,10 @@ using SilkBound.Network.Packets.Handlers;
 using UnityEngine.SceneManagement;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Linq;
 
-namespace SilkBound.Types
-{
-    public class Server
-    {
+namespace SilkBound.Types {
+    public class Server {
         /// <summary>
         /// Create a server instance for a host connection.
         /// </summary>
@@ -83,7 +82,7 @@ namespace SilkBound.Types
 
             if (Connection is SteamServer server)
             {
-                CSteamID weaverId = ((SteamConnection)weaver.Connection).RemoteId;
+                CSteamID weaverId = ((SteamConnection) weaver.Connection).RemoteId;
 
                 foreach (Weaver connection in Connections)
                 {
@@ -95,10 +94,9 @@ namespace SilkBound.Types
                 }
 
                 Connections.Remove(weaver);
-            }
-            else
+            } else
             {
-                
+
             }
         }
 
@@ -192,20 +190,16 @@ namespace SilkBound.Types
         #endregion
 
         #region game functions
-        public int GetPlayersInScene()
+        public int GetPlayerCountInScene()
         {
-            return GetPlayersInScene(SceneManager.GetActiveScene().name);
+            return GetPlayerCountInScene(SceneManager.GetActiveScene().name);
         }
-        public int GetPlayersInScene(string sceneName)
+        public int GetPlayerCountInScene(string sceneName)
         {
-            int count = 0;
-            foreach (Weaver weaver in Connections)
-            {
-                if (weaver.Mirror?.Scene == sceneName)
-                    count++;
-            }
-            return count;
+            return GetPlayersInScene(sceneName).Length;
         }
+        public Weaver[] GetPlayersInScene() => GetPlayersInScene(SceneManager.GetActiveScene().name);
+        public Weaver[] GetPlayersInScene(string sceneName) => [.. Connections.Where(w => w.Mirror?.Scene == sceneName)];
 
         #endregion
     }

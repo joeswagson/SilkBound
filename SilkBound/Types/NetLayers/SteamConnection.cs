@@ -23,7 +23,7 @@ namespace SilkBound.Types.NetLayers {
             //Connect(host, null);
         }
 
-        public SteamConnection(CSteamID remoteId, bool isServerSide) : base(isServerSide ? new ServerPacketHandler() : new ClientPacketHandler())
+        public SteamConnection(CSteamID remoteId, bool isServerSide, NetworkStats stats) : base(isServerSide ? new ServerPacketHandler() : new ClientPacketHandler(), stats: stats)
         {
             _remoteId = remoteId;
             _isServerSide = isServerSide;
@@ -129,7 +129,7 @@ namespace SilkBound.Types.NetLayers {
 
         }
 
-        public override async Task Send(byte[] packetData)
+        protected override async Task Write(byte[] packetData)
         {
             if (_remoteId == CSteamID.Nil)
             {

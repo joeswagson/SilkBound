@@ -53,7 +53,7 @@ namespace SilkBound.Types.NetLayers {
             {
                 if (!_connections.ContainsKey(req.m_steamIDRemote))
                 {
-                    var conn = new SteamConnection(req.m_steamIDRemote, true);
+                    var conn = new SteamConnection(req.m_steamIDRemote, true, Stats);
                     _connections[req.m_steamIDRemote] = conn;
                     Logger.Msg($"[SteamServer] Connection object created for {req.m_steamIDRemote}");
                 }
@@ -94,7 +94,7 @@ namespace SilkBound.Types.NetLayers {
                                     {
                                         lock (_connLock)
                                         {
-                                            conn = new SteamConnection(sender, true);
+                                            conn = new SteamConnection(sender, true, Stats);
                                             _connections[sender] = conn;
                                             Logger.Msg($"[SteamServer] Auto-accepted and created connection for {sender}");
                                         }
@@ -172,15 +172,9 @@ namespace SilkBound.Types.NetLayers {
 
         }
 
-        public override async Task Send(byte[] packetData)
+        protected override async Task Write(byte[] packetData)
         {
-            IEnumerable<SteamConnection> conns;
-            lock (_connLock)
-            {
-                conns = _connections.Values;
-            }
-
-            foreach (var conn in conns)
+            foreach (var conn in GetConnections())
             {
                 try
                 {
@@ -201,11 +195,11 @@ namespace SilkBound.Types.NetLayers {
             }
         }
 
-        public IReadOnlyCollection<SteamConnection> GetConnections()
+        public IEnumerable<SteamConnection> GetConnections()
         {
             lock (_connLock)
             {
-                return new List<SteamConnection>(_connections.Values).AsReadOnly();
+                return _connections.Values.Where(c => c != NetworkUtils.LocalConnection);
             }
         }
 

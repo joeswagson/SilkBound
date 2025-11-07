@@ -159,6 +159,8 @@ namespace SilkBound.Managers {
             request.Client = result.Host;
             request.Connection = conn;
 
+            NetworkStatsRenderer.ObjectSafeAssignAll(conn);
+
             if (conn.IsConnected)
             {
                 request.Succeeded = true;
@@ -255,6 +257,8 @@ namespace SilkBound.Managers {
             var conn = result.Connection;
             request.Client = result;
             request.Connection = conn;
+
+            NetworkStatsRenderer.ObjectSafeAssignAll(conn);
 
             if (conn.IsConnected && conn.PacketHandler is ClientPacketHandler cHandler)
             {

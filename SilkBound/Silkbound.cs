@@ -141,7 +141,7 @@ namespace SilkBound {
             //};
             //Screen.SetResolution(1200, 600, false);
 
-            #region Debug Renderer
+            #region Debug Renderers
             if (SilkConstants.DEBUG)
             {
                 int clientCount = 0;
@@ -177,6 +177,8 @@ namespace SilkBound {
 
                 ConnectionMenu = new ConnectionMenuRenderer();
                 DbgRenderCore.RegisterRenderer(ConnectionMenu);
+
+                DbgRenderCore.RegisterRenderer(new NetworkStatsRenderer(DrawAnchor.TopRight));
             }
             #endregion
         }

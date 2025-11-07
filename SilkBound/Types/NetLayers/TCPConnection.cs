@@ -37,8 +37,8 @@ namespace SilkBound.Types.NetLayers
             //Connect(host, port);
         }
 
-        internal TCPConnection(TcpClient client, string remoteId, bool isServerSide, PacketHandler handler)
-            : base(handler)
+        internal TCPConnection(TcpClient client, string remoteId, bool isServerSide, PacketHandler handler, NetworkStats stats)
+            : base(handler, stats: stats)
         {
             _client = client;
             _remoteId = remoteId;
@@ -179,7 +179,7 @@ namespace SilkBound.Types.NetLayers
         {
         }
 
-        public override async Task Send(byte[] packetData)
+        protected override async Task Write(byte[] packetData)
         {
             if (packetData == null) return;
             if (!HasConnection || _stream == null)

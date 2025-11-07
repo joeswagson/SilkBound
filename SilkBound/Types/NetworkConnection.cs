@@ -6,8 +6,22 @@ using System.Threading.Tasks;
 
 namespace SilkBound.Types
 {
-    public abstract class NetworkConnection(PacketHandler packetHandler, string? host=null, int? port=null) {
-        public PacketHandler PacketHandler { get; private set; } = packetHandler;
+    public abstract class NetworkConnection {
+        public NetworkStats Stats;
+        public PacketHandler PacketHandler { get; private set; }
+        public string? Host { get; private set; }
+        public int? Port { get; private set; }
+        private readonly bool Local;
+        public NetworkConnection(PacketHandler packetHandler, string? host= null, int? port = null, NetworkStats? stats=null)
+        {
+            PacketHandler = packetHandler;
+            Host = host;
+            Port = port;
+            Stats = stats ?? new NetworkStats(this);
+            Local = stats != null;
+
+            Initialize();
+        }
         public abstract bool IsConnected { get; }
 
         public Action<byte[]> DataRecieved = new((data) =>
@@ -15,8 +29,6 @@ namespace SilkBound.Types
             
         });
 
-        public string? Host { get; private set; } = host;
-        public int? Port { get; private set; } = port;
 
         public async Task Connect(string host, int? port)
         {
@@ -38,7 +50,16 @@ namespace SilkBound.Types
         /// Inform the network layer to schedule a packet send.
         /// </summary>
         /// <param name="packetData">The serialized packet data. Acquired through <see cref="PacketProtocol.PackPacket(Packet)"/> or an equivalent extension.</param>
-        public abstract Task Send(byte[] packetData);
+        protected abstract Task Write(byte[] packetData);
+        public async Task Send(byte[] packetData)
+        {
+            if(Local) Stats.LogPacketSent(packetData);
+
+            Task task = Write(packetData);
+            await task;
+            if (Local && !task.IsCompletedSuccessfully)
+                Stats.LogPacketSentFaulted(packetData);
+        }
 
         /// <summary>
         /// Pack and send a packet over the network. Note that using this method on seperate connections does not prevent reserializing the packet. To avoid reserialization, preprocess the packet with <see cref="PacketProtocol.PackPacket(Packet)"/> or an extension and call <see cref="Send(byte[]?)"/> directly.
@@ -46,6 +67,7 @@ namespace SilkBound.Types
         /// <param name="packet">The packet instance to send.</param>
         public async Task Send(Packet packet)
         {
+            Logger.Msg(packet.GetType().Name);
             if(packet.TryPack(out var packetData))
                 await Send(packetData);
         }
@@ -53,7 +75,9 @@ namespace SilkBound.Types
 
         public (string?, Guid?, Packet?) HandlePacket(byte[] data)
         {
+            Stats.LogBytesRead(data);
             (string?, Guid?, Packet?) returned = PacketProtocol.UnpackPacket(data);
+            Stats.LogPacketRead(data, returned.Item3);
             PacketHandler.Handle(returned.Item3, this);
             return returned;
         }

@@ -54,7 +54,7 @@ namespace SilkBound.Types.NetLayers {
                     {
                         if (!_connections.ContainsKey(key))
                         {
-                            var conn = new TCPConnection(client, key, true, _handler);
+                            var conn = new TCPConnection(client, key, true, _handler, Stats);
                             _connections[key] = conn;
                             Logger.Msg($"[TCPServer] Connection accepted from {key}");
                         }
@@ -96,16 +96,12 @@ namespace SilkBound.Types.NetLayers {
 
         public override void Initialize()
         {
+
         }
 
-        public override async Task Send(byte[] packetData)
+        protected override async Task Write(byte[] packetData)
         {
-            var conns = GetConnections();
-            //IEnumerable<TCPConnection> conns;
-            //lock (_connLock)
-            //    conns = _connections.Values;
-
-            foreach (var conn in _connections.Values)
+            foreach (var conn in GetConnections())
             {
                 try
                 {
@@ -117,20 +113,21 @@ namespace SilkBound.Types.NetLayers {
             }
         }
 
-        public IReadOnlyCollection<string> GetPlayerList()
+        public IEnumerable<string> GetPlayerList()
         {
             lock (_connLock)
             {
-                return new List<string>(_connections.Keys).AsReadOnly();
+                return _connections.Keys;
             }
         }
 
-        public IReadOnlyCollection<TCPConnection> GetConnections()
+        public IEnumerable<TCPConnection> GetConnections()
         {
             lock (_connLock)
-            {
-                return new List<TCPConnection>(_connections.Values).AsReadOnly();
-            }
+			{
+				//Logger.Msg([.. _connections.Values.Where(c => c != NetworkUtils.LocalConnection).Select(c => c.GetType().Name)]);
+				return _connections.Values.Where(c => c != NetworkUtils.LocalConnection);
+			}
         }
 
         public override async Task SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)

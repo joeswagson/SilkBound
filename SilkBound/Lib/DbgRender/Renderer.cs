@@ -36,11 +36,11 @@ namespace SilkBound.Lib.DbgRender {
 
         public TextAnchor? _text;
         public TextAnchor Text => _text ??= Enum.Parse<TextAnchor>(AnchorY switch {
-                DrawAnchorY.Top => "Upper",
-                DrawAnchorY.Center => "Middle",
-                DrawAnchorY.Bottom => "Lower",
-                _ => "Middle"
-            } + AnchorX.ToString());
+            DrawAnchorY.Top => "Upper",
+            DrawAnchorY.Center => "Middle",
+            DrawAnchorY.Bottom => "Lower",
+            _ => "Middle"
+        } + AnchorX.ToString());
 
         public Vector2 normalized = new Vector2(
             (((float) anchorX) + 1) / 2,
@@ -203,8 +203,8 @@ namespace SilkBound.Lib.DbgRender {
         #region Helper Methods
         static Color defaultBg = new Color(0, 0, 0, 0.75f);
         public Rect Box(float width, float height) => RenderUtils.GetWindowPosition(Origin, width, height);
-        public Rect DrawBox(float width, float height, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0) => DrawBox(Box(width, height), bgColor, borderRadius, borderWidth);
-        public Rect DrawBox(Rect box, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0)
+        protected Rect DrawBox(float width, float height, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0) => DrawBox(Box(width, height), bgColor, borderRadius, borderWidth);
+        protected Rect DrawBox(Rect box, Color? bgColor = null, float borderRadius = 0, float borderWidth = 0)
         {
             GUI.DrawTexture(
                 box,
@@ -219,6 +219,7 @@ namespace SilkBound.Lib.DbgRender {
             );
             return box;
         }
+        protected void DrawVoid(float? height = null, float margin = 5) => Scroll(height ?? ElementHeight + margin);
         #endregion
     }
 }

@@ -87,7 +87,7 @@ namespace SilkBound.Types.NetLayers {
 
         }
 
-        public override async Task Send(byte[] packetData)
+        protected override async Task Write(byte[] packetData)
         {
             if (Stream == null || !Stream.IsConnected)
             {

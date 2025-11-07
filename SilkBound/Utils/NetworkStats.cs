@@ -30,7 +30,7 @@ namespace SilkBound.Utils {
         public readonly uint PacketsDroppedTotal => PacketsReadDropped + PacketsSentDropped;
         #endregion
 
-        #region Windowed rates (accurate 1-second average)
+        #region Windowed rates
         public float PacketsSentPerSecond;
         public float PacketsReadPerSecond;
         public float BytesSentPerSecond;
@@ -48,7 +48,6 @@ namespace SilkBound.Utils {
         public NetworkData _data;
         public NetworkData Data => _data;
 
-        // keep timestamps in real time (Stopwatch ticks)
         private readonly Queue<(double time, uint packets, uint bytes)> _sentHistory = new();
         private readonly Queue<(double time, uint packets, uint bytes)> _readHistory = new();
 
@@ -70,12 +69,13 @@ namespace SilkBound.Utils {
             TickManager.OnTick -= OnTick;
         }
 
-        internal void LogPacketSend(Task packetSend, byte[] data)
+        internal void LogPacketSentImmediate(byte[] data)
         {
-            if (packetSend.IsCompletedSuccessfully)
-                LogPacketSent(data);
-            else
-                LogPacketSentDropped(data);
+            LogPacketSent(data);
+        }
+        internal void LogPacketSentFaulted(byte[] data)
+        {
+            LogPacketSentDropped(data);
         }
 
         internal void LogPacketSent(byte[] data)
@@ -86,6 +86,11 @@ namespace SilkBound.Utils {
 
         internal void LogPacketSentDropped(byte[] data)
         {
+            if(_data.PacketsSent > 0)
+                _data.PacketsSent--;
+            if(_data.BytesSent >= data.Length)
+                _data.BytesSent -= (uint) data.Length;
+
             _data.PacketsSentDropped++;
             _data.BytesSentDropped += (uint) data.Length;
         }
