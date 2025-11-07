@@ -30,6 +30,7 @@ namespace SilkBound.Network
                 SkinManager.ApplySkin(collection, skin);
             AppliedSkinName = skin.SkinName;
         }
-        public int GetPlayersInScene() => Server.CurrentServer.GetPlayersInScene();
+        public Weaver[] GetPlayersInScene() => Server.CurrentServer.GetPlayersInScene();
+        public int GetPlayerCountInScene() => Server.CurrentServer.GetPlayerCountInScene();
     }
 }
