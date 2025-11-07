@@ -36,6 +36,6 @@
     //        //    }
     //        //}
     //    }
-    //    public override object Fetch(params object[] args) => new KeyValuePair<Guid, Dictionary<string, object>>(weaver, changes);
+    //    protected override async Task<object> Fetch(params object[] args) => new KeyValuePair<Guid, Dictionary<string, object>>(weaver, changes);
     //}
 }

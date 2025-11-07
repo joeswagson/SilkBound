@@ -3,6 +3,7 @@ using SilkBound.Network.Packets;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SilkBound.Types.Transfers
 {
@@ -44,9 +45,9 @@ namespace SilkBound.Types.Transfers
         }
 
 
-        public override object Fetch(params object[] args)
+        protected override Task<object> Fetch(params object[] args)
         {
-            return Data!;
+            return Task.FromResult<object>(Data!);
         }
 
         public override void Completed(List<byte[]> unpacked, NetworkConnection connection)

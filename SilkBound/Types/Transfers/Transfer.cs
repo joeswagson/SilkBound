@@ -4,6 +4,7 @@ using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace SilkBound.Types.Transfers
 {
@@ -28,7 +29,11 @@ namespace SilkBound.Types.Transfers
             return FormatterServices.GetUninitializedObject(original) as Transfer ?? throw new Exception("Failed to create Transfer instance"); // once more can use an uninitialized object as the source Fetch should never be called for this object
         }
 
-        public abstract object Fetch(params object[] args);
+        protected abstract Task<object> Fetch(params object[] args);
+        public async Task<object> Prepare(params object[] args)
+        {
+            return await Fetch(args);
+        }
         public abstract void Completed(List<byte[]> unpacked, NetworkConnection connection);
         public void TransferCompleted(List<byte[]> unpacked, NetworkConnection connection)
         {

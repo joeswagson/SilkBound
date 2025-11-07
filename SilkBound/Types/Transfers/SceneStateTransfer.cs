@@ -4,6 +4,7 @@ using SilkBound.Types.JsonConverters;
 using SilkBound.Utils;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SilkBound.Types.Transfers
 {
@@ -22,6 +23,6 @@ namespace SilkBound.Types.Transfers
                 Logger.Error("SceneStateTransfer failed. Reason: Unpacked data chunks resulted in a null StateChange array.");
         }
 
-        public override object Fetch(params object[] args) => (name, changes);
+        protected override Task<object> Fetch(params object[] args) => Task.FromResult<object>((name, changes));
     }
 }

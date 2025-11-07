@@ -4,6 +4,7 @@ using SilkBound.Network;
 using SilkBound.Types.JsonConverters;
 using SilkBound.Utils;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SilkBound.Types.Transfers
 {
@@ -34,6 +35,6 @@ namespace SilkBound.Types.Transfers
             Server.CurrentServer.Host ??= state.Host.ToWeaver();
         }
 
-        public override object Fetch(params object[] args) => state;
+        protected override Task<object> Fetch(params object[] args) => Task.FromResult<object>(state);
     }
 }

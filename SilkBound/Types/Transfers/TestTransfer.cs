@@ -1,5 +1,6 @@
 ﻿using SilkBound.Utils;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SilkBound.Types.Transfers
 {
@@ -27,6 +28,6 @@ namespace SilkBound.Types.Transfers
             }
         }
 
-        public override object Fetch(params object[] args) => data;
+        protected override Task<object> Fetch(params object[] args) => Task.FromResult<object>(data);
     }
 }
