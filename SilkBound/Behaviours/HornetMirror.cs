@@ -125,7 +125,9 @@ namespace SilkBound.Behaviours {
             Attacks = Instantiate(HeroController.instance.transform.Find("Attacks").gameObject, Root.transform);
             Attacks.name = "Attacks";
 
+            Attacks.GetComponentsInChildren<NailSlashRecoil>(true).ToList().ForEach(c => c.enabled = false);
             Attacks.GetComponentsInChildren<DamageEnemies>(true).ToList().ForEach(c => c.enabled = false); // position misalignments could cause damage inbalances. we will sync this from direct calls instead
+            Attacks.GetComponentsInChildren<NailSlash>(true).ToList().ForEach(c => c.enabled = false);     // same as above
             Attacks.GetComponentsInChildren<AudioSource>(true).ToList().ForEach((source) =>                // audio falloffs
             {
                 source.rolloffMode = AudioRolloffMode.Linear;
