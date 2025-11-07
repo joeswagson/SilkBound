@@ -3,13 +3,12 @@ using SilkBound.Utils;
 using SilkBound.Behaviours;
 using SilkBound.Network.Packets.Impl.Sync.Entity;
 
-namespace SilkBound.Sync
-{
-    public abstract class NetworkEntity : NetworkObject
-    {
+namespace SilkBound.Sync {
+    public abstract class NetworkEntity : NetworkObject {
         public override bool Active => NetworkUtils.IsNullPtr(Root) || Root.activeInHierarchy;
 
         public virtual GameObject Root => gameObject;
+        private Vector3 lastPosition;
         public Vector3 Position => Root.transform.position;
         public SimpleInterpolator? _interpolator;
         public SimpleInterpolator Interpolator => _interpolator ?? Root.AddComponentIfNotPresent<SimpleInterpolator>();
@@ -39,22 +38,25 @@ namespace SilkBound.Sync
                 if (Body)
                     Body.constraints = RigidbodyConstraints2D.FreezeRotation;
 
-                //Logger.Msg("syncing position of entity", NetworkId);
-                NetworkUtils.SendPacket(
-                    new SyncEntityPositionPacket(
-                        NetworkId,
-                        Root.scene.name,
-                        Position,
-                        Body?.linearVelocity ?? Vector2.zero,
-                        Root.transform.localScale.x
-                    )
-                );
-            }
-            else
+                //var deltaPos = Root.transform.localPosition - Position;
+                ////Logger.Msg("syncing position of entity", NetworkId);
+                if ((lastPosition - Position).sqrMagnitude > 0.01f)
+                    NetworkUtils.SendPacket(
+                        new SyncEntityPositionPacket(
+                            NetworkId,
+                            Root.scene.name,
+                            Position,
+                            Body?.linearVelocity ?? Vector2.zero,
+                            Root.transform.localScale.x
+                        )
+                    );
+            } else
             {
                 if (Body)
                     Body.constraints = RigidbodyConstraints2D.FreezeAll;
             }
+
+            lastPosition = Position;
 
             AdditionalTick(dt);
         }
