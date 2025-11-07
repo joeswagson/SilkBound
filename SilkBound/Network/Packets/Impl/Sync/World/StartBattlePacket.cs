@@ -2,6 +2,7 @@
 using SilkBound.Types;
 using SilkBound.Utils;
 using System.IO;
+using System.Net.Sockets;
 
 namespace SilkBound.Network.Packets.Impl.Sync.World
 {
@@ -22,13 +23,15 @@ namespace SilkBound.Network.Packets.Impl.Sync.World
 
         public override void ClientHandler(NetworkConnection connection)
         {
-            
+            if (Sender.InScene(Battle?.gameObject.scene.name))
+                Battle?.StartBattle();
         }
 
         public override void ServerHandler(NetworkConnection connection)
         {
-            Battle?.StartBattle();
-            
+            if (Sender.InScene(Battle?.gameObject.scene.name))
+                Battle?.StartBattle();
+
             Relay(connection);
         }
 

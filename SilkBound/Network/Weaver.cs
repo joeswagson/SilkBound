@@ -32,5 +32,7 @@ namespace SilkBound.Network
         }
         public Weaver[] GetPlayersInScene() => Server.CurrentServer.GetPlayersInScene();
         public int GetPlayerCountInScene() => Server.CurrentServer.GetPlayerCountInScene();
+
+        public bool InScene(string? sceneName) => Mirror?.Scene == sceneName;
     }
 }

@@ -274,16 +274,6 @@ namespace SilkBound.Network.Packets.Handlers
             NetworkUtils.LocalServer?.SendExcept(packet, connection);
         }
 
-        [PacketHandler(typeof(StartBattlePacket))]
-        public void OnStartBattlePacket(StartBattlePacket packet, NetworkConnection connection)
-        {
-            if (packet.Sender.Mirror?.Scene == packet.Battle?.gameObject.scene.name)
-            {
-                packet.Battle?.StartBattle();
-                NetworkUtils.LocalServer?.SendExcept(packet, connection);
-            }
-        }
-
         [PacketHandler(typeof(SyncEntityPositionPacket))]
         public void OnSyncEntityPositionPacket(SyncEntityPositionPacket packet, NetworkConnection connection)
         {

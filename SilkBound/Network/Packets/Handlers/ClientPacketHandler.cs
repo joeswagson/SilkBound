@@ -264,15 +264,6 @@ namespace SilkBound.Network.Packets.Handlers
             packet.GateSensor?.UpdateSensor(packet.SensorActivated);
         }
 
-        [PacketHandler(typeof(StartBattlePacket))]
-        public void OnStartBattlePacket(StartBattlePacket packet, NetworkConnection connection)
-        {
-            if (packet.Sender.Mirror?.Scene == packet.Battle?.gameObject.scene.name)
-            {
-                packet.Battle?.StartBattle();
-            }
-        }
-
         [PacketHandler(typeof(SyncEntityPositionPacket))]
         public void OnSyncEntityPositionPacket(SyncEntityPositionPacket packet, NetworkConnection connection)
         {
