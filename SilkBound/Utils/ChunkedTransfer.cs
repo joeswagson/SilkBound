@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SilkBound.Utils
 {
@@ -36,10 +37,18 @@ namespace SilkBound.Utils
         }
         public static byte[] Serialize(object? data, params JsonConverter[] converters)
         {
-            SerializerSettings.Converters = converters;
-            string json = JsonConvert.SerializeObject(data, SerializerSettings);
-            //Logger.Msg("Serialized JSON:", json);
-            return CompressString(json);
+            var t = SerializeAsync(data, converters);
+            t.Wait();
+            return t.Result;
+        }
+        public static async Task<byte[]> SerializeAsync(object? data, params JsonConverter[] converters)
+        {
+            return await Task.Run(() => {
+                SerializerSettings.Converters = converters;
+                string json = JsonConvert.SerializeObject(data, SerializerSettings);
+
+                return CompressString(json);
+            });
         }
 
         public static T Deserialize<T>(byte[] rawData, params JsonConverter[] converters)
@@ -52,34 +61,13 @@ namespace SilkBound.Utils
 
         public static List<byte[]> Pack(object data, params JsonConverter[] converters)
         {
-            byte[] rawData = Serialize(data, converters);
-
-            var chunks = new List<byte[]>();
-            int totalChunks = (rawData.Length + CHUNK_SIZE - 1) / CHUNK_SIZE;
-
-            for (int i = 0; i < totalChunks; i++)
-            {
-                int offset = i * CHUNK_SIZE;
-                int length = Math.Min(CHUNK_SIZE, rawData.Length - offset);
-
-                using var ms = new MemoryStream();
-                using (var writer = new BinaryWriter(ms, Encoding.UTF8, true))
-                {
-                    writer.Write(i);
-                    writer.Write(totalChunks);
-                    writer.Write(length);
-                    writer.Write(rawData, offset, length);
-                }
-
-                chunks.Add(ms.ToArray());
-            }
-
-            return chunks;
+            var t = PackAsync(data, converters);
+            t.Wait();
+            return t.Result;
         }
-
-        public static List<byte[]> Pack<T>(T data, params JsonConverter[] converters)
+        public static async Task<List<byte[]>> PackAsync(object data, params JsonConverter[] converters)
         {
-            byte[] rawData = Serialize(data, converters);
+            byte[] rawData = await SerializeAsync(data, converters);
 
             var chunks = new List<byte[]>();
             int totalChunks = (rawData.Length + CHUNK_SIZE - 1) / CHUNK_SIZE;
