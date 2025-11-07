@@ -36,7 +36,7 @@ namespace SilkBound.Types.NetLayers {
             });
 
             _cts = new CancellationTokenSource();
-            _acceptTask = AcceptLoopAsync(_cts.Token);
+            _acceptTask = Task.Run(()=>AcceptLoopAsync(_cts.Token));
 
             return;
         }

@@ -29,14 +29,16 @@ namespace SilkBound.Types.NetLayers {
 
         public override async Task ConnectImpl(string host, int? port)
         {
-            Logger.Msg("[SteamServer] Starting up SteamServer...");
+            await Task.Run(() => {
+                Logger.Msg("[SteamServer] Starting up SteamServer...");
 
-            _p2pSessionRequest = Callback<P2PSessionRequest_t>.Create(OnP2PSessionRequest);
-            _p2pSessionFail = Callback<P2PSessionConnectFail_t>.Create(OnP2PSessionFail);
+                _p2pSessionRequest = Callback<P2PSessionRequest_t>.Create(OnP2PSessionRequest);
+                _p2pSessionFail = Callback<P2PSessionConnectFail_t>.Create(OnP2PSessionFail);
 
-            _recvCts = new CancellationTokenSource();
-            _ = ReceiveLoopAsync(_recvCts.Token);
-            Logger.Msg("[SteamServer] Ready for incoming Steam P2P connections.");
+                _recvCts = new CancellationTokenSource();
+                _ = ReceiveLoopAsync(_recvCts.Token);
+                Logger.Msg("[SteamServer] Ready for incoming Steam P2P connections.");
+            });
         }
 
         private void OnP2PSessionRequest(P2PSessionRequest_t req)

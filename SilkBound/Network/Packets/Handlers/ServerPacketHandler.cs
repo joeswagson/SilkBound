@@ -16,6 +16,7 @@ using SilkBound.Sync;
 using SilkBound.Network.Packets.Impl.Sync.Mirror;
 using SilkBound.Network.Packets.Impl.Sync.Entity;
 using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
+using System.Diagnostics;
 
 namespace SilkBound.Network.Packets.Handlers
 {
@@ -45,15 +46,26 @@ namespace SilkBound.Network.Packets.Handlers
             else
             {
                 Logger.Msg("Handshake Recieved (Server):", packet.ClientId, packet.ClientName, packet.HandshakeId);
-                connection.Send(new HandshakePacket(packet.ClientId, NetworkUtils.LocalClient!.ClientName, packet.HandshakeId, NetworkUtils.LocalClient.ClientID)); // reply with same handshake id so the client can acknowledge handshake completion
+                _ = connection.Send(new HandshakePacket(packet.ClientId, NetworkUtils.LocalClient!.ClientName, packet.HandshakeId, NetworkUtils.LocalClient.ClientID)); // reply with same handshake id so the client can acknowledge handshake completion
+                Logger.Msg("Mirrored to fulfill");
 
                 //now that we have the client id, we can create a client object for them
                 Weaver client = new(packet.ClientName, connection, packet.ClientId);
                 Server.CurrentServer.Connections.Add(client);
 
-                TransferManager.Send(transfer: new ServerInformationTransfer(ServerState.GetCurrent()), connections: [connection]);
+                var currState = ServerState.GetCurrent();
 
-                NetworkUtils.LocalServer!.SendExcept(new ClientConnectionPacket(client.ClientID, client.ClientName), connection);
+                Logger.Msg("making transfer");
+                var transfer = new ServerInformationTransfer(currState);
+                Logger.Msg("made transfer");
+
+                Logger.Msg("Transfering");
+                _ = TransferManager.Send(transfer: transfer, connections: [connection]);
+                Logger.Msg("Transfered");
+
+                Logger.Msg("Syncing connection to others");
+                _ = new ClientConnectionPacket(client.ClientID, client.ClientName).SendExcept(connection);
+                Logger.Msg("Sent connection sync packet.");
             }
         }
 
