@@ -112,7 +112,7 @@ namespace SilkBound.Behaviours {
 
             if (IsLocalOwned && Target.Update(out HornetMirror? newTarget))
             {
-                Logger.Debug("TARGETTING:", newTarget.Client.ClientName);
+                //Logger.Debug("TARGETTING:", newTarget.Client.ClientName);
                 UpdateHero(newTarget);
             }
         }

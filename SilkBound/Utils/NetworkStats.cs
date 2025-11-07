@@ -59,8 +59,6 @@ namespace SilkBound.Utils {
         public NetworkStats(NetworkConnection connection)
         {
             Connection = connection;
-            Logger.Msg(connection.Host, connection.GetType().Name);
-            Logger.Stacktrace();
             TickManager.OnTick += OnTick;
         }
 
@@ -128,7 +126,6 @@ namespace SilkBound.Utils {
             uint dPacketsRead = Math.Max(0, _data.PacketsRead - _lastPacketsRead);
             uint dBytesSent = Math.Max(0, _data.BytesSent - _lastBytesSent);
             uint dBytesRead = Math.Max(0, _data.BytesRead - _lastBytesRead);
-            Logger.Debug($"ΔSent={dPacketsSent} ΔRead={dPacketsRead}");
 
             if (dPacketsSent > 0 || dBytesSent > 0)
                 _sentHistory.Enqueue((now, dPacketsSent, dBytesSent));

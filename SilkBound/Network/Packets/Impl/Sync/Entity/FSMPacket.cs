@@ -67,7 +67,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
 
         public override void ClientHandler(NetworkConnection connection)
         {
-            Logger.Msg("Firing:", Fingerprint.Path, Fingerprint.Name, EventName, "on fsm:", FSM);
+            //Logger.Msg("Firing:", Fingerprint.Path, Fingerprint.Name, EventName, "on fsm:", FSM);
             if (FSM == null)
                 Logger.Warn("Null FSM!", Fingerprint.Path, Fingerprint.Name, EventName);
             FSM?.Event(EventName);

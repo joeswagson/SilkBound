@@ -114,7 +114,7 @@ namespace SilkBound.Patches.Simple.Attacks
                 //hitInstance.DamageDealt = 0;
                 using (new StackFlag<HitFlagData>(new HitFlagData(true, hm)))
                 {
-                    Logger.Msg("firing takedamage");
+                    //Logger.Msg("firing takedamage");
                     hm.TakeDamage(hitInstance);
                 }
                 __result = IHitResponder.Response.DamageEnemy;

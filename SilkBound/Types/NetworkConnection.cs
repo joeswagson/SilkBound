@@ -67,7 +67,6 @@ namespace SilkBound.Types
         /// <param name="packet">The packet instance to send.</param>
         public async Task Send(Packet packet)
         {
-            Logger.Msg(packet.GetType().Name);
             if(packet.TryPack(out var packetData))
                 await Send(packetData);
         }
