@@ -213,8 +213,17 @@ namespace SilkBound.Utils {
         {
             //Logger.Msg("send packet in nw utils");
             if (LocalConnection == null || !Connected) return false;
-            LocalConnection.Send(packet);
-            return true;
+            Task t = LocalConnection.Send(packet);
+            t.Wait();
+            return t.IsCompletedSuccessfully;
+        }
+        public static async Task<bool> SendPacketAsync(Packet packet)
+        {
+            //Logger.Msg("send packet in nw utils");
+            if (LocalConnection == null || !Connected) return false;
+            Task t = LocalConnection.Send(packet);
+            await t;
+            return t.IsCompletedSuccessfully;
         }
         public static bool IsNullPtr([NotNullWhen(false)] UnityEngine.Object? obj) => obj == null || !Object.IsNativeObjectAlive(obj);
         public static Weaver? GetWeaver(Guid target) => Server.GetWeaver(target);
