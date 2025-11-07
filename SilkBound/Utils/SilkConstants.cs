@@ -12,9 +12,9 @@
             #endif
         ;
         public const bool DEBUG_COLLIDERS = false;
-        public const short TEST_CLIENTS = 2;
+        public const short TEST_CLIENTS = 1;
         #region debug cheats
-        public const bool INVULNERABILITY = DEBUG;
+        public const bool INVULNERABILITY = false;// DEBUG;
         public const bool GETALLPOWERUPS = DEBUG;
         #endregion
 

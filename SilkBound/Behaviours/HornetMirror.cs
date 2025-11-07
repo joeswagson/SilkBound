@@ -511,11 +511,25 @@ namespace SilkBound.Behaviours {
             AirDash.SetActive(false);
             AirDash.SetActive(true);
         }
+        public bool IsGhost => Sprite.color.a != 1;
+        private void Immortal(bool enabled)
+        {
+            if (SilkConstants.INVULNERABILITY)
+            {
+                CheatManager.Invincibility = CheatManager.InvincibilityStates.FullInvincible;
+                return;
+            }
+
+            CheatManager.Invincibility = enabled
+                ? CheatManager.InvincibilityStates.FullInvincible
+                : CheatManager.InvincibilityStates.Off;
+        }
         public void Ghost()
         {
             if (IsLocal)
             {
                 Sprite.color = new Color(1, 1, 1, 0.5f);
+                //Immortal(true);
                 return;
             }
 
@@ -526,8 +540,11 @@ namespace SilkBound.Behaviours {
             if (IsLocal)
             {
                 Sprite.color = new Color(1, 1, 1, 1f);
+                //Immortal(false);
                 return;
             }
+
+            Immortal(false);
 
             MirrorSprite.color = new Color(1, 1, 1, 1f);
         }

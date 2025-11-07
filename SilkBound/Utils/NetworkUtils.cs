@@ -1,4 +1,5 @@
-﻿using SilkBound.Managers;
+﻿using SilkBound.Behaviours;
+using SilkBound.Managers;
 using SilkBound.Network;
 using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
@@ -15,6 +16,8 @@ using System.Threading.Tasks;
 namespace SilkBound.Utils {
     public class NetworkUtils {
         public static LocalWeaver LocalClient = null!;
+        private static HornetMirror? _lMirror;
+        public static HornetMirror? LocalMirror => _lMirror ??= LocalClient?.Mirror;
         public static Server Server => Server.CurrentServer;
         public static ServerSettings ServerSettings => Server.Settings;
         public static NetworkServer LocalServer = null!;
