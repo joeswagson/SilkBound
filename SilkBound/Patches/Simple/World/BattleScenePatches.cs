@@ -27,7 +27,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.World {
             using (new StackFlag<BattleScene>())
             {
                 NetworkUtils.SendPacket(new StartBattlePacket(__instance.transform.GetPath())); // ask KINDLY dickhead
-                return false;
+                return NetworkUtils.IsServer; // unless....
             }
         }
     }
