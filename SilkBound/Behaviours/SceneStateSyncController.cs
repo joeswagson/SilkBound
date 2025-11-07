@@ -11,8 +11,9 @@ namespace SilkBound.Behaviours {
         static bool firstLoad = true;
 
         public static event Action<Scene>? SceneLoaded;
-        
-        private void Update() {
+
+        private void Update()
+        {
             if (activated || !NetworkUtils.Connected)
                 return;
 
@@ -20,7 +21,10 @@ namespace SilkBound.Behaviours {
 
             var scene = SceneManager.GetActiveScene();
             if (SilkConstants.DEBUG && scene.name == "Tut_03")
-                GameObject.Find("RestBench").transform.position = new Vector3(76.8323f, 17.1686f, 0.004f);
+            {
+                var t = GameObject.Find("RestBench").transform;
+                t.position = new Vector3(76.8323f, 17.1686f, t.position.z);
+            }
             if (scene.name != "Menu_Title" && scene.name != "Pre_Menu_Title")
                 firstLoad = false;
 
@@ -35,7 +39,8 @@ namespace SilkBound.Behaviours {
 
         }
 
-        private void OnDestroy() {
+        private void OnDestroy()
+        {
             activated = false;
         }
     }
