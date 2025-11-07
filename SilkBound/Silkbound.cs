@@ -21,6 +21,11 @@ using UnityEngine;
 using SilkBound.Lib.DbgRender;
 using SilkBound.Lib.DbgRender.Renderers;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
+
+
+
 
 #if DEBUG
 using System.Reflection;
@@ -70,6 +75,14 @@ namespace SilkBound {
                 "| Unity Thread ID:", MainThreadId);
             var method = AccessTools.Method(typeof(HealthManager), "TakeDamage", [typeof(HitInstance)]);
             global::SilkBound.Utils.Logger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
+
+            Task.Run(async () => {
+                var sw = Stopwatch.StartNew();
+                int loaded = await SkinManager.LoadLibrary();
+                sw.Stop();
+                Logger.Msg("Initialized Skin Library in", sw.Elapsed.ToString(@"ss\.fff"), "seconds");
+                Logger.Msg("Loaded", loaded, "skins.");
+            });
 
             if (SilkConstants.DEBUG)
             {

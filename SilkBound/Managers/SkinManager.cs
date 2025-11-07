@@ -2,10 +2,54 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
-namespace SilkBound.Managers
-{
 
+namespace SilkBound.Managers {
+    public class SkinBundle(AssetBundle src) {
+        public AssetBundle Source = src;
+        public string Name => Source.name;
+        public Texture2D? Atlas0;
+        public Texture2D? Atlas1;
+        public Texture2D? Atlas2;
+        public Texture2D? Atlas3;
+
+        public Dictionary<int, Texture2D> AtlasLookup = [];
+
+        private static async Task<T> ProcessAssetLoad<T>(AssetBundleRequest request) where T : Object
+        {
+            await request;
+            return (T) request.GetResult();
+        }
+        private static async Task<T> Load<T>(AssetBundle src, string name) where T : Object => await ProcessAssetLoad<T>(src.LoadAssetAsync<T>(name));
+        public static SkinBundle LoadBundle(AssetBundle src)
+        {
+            var t = LoadBundleAsync(src);
+            t.Wait();
+            return t.Result;
+        }
+        public static async Task<SkinBundle> LoadBundleAsync(AssetBundle src)
+        {
+            var atlas0 = await Load<Texture2D>(src, "atlas0");
+            var atlas1 = await Load<Texture2D>(src, "atlas1");
+            var atlas2 = await Load<Texture2D>(src, "atlas2");
+            var atlas3 = await Load<Texture2D>(src, "atlas3");
+
+            SkinBundle skinBundle = new(src) {
+                Atlas0 = atlas0,
+                Atlas1 = atlas1,
+                Atlas2 = atlas2,
+                Atlas3 = atlas3,
+                AtlasLookup = new() {
+                    { 0, atlas0 },
+                    { 1, atlas1 },
+                    { 2, atlas2 },
+                    { 3, atlas3 }
+                }
+            };
+            return skinBundle;
+        }
+    }
     public class Skin(Dictionary<string, Texture2D> textures, string skinName = "Unnamed") {
         public Dictionary<string, Texture2D> Textures { get; private set; } = textures;
         public string SkinName { get; private set; } = skinName;
@@ -31,71 +75,70 @@ namespace SilkBound.Managers
             return new Skin(textures, Path.GetFileName(path));
         }
 
-        public static byte[] Serialize(Skin skin)
+        public static Skin Deserialize(SkinBundle bundle)
         {
-            using MemoryStream ms = new();
-            using BinaryWriter writer = new(ms, Encoding.UTF8);
-
-            writer.Write(MagicByteManager.SKIN_SIGNATURE);
-
-            writer.Write(skin.SkinName);
-            writer.Write(skin.Textures.Count);
-
-            int index = 0;
-            foreach (var kvp in skin.Textures) {
-                byte[] pngData = kvp.Value.EncodeToPNG();
-                writer.Write(pngData.Length);
-                writer.Write(pngData);
-                index++;
-            }
-
-            return ms.ToArray();
+            var t = DeserializeAsync(bundle);
+            t.Wait();
+            return t.Result;
         }
 
-        public static Skin Deserialize(byte[] data)
+        public static async Task<Skin> DeserializeAsync(SkinBundle bundle)
         {
-            using MemoryStream ms = new(data);
-            using BinaryReader reader = new(ms, Encoding.UTF8);
-            reader.ReadBytes(MagicByteManager.SKIN_SIGNATURE.Length);
-
-            string skinName = reader.ReadString();
-            int textureCount = reader.ReadInt32();
-
             var textures = new Dictionary<string, Texture2D>();
-            for (int i = 0; i < textureCount; i++) {
-                int sectionLength = reader.ReadInt32();
-                byte[] sectionData = reader.ReadBytes(sectionLength);
-
-                Texture2D tex = new(2, 2, TextureFormat.RGBA32, false);
-                tex.LoadImage(sectionData);
-                tex.Apply();
-
+            for (int i = 0; i < 4; i++)
+            {
+                Texture2D tex = bundle.AtlasLookup[i];
                 textures.Add($"atlas{i}", tex);
             }
 
-            return new Skin(textures, skinName);
+            return new Skin(textures, bundle.Name);
         }
 
         public static Skin LoadFromFile(string path)
         {
-            return Deserialize(File.ReadAllBytes(path));
+            return Deserialize(SkinBundle.LoadBundle(AssetBundle.LoadFromFile(path)));
         }
-
-        public static void WriteToFile(Skin skin, string path)
-        {
-            File.WriteAllBytes(path, Serialize(skin));
-        }
-
-        public byte[] Serialize() => Serialize(this);
-        public void WriteToFile(string path) => WriteToFile(this, path);
     }
-    public class SkinManager
-    {
+    public class SkinManager {
+        public static async Task<Skin> LoadAsync(params string[] selector)
+        {
+            return await Skin.DeserializeAsync(
+                await SkinBundle.LoadBundleAsync(
+                    await ResourceManager.LoadEmbeddedBundleAsync(
+                        ResourceManager.SilkResolve(selector)
+                    )
+                ));
+        }
+
+        private static readonly string[] skins = [
+            "red",
+            "blue",
+            "green",
+            "purple"
+        ];
+
+        public static async Task<int> LoadLibrary()
+        {
+            int counter = 0;
+
+            foreach (var skinName in skins)
+            {
+                Task<Skin> loadTask = LoadAsync("SkinLibrary", $"{skinName}.skin");
+                await loadTask;
+                if (loadTask.IsCompletedSuccessfully)
+                {
+                    Library[skinName] = loadTask.Result;
+                    counter++;
+                }
+            }
+
+            return counter;
+        }
         public static Dictionary<string, Skin> Library { get; private set; } = new Dictionary<string, Skin>() { // finally made them embedded lmao
-            { "red",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "red.skin")))},
-            { "blue",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "blue.skin")))},
-            { "green",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "green.skin")))},
-            { "purple",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "purple.skin")))},
+            //{ "red",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "red.skin")))},
+            //{ "blue",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "blue.skin")))},
+            //{ "green",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "green.skin")))},
+            //{ "purple",  Skin.Deserialize(ResourceManager.LoadEmbedded(ResourceManager.SilkResolve("SkinLibrary", "purple.skin")))},
         };
 
         public static Skin Default
@@ -117,7 +160,7 @@ namespace SilkBound.Managers
             {
                 string key = $"atlas{i}";
 
-                if (!skin.Textures.TryGetValue(key, out Texture2D skinTex))
+                if (!skin.Textures.TryGetValue(key, out Texture2D skinTex) || skinTex == null)
                     continue;
 
                 Texture atlas = collection.textures[i];
@@ -131,7 +174,7 @@ namespace SilkBound.Managers
                 RenderTexture.ReleaseTemporary(rt);
 
                 collection.materials[i].SetTexture("_MainTex", skinTex);
-                if(collection.materialInsts != null && collection.materialInsts.Length >= i)
+                if (collection.materialInsts != null && collection.materialInsts.Length >= i)
                     collection.materialInsts[i].SetTexture("_MainTex", skinTex);
                 collection.textures[i] = skinTex;
                 //Logger.Msg("Applied texture", key);
@@ -165,16 +208,11 @@ namespace SilkBound.Managers
 
             double rPrime = 0, gPrime = 0, bPrime = 0;
 
-            if (h < 60) { rPrime = c; gPrime = x; }
-            else if (h < 120) { rPrime = x; gPrime = c; }
-            else if (h < 180) { gPrime = c; bPrime = x; }
-            else if (h < 240) { gPrime = x; bPrime = c; }
-            else if (h < 300) { rPrime = x; bPrime = c; }
-            else { rPrime = c; bPrime = x; }
+            if (h < 60) { rPrime = c; gPrime = x; } else if (h < 120) { rPrime = x; gPrime = c; } else if (h < 180) { gPrime = c; bPrime = x; } else if (h < 240) { gPrime = x; bPrime = c; } else if (h < 300) { rPrime = x; bPrime = c; } else { rPrime = c; bPrime = x; }
 
-            r = (int)((rPrime + m) * 255);
-            g = (int)((gPrime + m) * 255);
-            b = (int)((bPrime + m) * 255);
+            r = (int) ((rPrime + m) * 255);
+            g = (int) ((gPrime + m) * 255);
+            b = (int) ((bPrime + m) * 255);
         }
         #endregion
     }

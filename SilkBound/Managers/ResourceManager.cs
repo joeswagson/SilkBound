@@ -1,6 +1,8 @@
-﻿using System;
+﻿using SilkBound.Utils;
+using System;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
 namespace SilkBound.Managers
 {
@@ -10,20 +12,47 @@ namespace SilkBound.Managers
         {
             return "SilkBound.Resources." + string.Join(".", paths);
         }
-        public static byte[] LoadEmbedded(string key, Assembly? target=null)
+        public static byte[] LoadEmbedded(string key, Assembly? target = null)
+        {
+            var t = LoadEmbeddedAsync(key, target);
+            t.Wait();
+            return t.Result;
+        }
+        public static async Task<byte[]> LoadEmbeddedAsync(string key, Assembly? target = null)
         {
             target ??= Assembly.GetExecutingAssembly();
             using MemoryStream ms = new();
 
             try
             {
-                target.GetManifestResourceStream(key)?.CopyTo(ms);
-            } catch(Exception ex)
+                using Stream? stream = target.GetManifestResourceStream(key);
+                if (stream != null)
+                    await stream.CopyToAsync(ms);
+            } catch (Exception ex)
             {
                 Logger.Error($"Failed to load embedded resource '{key}': {ex}");
             }
 
             return ms.ToArray();
+        }
+        public static async Task<AssetBundle> LoadEmbeddedBundleAsync(string key, Assembly? target = null)
+        {
+            target ??= Assembly.GetExecutingAssembly();
+            using MemoryStream ms = new();
+
+            try
+            {
+                using Stream? stream = target.GetManifestResourceStream(key);
+                if (stream != null)
+                    await stream.CopyToAsync(ms);
+            } catch (Exception ex)
+            {
+                Logger.Error($"Failed to load embedded resource '{key}': {ex}");
+            }
+
+            AssetBundleCreateRequest req = AssetBundle.LoadFromMemoryAsync(ms.ToArray());
+            await req;
+            return req.assetBundle;
         }
 
         public class Resources
@@ -54,6 +83,12 @@ namespace SilkBound.Managers
                     resource = Resource;
                     return resource != null;
                 }
+            }
+
+            public class BundledResource<T>(AssetBundle bundle, string name) where T : Object
+            {
+                public T? _object;
+                public T? Object => NetworkUtils.IsNullPtr(_object) ? _object = bundle.LoadAsset<T>(name) : _object; // not using ??= because (iirc) it doesnt trigger unitys dead native object check
             }
             #endregion
             #region Key Shortcuts
