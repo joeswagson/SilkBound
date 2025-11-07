@@ -3,6 +3,8 @@ using SilkBound.Network.Packets;
 using SilkBound.Utils;
 using System;
 using System.IO;
+using System.Reflection;
+using UnityEngine.UIElements;
 
 namespace SilkBound.Managers {
     #region Enums
@@ -29,18 +31,16 @@ namespace SilkBound.Managers {
         Default = Individual
     }
 
-    public enum NetworkingLayer
-    {
+    public enum NetworkingLayer {
         TCP,
         Steam,
         NamedPipe,
 
-        Default=TCP
+        Default = TCP
     }
     #endregion
 
-    public struct ServerSettings()
-    {
+    public struct ServerSettings() {
         /// <summary>
         /// Send a message in console when a player disconnects
         /// </summary>
@@ -68,12 +68,11 @@ namespace SilkBound.Managers {
         [JsonIgnore]
         public bool GhostAfterDeath => RespawnMethod == RespawnMode.SharedPartyDeath || RespawnMethod == RespawnMode.PartyDeath;
     }
-    public class Config
-    {
+    public class Config {
         #region Config
 
-        
-        #if !SERVER
+
+#if !SERVER
 
         /// <summary>
         /// Online username
@@ -85,7 +84,7 @@ namespace SilkBound.Managers {
         public string ConnectIP = "127.0.0.1";
 
         public NetworkingLayer NetworkLayer = NetworkingLayer.Default;
-        #endif 
+#endif
         /// <summary>
         /// Default port for hosting/joining-(default, if not specified) servers.
         /// </summary>
@@ -113,8 +112,7 @@ namespace SilkBound.Managers {
         }
         #endregion
     }
-    public class ConfigurationManager
-    {
+    public class ConfigurationManager {
         static readonly string FileDirectory = ModFolder.Root.FullName;
         static string Resolve(string path)
         {
@@ -131,6 +129,28 @@ namespace SilkBound.Managers {
             if (File.Exists(Resolve($"{fileName}.json")))
                 return JsonConvert.DeserializeObject<Config>(File.ReadAllText(Resolve($"{fileName}.json"))) ?? new Config();
             return new Config();
+        }
+    }
+
+    public static class LocalProps {
+        public static T? Safe<T>(string name, T? fallback = default)
+        {
+#if DEBUG
+            var original = typeof(SilkBound.Generated.Props)
+                .GetField(
+                    name,
+                    BindingFlags.Public
+                    | BindingFlags.NonPublic
+                    | BindingFlags.Static
+                )?
+                .GetValue(null);
+
+            var converted = original != null ? (T) Convert.ChangeType(original, typeof(T)) : fallback;
+
+            return converted ?? fallback;
+#else
+            return default(T) ?? fallback;
+#endif
         }
     }
 }

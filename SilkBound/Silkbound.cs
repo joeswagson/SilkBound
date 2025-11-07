@@ -18,15 +18,14 @@ using System.Collections;
 using System.Linq;
 using SilkBound.Types.Language;
 using UnityEngine;
-using SilkBound.Types.Language;
 using SilkBound.Lib.DbgRender;
 using SilkBound.Lib.DbgRender.Renderers;
 using System.Collections.Generic;
+
 #if DEBUG
-using SilkBound.Types.Language;
 using System.Reflection;
-using System.Threading;
 #endif
+using System.Threading;
 
 #if MELON
 [assembly: MelonInfo(typeof(Silkbound), "SilkBound", "1.0.0", "@joeswanson.")]
@@ -209,7 +208,7 @@ namespace SilkBound {
 #if DEBUG
         System.Collections.IEnumerator DelayedWindowPosition()
         {
-            bool smallWindow = true;
+            bool smallWindow = LocalProps.Safe<bool>("SmallWindow", false);
             int width = smallWindow ? 950 : 1200;
             int height = smallWindow ? 500 : 600;
 

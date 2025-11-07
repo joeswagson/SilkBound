@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
@@ -7,61 +6,66 @@
     <Configurations>MelonLoader;MelonLoader Release;BepInEx;BepInEx Release;Server</Configurations>
   </PropertyGroup>
 
-
   <!-- Import Game Paths -->
   <Import Project="Local.props" Condition="Exists('Local.props')" />
-  
+
   <!-- MelonLoader Configurations -->
   <PropertyGroup Condition="'$(Configuration)' == 'MelonLoader'">
-      <DefineConstants>DEBUG;MELON</DefineConstants>
-      <TargetLoader>MelonLoader</TargetLoader>
-      <TargetConfiguration>Debug</TargetConfiguration>
-      <SilksongPath_Output>$(SilksongPath_Offline)\Mods</SilksongPath_Output>
-      <OutputPath>bin\MelonLoader_Debug\</OutputPath>
+    <DefineConstants>DEBUG;MELON</DefineConstants>
+    <TargetLoader>MelonLoader</TargetLoader>
+    <TargetConfiguration>Debug</TargetConfiguration>
+    <SilksongPath_Output>$(SilksongPath_Offline)\Mods</SilksongPath_Output>
+    <OutputPath>bin\MelonLoader_Debug\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'MelonLoader Release'">
-      <DefineConstants>MELON</DefineConstants>
-      <TargetLoader>MelonLoader</TargetLoader>
-      <TargetConfiguration>Release</TargetConfiguration>
-      <SilksongPath_Output>$(SilksongPath_Steam)\Mods</SilksongPath_Output>
-      <OutputPath>bin\MelonLoader_Release\</OutputPath>
+    <DefineConstants>MELON</DefineConstants>
+    <TargetLoader>MelonLoader</TargetLoader>
+    <TargetConfiguration>Release</TargetConfiguration>
+    <SilksongPath_Output>$(SilksongPath_Steam)\Mods</SilksongPath_Output>
+    <OutputPath>bin\MelonLoader_Release\</OutputPath>
   </PropertyGroup>
 
   <!-- BepInEx Configurations -->
   <PropertyGroup Condition="'$(Configuration)' == 'BepInEx'">
-      <DefineConstants>DEBUG;BEPIN</DefineConstants>
-      <TargetLoader>BepInEx</TargetLoader>
-      <TargetConfiguration>Debug</TargetConfiguration>
-      <SilksongPath_Output>$(SilksongPath_Offline)\BepInEx\plugins</SilksongPath_Output>
-      <OutputPath>bin\BepInEx_Debug\</OutputPath>
+    <DefineConstants>DEBUG;BEPIN</DefineConstants>
+    <TargetLoader>BepInEx</TargetLoader>
+    <TargetConfiguration>Debug</TargetConfiguration>
+    <SilksongPath_Output>$(SilksongPath_Offline)\BepInEx\plugins</SilksongPath_Output>
+    <OutputPath>bin\BepInEx_Debug\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'BepInEx Release'">
-      <DefineConstants>BEPIN</DefineConstants>
-      <TargetLoader>BepInEx</TargetLoader>
-      <TargetConfiguration>Release</TargetConfiguration>
+    <DefineConstants>BEPIN</DefineConstants>
+    <TargetLoader>BepInEx</TargetLoader>
+    <TargetConfiguration>Release</TargetConfiguration>
     <SilksongPath_Output>$(SilksongPath_Steam)\BepInEx\plugins</SilksongPath_Output>
-      <OutputPath>bin\BepInEx_Release\</OutputPath>
+    <OutputPath>bin\BepInEx_Release\</OutputPath>
   </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)' == 'Server'">
-        <DefineConstants>MELON;SERVER</DefineConstants>
-        <TargetLoader>MelonLoader</TargetLoader>
-        <TargetConfiguration>Release</TargetConfiguration>
-        <OutputPath>bin\Server\</OutputPath>
-    </PropertyGroup>
-  
+  <PropertyGroup Condition="'$(Configuration)' == 'Server'">
+    <DefineConstants>MELON;SERVER</DefineConstants>
+    <TargetLoader>MelonLoader</TargetLoader>
+    <TargetConfiguration>Release</TargetConfiguration>
+    <OutputPath>bin\Server\</OutputPath>
+  </PropertyGroup>
+
   <!-- Generic Configuration -->
   <PropertyGroup Condition="'$(TargetConfiguration)' == 'Debug'">
     <UseUnityExplorerPatches>true</UseUnityExplorerPatches>
   </PropertyGroup>
+  <ItemGroup Condition="'$(TargetConfiguration)' != 'Debug'">
+    <Compile Remove="Generated\Props.g.cs"/>
+  </ItemGroup>
   <ItemGroup>
     <Compile Remove="Types\NewFolder\**" />
     <EmbeddedResource Remove="Types\NewFolder\**" />
     <None Remove="Types\NewFolder\**" />
   </ItemGroup>
-    
+  <ItemGroup>
+    <Compile Remove="Generated\Props.template.cs" />
+  </ItemGroup>
+
   <!-- Resources -->
   <ItemGroup>
     <None Remove="Resources\SkinLibrary\blue.skin" />
@@ -72,6 +76,7 @@
     <None Remove="Resources\Textures\silkbound_logo.png" />
   </ItemGroup>
 
+
   <!-- Embed Resources -->
   <ItemGroup>
     <EmbeddedResource Include="Resources\SkinLibrary\blue.skin" />
@@ -81,38 +86,58 @@
     <EmbeddedResource Include="Resources\Sounds\shaw.wav" />
     <EmbeddedResource Include="Resources\Textures\silkbound_logo.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Generated\Props.template.cs" />
+  </ItemGroup>
 
   <!-- Generic References -->
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
     <PackageReference Include="Silksong.GameLibs" Version="1.0.2-silksong1.0.28561" Publicize="true" />
     <PackageReference Include="UnityEngine.Modules" Version="6000.0.50" IncludeAssets="compile" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3">
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3">
       <Private>false</Private>
     </PackageReference>
   </ItemGroup>
 
   <!-- MelonLoader References -->
-    <ItemGroup Condition="'$(TargetLoader)' == 'MelonLoader'">
-        <PackageReference Include="LavaGang.MelonLoader" Version="0.7.1" Publicize="true" />
-        <PackageReference Include="Lib.Harmony" Version="2.4.1" />
-    </ItemGroup>
-  
+  <ItemGroup Condition="'$(TargetLoader)' == 'MelonLoader'">
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.1" Publicize="true" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.1" />
+  </ItemGroup>
+
   <!-- BepInEx References -->
-    <ItemGroup Condition="'$(TargetLoader)' == 'BepInEx'">
-        <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-        <PackageReference Include="BepInEx.AutoPlugin" Version="1.1.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+  <ItemGroup Condition="'$(TargetLoader)' == 'BepInEx'">
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
+    <PackageReference Include="BepInEx.AutoPlugin" Version="1.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Server'">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.10" />
+  </ItemGroup>
+
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <PropertyGroup>
+      <PropsInput>Generated\Props.template.cs</PropsInput>
+      <PropsOutput>Generated\Props.g.cs</PropsOutput>
+
+      <RawPropsContent>$([System.IO.File]::ReadAllText($(PropsInput)))</RawPropsContent>
+    </PropertyGroup>
+
+    <ExpandStringTask InputString="$(RawPropsContent)">
+      <Output TaskParameter="OutputString" PropertyName="ExpandedValue"/>
+    </ExpandStringTask>
+    <WriteLinesToFile File="$(PropsOutput)" Lines="$(ExpandedValue)" Overwrite="true" />
+
+    <ItemGroup Condition="'$(TargetConfiguration)' == 'Debug'">
+      <Compile Include="$(PropsOutput)"/>
     </ItemGroup>
 
-    <ItemGroup Condition="'$(Configuration)' == 'Server'">
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.10" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.10" />
-    </ItemGroup>
-  
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; /IM &quot;Hollow Knight Silksong.Client2.exe&quot; /IM &quot;Hollow Knight Silksong.Client3.exe&quot; /IM &quot;Hollow Knight Silksong.Client4.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0" />
   </Target>
 
@@ -120,4 +145,31 @@
     <Message Text="Deploying to $(TargetLoader) → $(SilksongPath_Output)" Importance="high" />
     <Exec Command="xcopy /y /d &quot;$(TargetPath)&quot; &quot;$(SilksongPath_Output)&quot;" />
   </Target>
+
+  <UsingTask TaskName="ExpandStringTask" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <InputString ParameterType="System.String" Required="true"/>
+      <OutputString ParameterType="System.String" Output="true"/>
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Xml"/>
+      <Reference Include="Microsoft.Build"/>
+      <Using Namespace="Microsoft.Build.Evaluation"/>
+      <Using Namespace="Microsoft.Build.Utilities"/>
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+        var properties = new Dictionary<string, string>
+        {
+          { "Configuration", "$(Configuration)" },
+          { "Platform", "$(Platform)" }
+        };
+
+        var collection = new ProjectCollection(properties);
+        var project = collection.LoadProject(BuildEngine.ProjectFileOfTaskNode);
+
+        OutputString = project.ExpandString(InputString);
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
 </Project>
