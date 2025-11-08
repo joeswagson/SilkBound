@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -17,8 +18,18 @@ namespace SilkBound.Utils {
         /// <returns>The serialized packet.</returns>
         public static byte[]? PackPacket(Packet packet)
         {
+            BinaryWriter writer;
+            GZipStream? gzs = null;
             using MemoryStream ms = new();
-            using BinaryWriter writer = new(ms, Encoding.UTF8);
+            if (packet.IsGzipped)
+            {
+                gzs = new GZipStream(ms, CompressionMode.Compress);
+                writer = new BinaryWriter(gzs, Encoding.UTF8);
+            }
+            else
+            {
+                writer = new BinaryWriter(ms, Encoding.UTF8);
+            }
 
             //Guid clientId = packet.Sender?.ClientID ?? NetworkUtils.ClientID;
             int hash = packet.GetHashCode();
@@ -51,6 +62,13 @@ namespace SilkBound.Utils {
             byte[] framed = new byte[4 + inner.Length];
             Array.Copy(BitConverter.GetBytes(inner.Length), 0, framed, 0, 4);
             Array.Copy(inner, 0, framed, 4, inner.Length);
+            if (gzs != null)
+            {
+                gzs.Flush();
+                gzs.Close();
+            }
+            writer.Flush();
+            writer.Close();
             return framed;
         }
 
@@ -122,7 +140,7 @@ namespace SilkBound.Utils {
                 //Logger.Warn("Read clientid:", clientId);
 
                 // remaining payload
-                byte[] payload = reader.ReadBytes((int) (stream.Length - stream.Position));
+                byte[] payload = reader.ReadBytes((int)(stream.Length - stream.Position));
 
                 var type = GetPacketType(packetName);
 
@@ -132,12 +150,30 @@ namespace SilkBound.Utils {
                     return (packetName, clientId, null);
                 }
 
-                var tmp = (Packet) FormatterServices.GetUninitializedObject(type)!;
-
+                var tmp = (Packet)FormatterServices.GetUninitializedObject(type)!;
                 using MemoryStream payloadStream = new(payload);
-                using BinaryReader payloadReader = new(payloadStream, Encoding.UTF8);
-                return (packetName, clientId, tmp.Deserialize(clientId, payloadReader));
-            } catch (Exception ex)
+                BinaryReader payloadReader;
+                GZipStream? gzs = null;
+                if (tmp.IsGzipped)
+                {
+                    gzs = new GZipStream(payloadStream, CompressionMode.Decompress);
+                    payloadReader = new BinaryReader(gzs, Encoding.UTF8);
+                }
+                else
+                {
+                    payloadReader = new BinaryReader(payloadStream, Encoding.UTF8);
+                }
+
+                var packet = tmp.Deserialize(clientId, payloadReader);
+                if (gzs != null)
+                {
+                    gzs.Close();
+                    gzs.Flush();
+                }
+                payloadReader.Close();
+                return (packetName, clientId, packet);
+            }
+            catch (Exception ex)
             {
                 Logger.Error("UnpackPacket", $"Failed to unpack: {ex}");
                 return (null, null, null);
