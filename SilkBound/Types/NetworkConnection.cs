@@ -18,7 +18,7 @@ namespace SilkBound.Types
             Host = host;
             Port = port;
             Stats = stats ?? new NetworkStats(this);
-            Local = stats != null;
+            Local = stats == null;
 
             Initialize();
         }
