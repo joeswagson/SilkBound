@@ -31,6 +31,7 @@ namespace SilkBound.Network.Packets {
     public abstract class Packet {
         protected Packet() { }
         
+        
         /// <summary>
         /// Resolve the authority type of a client.
         /// </summary>
@@ -112,6 +113,11 @@ namespace SilkBound.Network.Packets {
         /// Sender may very rarely be <see langword="null"/> if the packet has not been sent yet.
         /// </summary>
         public Weaver Sender { get; protected set; } = null!;
+
+        /// <summary>
+        /// Whether or not to use the gzip stream when packing and unpacking the packet.
+        /// </summary>
+        public virtual bool IsGzipped { get; } = false;
 
         /// <summary>
         /// Writes any packet data into <paramref name="writer"/>.
