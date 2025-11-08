@@ -82,8 +82,8 @@ namespace SilkBound {
                 var sw = Stopwatch.StartNew();
                 int loaded = await SkinManager.LoadLibrary();
                 sw.Stop();
-                Logger.Msg("Initialized Skin Library in", sw.Elapsed.ToString(@"ss\.fff"), "seconds");
-                Logger.Msg("Loaded", loaded, "skins.");
+                global::SilkBound.Utils.Logger.Msg("Initialized Skin Library in", sw.Elapsed.ToString(@"ss\.fff"), "seconds");
+                global::SilkBound.Utils.Logger.Msg("Loaded", loaded, "skins.");
 
                 ConnectionMenuRenderer.ConnectReady();
             });
