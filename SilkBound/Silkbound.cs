@@ -324,7 +324,11 @@ namespace SilkBound {
         private static readonly int clientNumber = SilkDebug.GetClientNumber();
         public static readonly Config Config = ConfigurationManager.ReadFromFile(clientNumber > 1 ? $"config{clientNumber}" : "config");
         private static readonly System.Random random = new();
-        public static string RandomString(int length)
+        public static int HashCode(int length)
+        {
+            return random.Next((int) Math.Pow(10, length), (int) Math.Pow(10, length + 1));
+        }
+        public static string Salt(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);

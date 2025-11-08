@@ -18,16 +18,14 @@ namespace SilkBound.Managers {
 
         private static async Task<T> ProcessAssetLoad<T>(AssetBundleRequest request) where T : Object
         {
-            await request;
-            return (T) request.GetResult();
+            var tcs = new TaskCompletionSource<T>();
+            CoreLoop.InvokeOnGameThread(() => {
+                tcs.SetResult((T) request.GetResult());
+            });
+            return await tcs.Task;
         }
+
         private static async Task<T> Load<T>(AssetBundle src, string name) where T : Object => await ProcessAssetLoad<T>(src.LoadAssetAsync<T>(name));
-        public static SkinBundle LoadBundle(AssetBundle src)
-        {
-            var t = LoadBundleAsync(src);
-            t.Wait();
-            return t.Result;
-        }
         public static async Task<SkinBundle> LoadBundleAsync(AssetBundle src)
         {
             var atlas0 = await Load<Texture2D>(src, "atlas0");
@@ -77,13 +75,6 @@ namespace SilkBound.Managers {
 
         public static Skin Deserialize(SkinBundle bundle)
         {
-            var t = DeserializeAsync(bundle);
-            t.Wait();
-            return t.Result;
-        }
-
-        public static async Task<Skin> DeserializeAsync(SkinBundle bundle)
-        {
             var textures = new Dictionary<string, Texture2D>();
             for (int i = 0; i < 4; i++)
             {
@@ -94,15 +85,17 @@ namespace SilkBound.Managers {
             return new Skin(textures, bundle.Name);
         }
 
-        public static Skin LoadFromFile(string path)
+        public static async Task<Skin> LoadFromFileAsync(string path)
         {
-            return Deserialize(SkinBundle.LoadBundle(AssetBundle.LoadFromFile(path)));
+            var t = AssetBundle.LoadFromFileAsync(path);
+            await t;
+            return Deserialize(await SkinBundle.LoadBundleAsync(t.assetBundle));
         }
     }
     public class SkinManager {
         public static async Task<Skin> LoadAsync(params string[] selector)
         {
-            return await Skin.DeserializeAsync(
+            return Skin.Deserialize(
                 await SkinBundle.LoadBundleAsync(
                     await ResourceManager.LoadEmbeddedBundleAsync(
                         ResourceManager.SilkResolve(selector)

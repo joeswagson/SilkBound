@@ -25,7 +25,7 @@ namespace SilkBound.Patches.Simple.Attacks
             #region Non-Packet thread handling
             if (!packetThread)
             {
-                NetworkUtils.SendPacket(new SyncHitPacket(hitInstance, goPath));
+                NetworkUtils.SendPacketAsync(new SyncHitPacket(hitInstance, goPath)).Void();
 
                 if (responderType == typeof(Breakable))
                 {

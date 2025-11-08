@@ -1,4 +1,5 @@
-﻿using SilkBound.Utils;
+﻿using SilkBound.Extensions;
+using SilkBound.Utils;
 using System;
 using System.IO;
 using System.Reflection;
@@ -15,8 +16,7 @@ namespace SilkBound.Managers
         public static byte[] LoadEmbedded(string key, Assembly? target = null)
         {
             var t = LoadEmbeddedAsync(key, target);
-            t.Wait();
-            return t.Result;
+            return t.AssertResult(); // make nullsafe later (soooo laaaazy)
         }
         public static async Task<byte[]> LoadEmbeddedAsync(string key, Assembly? target = null)
         {

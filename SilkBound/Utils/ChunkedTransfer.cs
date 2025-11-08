@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
+using SilkBound.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -37,9 +39,10 @@ namespace SilkBound.Utils
         }
         public static byte[] Serialize(object? data, params JsonConverter[] converters)
         {
-            var t = SerializeAsync(data, converters);
-            t.Wait();
-            return t.Result;
+            SerializerSettings.Converters = converters;
+            string json = JsonConvert.SerializeObject(data, SerializerSettings);
+
+            return CompressString(json);
         }
         public static async Task<byte[]> SerializeAsync(object? data, params JsonConverter[] converters)
         {
@@ -61,13 +64,7 @@ namespace SilkBound.Utils
 
         public static List<byte[]> Pack(object data, params JsonConverter[] converters)
         {
-            var t = PackAsync(data, converters);
-            t.Wait();
-            return t.Result;
-        }
-        public static async Task<List<byte[]>> PackAsync(object data, params JsonConverter[] converters)
-        {
-            byte[] rawData = await SerializeAsync(data, converters);
+            byte[] rawData = Serialize(data, converters);
 
             var chunks = new List<byte[]>();
             int totalChunks = (rawData.Length + CHUNK_SIZE - 1) / CHUNK_SIZE;

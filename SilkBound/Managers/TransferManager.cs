@@ -17,7 +17,7 @@ namespace SilkBound.Managers
                 return;
 
             Type transferType = transfer.GetType();
-            List<byte[]> chunks = await ChunkedTransfer.PackAsync(await transfer.Prepare(fetchArgs), transfer.Converters);
+            List<byte[]> chunks = ChunkedTransfer.Pack(await transfer.Prepare(fetchArgs), transfer.Converters);
             Logger.Msg("Transfering", transferType.Name, "with id", transfer.TransferId, "in", chunks.Count, "chunks");
             for (int i = 0; i < chunks.Count; i++)
             {

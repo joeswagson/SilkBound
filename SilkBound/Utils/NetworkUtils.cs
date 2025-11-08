@@ -1,4 +1,5 @@
 ﻿using SilkBound.Behaviours;
+using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network;
 using SilkBound.Network.Packets;
@@ -100,7 +101,7 @@ namespace SilkBound.Utils {
                 Server.CurrentServer.Port
             );
 
-            if(LocalConnection is not NetworkServer)
+            if (LocalConnection is not NetworkServer)
                 Handshake(request, LocalClient);
 
             Logger.Debug("Connection Completed:", connection.GetType().Name, name, LocalClient.ClientID);
@@ -134,10 +135,12 @@ namespace SilkBound.Utils {
             Server.CurrentServer.Address = connection.Host!;
             Server.CurrentServer.Port = connection.Port ?? Silkbound.Config.Port;
 
+            Logger.Msg(MethodInfo.GetCurrentMethod().Name, "waiting");
             connection.Connect(
                 Server.CurrentServer.Address,
                 Server.CurrentServer.Port
-            ).Wait();
+            ).Await();
+            Logger.Msg(MethodInfo.GetCurrentMethod().Name, "waited");
 
             Handshake(null, LocalClient);
 
@@ -209,13 +212,17 @@ namespace SilkBound.Utils {
             }
             return false;
         }
-        public static bool SendPacket(Packet packet)
+        public static void SendPacket(Packet packet)
         {
             //Logger.Msg("send packet in nw utils");
-            if (LocalConnection == null || !Connected) return false;
-            Task t = LocalConnection.Send(packet);
-            t.Wait();
-            return t.IsCompletedSuccessfully;
+            if (LocalConnection == null || !Connected) return;
+            //Logger.Msg(MethodInfo.GetCurrentMethod().Name, "waiting");
+            //Task t = Task.Run(async () => {
+            //    await LocalConnection.Send(packet);
+            //});
+            //t.Wait();
+            //Logger.Msg(MethodInfo.GetCurrentMethod().Name, "waited");
+            LocalConnection.Send(packet).Void();
         }
         public static async Task<bool> SendPacketAsync(Packet packet)
         {
