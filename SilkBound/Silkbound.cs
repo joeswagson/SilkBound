@@ -43,7 +43,7 @@ namespace SilkBound {
 #elif BEPIN
     [BepInAutoPlugin("io.github.joeswagson", "SilkBound", "1.0.0")]
     [BepInProcess("Hollow Knight Silksong.exe")]
-    public partial class ModMain : BaseUnityPlugin
+    public partial class Silkbound : BaseUnityPlugin
 #endif
     {
 
