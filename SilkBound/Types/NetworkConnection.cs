@@ -56,7 +56,7 @@ namespace SilkBound.Types
             if(Local) Stats.LogPacketSent(packetData);
 
             Task task = Write(packetData);
-            await task;
+            await task.ConfigureAwait(false);
             if (Local && !task.IsCompletedSuccessfully)
                 Stats.LogPacketSentFaulted(packetData);
         }

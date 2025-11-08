@@ -191,8 +191,8 @@ namespace SilkBound.Types.NetLayers
 
             try
             {
-                await _stream.WriteAsync(packetData, 0, packetData.Length);
-                //_stream.Flush();
+                await _stream.WriteAsync(packetData, 0, packetData.Length).ConfigureAwait(false);
+                await _stream.FlushAsync().ConfigureAwait(false);
             } catch (Exception ex)
             {
                 Logger.Warn($"[TCPConnection] Send error to {_remoteId}: {ex}");
