@@ -397,8 +397,8 @@ namespace SilkBound {
                     global::SilkBound.Utils.Logger.Msg("SteamAPI initialized.");
             }
 
-            if (Input.GetKeyDown(KeyCode.H))
-            {
+            //if (Input.GetKeyDown(KeyCode.H))
+            //{
                 //    //Server.ConnectPipe("sb_dbg", "host");
                 //    switch (Config.NetworkLayer)
                 //    {
@@ -443,7 +443,7 @@ namespace SilkBound {
                 {
                     NetworkUtils.Disconnect("Leaving.");
                 }
-            }
+            //}
         }
 
         static bool lePrefixduCacheObjectBase(object __instance, [HarmonyArgument("cell")] object cell, [HarmonyArgument("args")] object args)
