@@ -23,6 +23,8 @@ using SilkBound.Lib.DbgRender.Renderers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using SilkBound.Behaviours;
+
 
 
 
@@ -82,6 +84,8 @@ namespace SilkBound {
                 sw.Stop();
                 Logger.Msg("Initialized Skin Library in", sw.Elapsed.ToString(@"ss\.fff"), "seconds");
                 Logger.Msg("Loaded", loaded, "skins.");
+
+                ConnectionMenuRenderer.ConnectReady();
             });
 
             if (SilkConstants.DEBUG)
