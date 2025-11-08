@@ -66,7 +66,13 @@ namespace SilkBound.Managers {
         [JsonIgnore]
         public bool ServerBenches => RespawnMethod == RespawnMode.SharedPartyDeath || RespawnMethod == RespawnMode.Shared;
         [JsonIgnore]
-        public bool GhostAfterDeath => RespawnMethod == RespawnMode.SharedPartyDeath || RespawnMethod == RespawnMode.PartyDeath;
+        public bool GhostAfterDeath {
+            get
+            {
+                Logger.Warn("overwriting respawnmode to use ghosts");
+                return false;
+            }
+        }//RespawnMethod == RespawnMode.SharedPartyDeath || RespawnMethod == RespawnMode.PartyDeath;
     }
     public class Config {
         #region Config
