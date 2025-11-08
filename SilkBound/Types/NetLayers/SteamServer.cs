@@ -1,5 +1,4 @@
-﻿using MelonLoader.TinyJSON;
-using SilkBound.Network.Packets;
+﻿using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Utils;
 using Steamworks;
