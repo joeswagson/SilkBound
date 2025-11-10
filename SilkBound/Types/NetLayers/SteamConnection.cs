@@ -40,7 +40,9 @@ namespace SilkBound.Types.NetLayers {
             _remoteId = new CSteamID(steamIdUlong);
             _isServerSide = false;
 
-            SteamNetworking.AcceptP2PSessionWithUser(_remoteId);
+            await Task.Run(() => {
+                SteamNetworking.AcceptP2PSessionWithUser(_remoteId);
+            });
             Logger.Msg($"[SteamConnection] ConnectImpl: session accepted for {_remoteId}");
 
             _receiveCts = new CancellationTokenSource();
