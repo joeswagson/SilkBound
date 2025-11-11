@@ -189,9 +189,7 @@ namespace SilkBound.Utils {
                 //Logger.Warn("Read clientid:", clientId);
 
                 // remaining payload
-                var oldPos = stream.Position;
                 byte[] payload = reader.ReadBytes((int) (stream.Length - stream.Position));
-                Logger.Msg("Remaining data:", payload.Length, stream.Length, oldPos);
                 var type = GetPacketType(packetId);
 
                 if (type == null)
