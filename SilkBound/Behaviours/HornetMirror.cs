@@ -6,6 +6,7 @@ using SilkBound.Network;
 using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Sync;
 using SilkBound.Types;
+using SilkBound.Types.Data;
 using SilkBound.Types.Language;
 using SilkBound.Types.Mirrors;
 using SilkBound.Utils;
@@ -416,8 +417,8 @@ namespace SilkBound.Behaviours {
                 //mirrorObj.SetName($"SilkBound Mirror " + packet.id);
                 mirrorObj.SetName(GetObjectName(packet.Sender.ClientID));
                 //mirrorObj.transform.SetParent(HeroController.instance.transform);
-                mirrorObj.transform.position = new Vector3(packet.PosX, packet.PosY, 0.004f + Server.CurrentServer!.Connections.Count * 0.001f);
-                mirrorObj.transform.localScale = new Vector3(packet.ScaleX, 1, 1);
+                mirrorObj.transform.position = new Vector3(packet.PosX ?? 99999, packet.PosY ?? 99999, 0.004f + Server.CurrentServer!.Connections.Count * 0.001f);
+                mirrorObj.transform.localScale = new Vector3(packet.ScaleX ?? 1, 1, 1);
 
                 mirrorObj.layer = LayerMask.NameToLayer("Ignore Raycast");
 
@@ -466,17 +467,37 @@ namespace SilkBound.Behaviours {
             if (IsLocal) return;
             //Logger.Stacktrace();
 
-            Scene = packet.Scene;
+            if (packet.Scene != null)
+            {
+                Scene = packet.Scene;
+            }
 
-            CurrentEnvironment = packet.Environment;
-            regionListener.overrideEnvironment = true;
-            regionListener.overrideEnvironmentType = packet.Environment;
-            Root.SetActive(packet.Scene == SceneManager.GetActiveScene().name);
+            Root.SetActive(Scene == SceneManager.GetActiveScene().name);
 
-            Root.transform.position = new Vector3(packet.PosX, packet.PosY, Layer);
-            Root.transform.localScale = new Vector3(packet.ScaleX, 1, 1);
+            //CurrentEnvironment = packet.Environment;
+            //regionListener.overrideEnvironment = true;
+            //regionListener.overrideEnvironmentType = packet.Environment;
 
-            Interpolator.velocity = new Vector3(packet.VelocityX, packet.VelocityY, 0);
+            Vector3 srcPos = Root.transform.position;
+            bool hasX = packet.PosX.HasValue;
+            bool hasY = packet.PosY.HasValue;
+            float x = hasX ? packet.PosX!.Value : srcPos.x;
+            float y = hasY ? packet.PosY!.Value : srcPos.y;
+            //Logger.Msg(hasX, hasY);
+            if (hasX || hasY)
+                Root.transform.position = new Vector3(x, y, Layer);
+
+            if (packet.ScaleX != null)
+                Root.transform.localScale = new Vector3(packet.ScaleX.Value, 1, 1);
+
+            Vector3 srcVel = Interpolator.velocity;
+            bool hasvX = packet.VelocityX != null;
+            bool hasvY = packet.VelocityY != null;
+            float vX = hasvX ? packet.VelocityX!.Value : srcVel.x;
+            float vY = hasvY ? packet.VelocityY!.Value : srcVel.y;
+
+            if (hasvX || hasvY)
+                Interpolator.velocity = new Vector3(vX, vY, 0);
             //Logger.Msg("updating mirror:", packet.posX, packet.posY, packet.scaleX, packet.vX, packet.vY);
         }
         public void PlayClip(PlayClipPacket packet)
@@ -608,17 +629,23 @@ namespace SilkBound.Behaviours {
             }
         }
 
+        private readonly StringThreshold t_scene = new();
+        private readonly DistanceThreshold<float> t_posX = new(Distances.FloatAbs);
+        private readonly DistanceThreshold<float> t_posY = new(Distances.FloatAbs);
+        private readonly DistanceThreshold<float> t_scaleX = new(Distances.FloatAbs);
+        private readonly ActivationThreshold<float> t_vX = new(Activators.AbsGreaterThanOrZero);
+        private readonly ActivationThreshold<float> t_vY = new(Activators.AbsGreaterThanOrZero);
         public UpdateWeaverPacket CraftPacket()
         {
             return new UpdateWeaverPacket(
-                SceneManager.GetActiveScene().name,
-                HeroController.instance.transform.position.x,
-                HeroController.instance.transform.position.y,
-                HeroController.instance.transform.localScale.x,
-                HeroController.instance.GetComponent<Rigidbody2D>().linearVelocity.x * Time.timeScale,
-                HeroController.instance.GetComponent<Rigidbody2D>().linearVelocity.y * Time.timeScale,
-                CachedEnviro?.CurrentEnvironmentType ?? EnvironmentTypes.Dust
+                t_scene.Check(SceneManager.GetActiveScene().name),
+                t_posX.Check(HeroController.instance.transform.position.x),
+                t_posY.Check(HeroController.instance.transform.position.y),
+                t_scaleX.Check(HeroController.instance.transform.localScale.x),
+                t_vX.Check(HeroController.instance.GetComponent<Rigidbody2D>().linearVelocity.x * Time.timeScale),
+                t_vY.Check(HeroController.instance.GetComponent<Rigidbody2D>().linearVelocity.y * Time.timeScale)
             );
+            //CachedEnviro?.CurrentEnvironmentType ?? EnvironmentTypes.Dust
         }
         protected override void Tick(float dt)
         {

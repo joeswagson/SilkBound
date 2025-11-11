@@ -136,6 +136,16 @@ namespace SilkBound.Network.Packets {
             Serialize(writer);
         }
 
+        public bool Cancelled { get; private set; } = false;
+
+        /// <summary>
+        /// Prevents a packet from sending when called in <see cref="Serialize(BinaryWriter)"/>
+        /// </summary>
+        protected void Abrupt()
+        {
+            Cancelled = true;
+        }
+
         /// <summary>
         /// Reads the deserialized packet data into <paramref name="reader"/> and returns a new <see cref="Packet"/>.
         /// </summary>

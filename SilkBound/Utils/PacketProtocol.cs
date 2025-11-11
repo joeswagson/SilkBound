@@ -90,6 +90,9 @@ namespace SilkBound.Utils {
                 using (BinaryWriter writer = new(stream, Encoding.UTF8, leaveOpen: true))
                     packet.SerializeInternal(writer);
 
+                if (packet.Cancelled)
+                    return null; // packet send cancelled
+
                 //stream.Flush();
 
                 byte[] serialized = ms.ToArray();
