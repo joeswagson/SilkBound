@@ -117,7 +117,7 @@ namespace SilkBound.Network.Packets {
         /// <summary>
         /// Whether or not to use the gzip stream when packing and unpacking the packet.
         /// </summary>
-        public virtual bool IsGzipped => true;
+        public virtual bool IsGzipped => false;
 
         /// <summary>
         /// Writes any packet data into <paramref name="writer"/>.

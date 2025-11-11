@@ -5,6 +5,8 @@ namespace SilkBound.Network.Packets.Impl.Communication
 {
     public class TransferDataPacket : Packet
     {
+        public override bool IsGzipped => true; // this packet can benefit from arbitrary compression
+
         public byte[] Data;
         public int ChunkIndex;
         public int TotalChunks;
