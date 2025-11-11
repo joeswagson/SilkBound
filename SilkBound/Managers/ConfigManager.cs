@@ -139,7 +139,8 @@ namespace SilkBound.Managers {
     }
 
     public static class LocalProps {
-        public static T? Safe<T>(string name, T? fallback = default)
+        public static T? Safe<T>(string name, T? fallback = default) => Safe<T>(name) ?? fallback;
+        public static T? Safe<T>(string name)
         {
 #if DEBUG
             var original = typeof(SilkBound.Generated.Props)
@@ -151,11 +152,9 @@ namespace SilkBound.Managers {
                 )?
                 .GetValue(null);
 
-            var converted = original != null ? (T) Convert.ChangeType(original, typeof(T)) : fallback;
-
-            return converted ?? fallback;
+            return original != null ? (T) Convert.ChangeType(original, typeof(T)) : default;
 #else
-            return default(T) ?? fallback;
+            return default;
 #endif
         }
     }

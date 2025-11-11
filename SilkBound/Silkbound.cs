@@ -229,7 +229,7 @@ namespace SilkBound {
 #if DEBUG
         System.Collections.IEnumerator DelayedWindowPosition()
         {
-            bool smallWindow = LocalProps.Safe<bool>("SmallWindow", false);
+            bool smallWindow = LocalProps.Safe<bool>("SMALL_WINDOW", false);
             int width = smallWindow ? 950 : 1200;
             int height = smallWindow ? 500 : 600;
 
