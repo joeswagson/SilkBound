@@ -46,7 +46,7 @@ namespace SilkBound.Network.Packets.Handlers
                 original.Fulfilled = true;
 
                 //Server.CurrentServer = new Server((connection as NetworkServer)!);
-                Server.CurrentServer!.Host = new Weaver(packet.ClientName, connection, packet.HostGUID);
+                Server.CurrentServer!.Host = new Weaver(packet.ClientName, connection, packet.HostGUID ?? packet.Sender.ClientID);
                 Server.CurrentServer.Connections.Add(Server.CurrentServer.Host);
 
                 Logger.Msg("Handshake Fulfilled (Client):", packet.ClientId, packet.HandshakeId);

@@ -41,7 +41,7 @@ namespace SilkBound.Extensions {
         }
         public static bool TryUnpack(this byte[] packetData, [NotNullWhen(true)] out Packet? packet)
         {
-            return (packet = PacketProtocol.UnpackPacket(packetData).Item3) != null;
+            return (packet = PacketProtocol.UnpackPacket(packetData)?.Item3) != null;
         }
     }
 }

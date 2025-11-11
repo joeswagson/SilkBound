@@ -75,8 +75,10 @@ namespace SilkBound {
             MainThreadId = Environment.CurrentManagedThreadId;
             global::SilkBound.Utils.Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
                 "| Unity Thread ID:", MainThreadId);
-            var method = AccessTools.Method(typeof(HealthManager), "TakeDamage", [typeof(HitInstance)]);
-            global::SilkBound.Utils.Logger.Msg(method == null ? "Method not found!" : $"Found method: {method.FullDescription()}");
+            global::SilkBound.Utils.Logger.Debug("Current packet protocol hash:", PacketProtocol.Fingerprint);
+
+            // populate packet registry
+            PacketProtocol.PopulateRegistry();
 
             Task.Run(async () => {
                 var sw = Stopwatch.StartNew();

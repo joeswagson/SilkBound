@@ -29,8 +29,8 @@ namespace SilkBound.Network.Packets {
         S2S = 0x11, // Server to Server (support)
     }
     public abstract class Packet {
+        public ushort ID;
         protected Packet() { }
-        
         
         /// <summary>
         /// Resolve the authority type of a client.
@@ -117,7 +117,7 @@ namespace SilkBound.Network.Packets {
         /// <summary>
         /// Whether or not to use the gzip stream when packing and unpacking the packet.
         /// </summary>
-        public virtual bool IsGzipped { get; } = false;
+        public virtual bool IsGzipped => true;
 
         /// <summary>
         /// Writes any packet data into <paramref name="writer"/>.

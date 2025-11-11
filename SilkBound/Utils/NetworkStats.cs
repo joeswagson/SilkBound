@@ -95,7 +95,7 @@ namespace SilkBound.Utils {
 
         internal void LogBytesRead(byte[] data)
         {
-            _data.BytesRead += (uint) data.Length;
+            _data.BytesRead += (uint) data.Length + 4; // add back stripped frame size
         }
 
         internal void LogPacketRead(byte[] data, Packet? packet)
@@ -109,7 +109,7 @@ namespace SilkBound.Utils {
         internal void LogPacketReadDropped(byte[] data)
         {
             _data.PacketsReadDropped++;
-            _data.BytesReadDropped += (uint) data.Length;
+            _data.BytesReadDropped += (uint) data.Length + 4; // add back stripped frame size
         }
 
         public void LogEndpoints(IEnumerable<NetworkConnection> connections)

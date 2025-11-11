@@ -15,7 +15,7 @@ namespace SilkBound.Network.Packets.Impl.Communication
                 return _handshakeId ??= (handshakeId.HasValue ? handshakeId.Value : Guid.NewGuid());
             }
         }
-        public Guid HostGUID => hostGuid.HasValue ? hostGuid.Value : Guid.NewGuid();
+        public Guid? HostGUID => hostGuid;
         public string ClientName => clientName;
         public bool Fulfilled = false;
 
@@ -42,7 +42,7 @@ namespace SilkBound.Network.Packets.Impl.Communication
             writer.Write(HandshakeId.ToByteArray());
             writer.Write(HostGUID != null);
             if (HostGUID != null)
-                writer.Write(HostGUID.ToByteArray());
+                writer.Write(HostGUID.Value.ToByteArray());
         }
     }
 }

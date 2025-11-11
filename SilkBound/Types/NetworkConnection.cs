@@ -72,12 +72,12 @@ namespace SilkBound.Types
         }
 
 
-        public (string?, Guid?, Packet?) HandlePacket(byte[] data)
+        public (ushort, Guid, Packet?)? HandlePacket(byte[] data)
         {
             Stats.LogBytesRead(data);
-            (string?, Guid?, Packet?) returned = PacketProtocol.UnpackPacket(data);
-            Stats.LogPacketRead(data, returned.Item3);
-            PacketHandler.Handle(returned.Item3, this);
+            (ushort, Guid, Packet?)? returned = PacketProtocol.UnpackPacket(data);
+            Stats.LogPacketRead(data, returned?.Item3);
+            PacketHandler.Handle(returned?.Item3, this);
             return returned;
         }
         public abstract void Initialize();
