@@ -1,13 +1,16 @@
-﻿using JetBrains.Annotations;
+﻿using HutongGames.PlayMaker;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using SilkBound.Types;
 using SilkBound.Types.Data;
 using SilkBound.Types.Language;
 using SilkBound.Utils;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using UnityEngine;
 
 namespace SilkBound.Network.Packets {
     /// <summary>
@@ -31,7 +34,7 @@ namespace SilkBound.Network.Packets {
     public abstract class Packet {
         public ushort ID;
         protected Packet() { }
-        
+
         /// <summary>
         /// Resolve the authority type of a client.
         /// </summary>
@@ -133,6 +136,8 @@ namespace SilkBound.Network.Packets {
 
             Sender ??= NetworkUtils.LocalClient;
 
+            _writer = writer;
+
             Serialize(writer);
         }
 
@@ -160,6 +165,7 @@ namespace SilkBound.Network.Packets {
                 throw new UnauthorizedAccessException($"Packet of type {GetType().Name} does not allow authority {PacketAuthority}.");
             }
 
+            _reader = reader;
 
             Packet packet = Deserialize(reader);
             packet.Sender = Sender;
@@ -215,212 +221,137 @@ namespace SilkBound.Network.Packets {
 
         #region Binary IO Shortcuts
 
-        public static bool GetDeserializer([NotNullWhen(true)] out BinaryReader? reader)
-        {
-            reader = StackFlag<SerializerContext>.Value.Reader;
-            if (StackFlag<SerializerContext>.RaisedWithValue && reader != null)
-                return true;
+        private BinaryReader _reader;
+        private BinaryWriter _writer;
 
-            return false;
+        // GENERIC
+        public void Write<T>(T value)
+        {
+            switch (value)
+            {
+                case int val: _writer.Write(val); break;
+                case float val: _writer.Write(val); break;
+                case bool val: _writer.Write(val); break;
+                case byte val: _writer.Write(val); break;
+                case Guid val: WriteGuid(val); break;
+                case Enum val: WriteEnum(val); break;
+                case Vector3 val:
+                    _writer.Write(val.x);
+                    _writer.Write(val.y);
+                    _writer.Write(val.z);
+                    break;
+                case Vector2 val:
+                    _writer.Write(val.x);
+                    _writer.Write(val.y);
+                    break;
+                case string val: _writer.Write(val); break;
+                case ushort val: _writer.Write(val); break;
+                case short val: _writer.Write(val); break;
+                case char val: _writer.Write(val); break;
+                case uint val: _writer.Write(val); break;
+                case long val: _writer.Write(val); break;
+                case double val: _writer.Write(val); break;
+                case sbyte val: _writer.Write(val); break;
+                case ulong val: _writer.Write(val); break;
+                case decimal val: _writer.Write(val); break;
+                default:
+                    throw new InvalidOperationException(
+                    $"Type {typeof(T).Name} does not have a registered serializer");
+            }
+        }
+        public void Write<T>(T? value) where T : struct
+        {
+            Write(value.HasValue);
+            if (value.HasValue)
+                Write(value.Value);
         }
 
-        public static bool GetSerializer([NotNullWhen(true)] out BinaryWriter? writer)
-        {
-            writer = StackFlag<SerializerContext>.Value.Writer;
-            if (StackFlag<SerializerContext>.RaisedWithValue && writer != null)
-                return true;
+        private static readonly Dictionary<Type, Func<BinaryReader, Type, object>> _readers = new() {
+                { typeof(int), (r, t) => r.ReadInt32() },
+                { typeof(float), (r, t) => r.ReadSingle() },
+                { typeof(bool), (r, t) => r.ReadBoolean() },
+                { typeof(byte), (r, t) => r.ReadByte() },
+                { typeof(Guid), (r, t) => ReadGuid(r) },
+                { typeof(Enum), (r, t) => ReadEnum(r, t) },
+                { typeof(Vector3), (r, t) =>
+                    new Vector3(r.ReadSingle() ,r.ReadSingle() ,r.ReadSingle()) },
+                { typeof(Vector2), (r, t) =>
+                    new Vector2(r.ReadSingle() ,r.ReadSingle()) },
+                { typeof(string), (r, t) => r.ReadString() },
+                { typeof(ushort), (r, t) => r.ReadUInt16() },
+                { typeof(short), (r, t) => r.ReadInt16() },
+                { typeof(char), (r, t) => r.ReadChar() },
+                { typeof(uint), (r, t) => r.ReadUInt32() },
+                { typeof(long), (r, t) => r.ReadInt64() },
+                { typeof(double), (r, t) => r.ReadDouble() },
+                { typeof(sbyte), (r, t) => r.ReadSByte() },
+                { typeof(ulong), (r, t) => r.ReadUInt64() },
+                { typeof(decimal), (r, t) => r.ReadDecimal() }
+        };
 
-            return false;
+        public object Read(Type t)
+        {
+            if (_readers.TryGetValue(t, out var readerFunc))
+                return readerFunc(_reader, t);
+
+            throw new InvalidOperationException(
+                    $"Type {t.Name} does not have a registered serializer");
+        }
+        public T Read<T>()
+        {
+            return (T) Read(typeof(T));
+        }
+        public T? ReadNull<T>() where T : struct
+        {
+            var underlying = Nullable.GetUnderlyingType(typeof(T));
+            if (underlying == null)
+                return null;
+
+            if (Read<bool>())
+                return (T) Read(underlying);
+
+            return null;
         }
 
         // ENUM
-        public static void Write(Enum obj)
+        private void WriteEnum(Enum obj)
         {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(Convert.ToInt32(obj));
+            _writer.Write(Convert.ToInt32(obj));
         }
 
-        public static T ReadEnum<T>() where T : struct, Enum
+        private static T ReadEnum<T>(BinaryReader r) where T : struct, Enum
         {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            int raw = reader.ReadInt32();
+            int raw = r.ReadInt32();
             return (T) Enum.ToObject(typeof(T), raw);
         }
-
-        // BOOL
-        public static void Write(bool value)
+        private static object ReadEnum(BinaryReader r, Type t)
         {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value);
-        }
-
-        public static bool ReadBool()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            return reader.ReadBoolean();
-        }
-
-        // BYTE
-        public static void Write(byte value)
-        {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value);
-        }
-
-        public static byte ReadByte()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            return reader.ReadByte();
-        }
-
-        // SHORT
-        public static void Write(short value)
-        {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value);
-        }
-
-        public static short ReadShort()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            return reader.ReadInt16();
-        }
-
-        // INT
-        public static void Write(int value)
-        {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value);
-        }
-
-        public static int ReadInt()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            return reader.ReadInt32();
-        }
-
-        // LONG
-        public static void Write(long value)
-        {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value);
-        }
-
-        public static long ReadLong()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            return reader.ReadInt64();
-        }
-
-        // FLOAT
-        public static void Write(float value)
-        {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value);
-        }
-
-        public static float ReadFloat()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            return reader.ReadSingle();
-        }
-
-        // DOUBLE
-        public static void Write(double value)
-        {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value);
-        }
-
-        public static double ReadDouble()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            return reader.ReadDouble();
-        }
-
-        // STRING
-        public static void Write(string? value)
-        {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write(value ?? string.Empty);
-        }
-
-        public static string ReadString()
-        {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return string.Empty;
-
-            return reader.ReadString();
+            int raw = r.ReadInt32();
+            return Enum.ToObject(t, raw);
         }
 
         // GUID
-        public static void Write(Guid? value)
+        private void WriteGuid(Guid? value)
         {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
-            writer.Write((value ?? Guid.Empty).ToByteArray());
+            _writer.Write((value ?? Guid.Empty).ToByteArray());
         }
 
-        public static Guid ReadGuid()
+        private static Guid ReadGuid(BinaryReader r)
         {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return Guid.Empty;
-
-            return new Guid(reader.ReadBytes(16));
+            return new Guid(r.ReadBytes(16));
         }
 
         // GENERIC
-        public static void Write(object? value, params JsonConverter[] converters)
+        public void Write(object? value, params JsonConverter[] converters)
         {
-            if (!GetSerializer(out BinaryWriter? writer))
-                return;
-
             var data = ChunkedTransfer.Serialize(value, converters);
-            writer.Write(data.Length);
-            writer.Write(data);
+            _writer.Write(data.Length);
+            _writer.Write(data);
         }
-        public static T? Read<T>(params JsonConverter[] converters)
+        public T? Read<T>(params JsonConverter[] converters)
         {
-            if (!GetDeserializer(out BinaryReader? reader))
-                return default;
-
-            var len = reader.ReadInt32();
-            return ChunkedTransfer.Deserialize<T>(reader.ReadBytes(len));
+            var len = _reader.ReadInt32();
+            return ChunkedTransfer.Deserialize<T>(_reader.ReadBytes(len));
         }
 
         #endregion
