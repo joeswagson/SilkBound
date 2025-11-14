@@ -59,12 +59,7 @@ namespace SilkBound.Network.Packets.Impl.Mirror {
         public override Packet Deserialize(BinaryReader reader)
         {
             var optional = new OptionalValueSet<UpdateWeaver>(UpdateWeaverSchema);
-            //optional.Read(reader, (flag, r) => {
-            //    return flag switch {
-            //        UpdateFlags.Scene => new ComparableString(r.ReadString()),
-            //        _ => null!,
-            //    };
-            //});
+
             optional.Read(reader, (flag, r) => {
                 switch (flag)
                 {
@@ -81,13 +76,6 @@ namespace SilkBound.Network.Packets.Impl.Mirror {
             float? scaleX = optional.Get<float>(UpdateWeaver.ScaleX);
             float? vX = optional.Get<float>(UpdateWeaver.VelocityX);
             float? vY = optional.Get<float>(UpdateWeaver.VelocityY);
-
-            Logger.Msg("read scene:", scene);
-            Logger.Msg("read posX:", posX);
-            Logger.Msg("read posY:", posY);
-            Logger.Msg("read scaleX:", scaleX);
-            Logger.Msg("read vX:", vX);
-            Logger.Msg("read vY:", vY);
 
             return new UpdateWeaverPacket(scene, posX, posY, scaleX, vX, vY);
         }
