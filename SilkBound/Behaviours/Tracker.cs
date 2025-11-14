@@ -7,9 +7,11 @@ using UnityEngine;
 namespace SilkBound.Behaviours {
     public class Tracker : MonoBehaviour {
         private DisposableGameObject? self;
-        void Start()
+
+        Tracker()
         {
-            self = ObjectManager.Register(gameObject);
+            if(StackFlag<GameObject>.RaisedWithValue)
+                self = ObjectManager.Register(StackFlag<GameObject>.Value!);
         }
         private void OnDestroy()
         {
@@ -19,6 +21,7 @@ namespace SilkBound.Behaviours {
 
         public static Tracker Track(GameObject obj)
         {
+            using (new StackFlag<GameObject>(obj))
             return obj.AddComponentIfNotPresent<Tracker>();
         }
     }
