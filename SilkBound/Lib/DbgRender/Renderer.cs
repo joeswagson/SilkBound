@@ -152,6 +152,26 @@ namespace SilkBound.Lib.DbgRender {
         }
 
         /// <summary>
+        /// Explicitly sets the cursors Y position locally.
+        /// </summary>
+        /// <returns>The screen space <see cref="Cursor"/>.</returns>
+        public Rect Y(float y)
+        {
+            Cursor.y = y;
+            return CursorToScreen();
+        }
+
+        /// <summary>
+        /// Explicitly sets the cursors Y position locally.
+        /// </summary>
+        /// <returns>The screen space <see cref="Cursor"/>.</returns>
+        public Rect X(float x)
+        {
+            Cursor.x = x;
+            return CursorToScreen();
+        }
+
+        /// <summary>
         /// Returns a region at the sub-anchor with a specified <see cref="float"/> width and height.
         /// </summary>
         public Rect ScaleCursor(float width, float height)
