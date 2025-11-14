@@ -82,7 +82,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             }
         }
         const float WIDTH = 200;
-        const float HEIGHT = 145;
+        const float HEIGHT = 170;
         const float MARGIN = 5f;
 
         bool connecting = false;
@@ -94,9 +94,9 @@ namespace SilkBound.Lib.DbgRender.Renderers {
         {
             SetCursorReference(DrawBox(WIDTH, HEIGHT, frameBgColor, 5)); // draw and center cursor around frame
             ElementBuffer(ElementWidth - 2 * MARGIN, 20); // prevent overlap
-            Slide(MARGIN); // left side margin
+            X(MARGIN); // left side margin
 
-            Scroll(MARGIN); // top margin
+            Y(MARGIN); // top margin
             RenderStatus();
 
             GUI.Label(Scroll(ElementHeight + MARGIN), HostHeader); // host label
@@ -108,7 +108,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             ElementBuffer((WIDTH - 3 * MARGIN) / 2);
             if (GUI.Button(Scroll(ElementHeight + MARGIN), IsReady ? "Host" : "Not Ready") && IsReady && !connecting)
             {
-                Logger.Msg("host");
+                Logger.Debug("host");
                 connecting = true;
                 SetStatus(ConnectionStatus.Connecting);
 
@@ -123,7 +123,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             Slide(ElementWidth + MARGIN);
             if (GUI.Button(CursorToScreen(), IsReady ? "Connect" : "Not Ready") && IsReady && !connecting)
             {
-                Logger.Msg("join");
+                Logger.Debug("join");
                 connecting = true;
                 SetStatus(ConnectionStatus.Connecting);
 
@@ -133,6 +133,16 @@ namespace SilkBound.Lib.DbgRender.Renderers {
                     port = ushort_port;
 
                 ConnectionManager.Client(ip: connect, port: port).ContinueWith(t => t.Result.Dump());
+            }
+
+            X(MARGIN);
+            ElementBuffer(WIDTH - 2 * MARGIN, 20);
+            if (GUI.Button(Scroll(ElementHeight + MARGIN), "Disconnect") && NetworkUtils.Connected)
+            {
+                Logger.Debug("disconnect");
+                connecting = false;
+                NetworkUtils.Disconnect("Leaving.");
+                SetStatus(ConnectionStatus.Disconnected);
             }
         }
     }
