@@ -35,7 +35,7 @@ namespace SilkBound.Types.Data {
             var obj = _values[Convert.ToByte(flag)];
             if (obj is T val) return val;
             if (TryCast(obj, out T nullable)) return nullable;
-            Logger.Msg("was not of T:", flag.ToString(), obj?.GetType().Name ?? "no obj", typeof(T).Name);
+            //Logger.Msg("was not of T:", flag.ToString(), obj?.GetType().Name ?? "no obj", typeof(T).Name);
             if (obj is null) return null;
             throw new InvalidCastException($"Flag {flag} is stored as {obj.GetType()}, not {typeof(T)}");
         }
@@ -74,7 +74,7 @@ namespace SilkBound.Types.Data {
                 if (_values[i] != null) flags |= (byte) (1 << i);
 
             writer.Write(flags);
-            Logger.Msg("flags byte", Convert.ToString(flags, 2).PadLeft(8, '0'));
+            //Logger.Msg(" te", Convert.ToString(flags, 2).PadLeft(8, '0'));
 
             for (int i = 0; i < _allFlags.Length; i++)
             {
