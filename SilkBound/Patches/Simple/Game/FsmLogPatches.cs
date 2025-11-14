@@ -7,6 +7,7 @@ using SilkBound.Managers;
 using SilkBound.Network.Packets.Impl.Sync.Entity;
 using SilkBound.Types.Language;
 using SilkBound.Utils;
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -23,10 +24,10 @@ namespace SilkBound.Patches.Simple.Game {
         public static bool PlayMakerFSM_Awake_Prefix(PlayMakerFSM __instance)
         {
             //if (NetworkUtils.Connected && __instance?.gameObject?.layer == LayerMask.NameToLayer("Enemies")) {
+            Tracker.Track(__instance.gameObject);
             if (GetHandler(__instance.Fsm) != Handler.NONE)
             {
                 new StackFlagPole<PlayMakerFSM>(__instance);
-                Tracker.Track(__instance.gameObject);
             }
 
             return true;
@@ -170,6 +171,9 @@ namespace SilkBound.Patches.Simple.Game {
                     //FsmEvent.
                     //Logger.Msg("FSM len:", ChunkedTransfer.Pack(__instance).Sum(x=>x.Length));
                     //Logger.Msg("Firing", $"{__instance.GameObjectName}::{__instance.Name}.{fsmEvent.name}");
+                    if (FsmExtensions.Identifier(__instance) == Guid.Empty)
+                        Logger.Warn("Sending null fsm id!", __instance.GameObject.transform.GetPath());
+                    Logger.Warn("Sending fsm id!", FsmExtensions.Identifier(__instance));
                     __instance.Send(f => new FSMEventPacket(f, fsmEvent.name));
                     //NetworkUtils.SendPacket(new FSMEventPacket(
                     //    goPath,
