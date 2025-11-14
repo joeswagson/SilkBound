@@ -21,7 +21,7 @@ namespace SilkBound.Patches.Simple.Hero
                     && mirror != null
                     && mirror.IsLocalOwned
                     && !StackFlag<None>.Raised)
-                NetworkUtils.SendPacket(new PlayClipPacket(mirror.NetworkId, clip.name, clipStartTime, overrideFps));
+                NetworkUtils.SendPacket(new EntityPlayClipPacket(mirror.NetworkId, clip.name, clipStartTime, overrideFps));
 
             return true;
         }

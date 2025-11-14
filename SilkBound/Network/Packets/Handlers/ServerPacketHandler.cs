@@ -139,15 +139,10 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
         {
-            if (packet.id.StartsWith("NETOBJ") && NetworkObjectManager.TryGet(packet.id, out NetworkEntity netent) && netent is EntityMirror mirror)
-            {
-                mirror.PlayClip(packet);
-            }
-            else
-            {
-                packet.Sender.Mirror?.PlayClip(packet);
-            }
-            NetworkUtils.LocalServer!.SendExcept(packet, connection);
+            packet.Sender.Mirror?.PlayClip(packet);
+
+            packet.Relay(connection);
+            //NetworkUtils.LocalServer!.SendExcept(packet, connection);
         }
 
         [PacketHandler(typeof(PlaySoundPacket))]

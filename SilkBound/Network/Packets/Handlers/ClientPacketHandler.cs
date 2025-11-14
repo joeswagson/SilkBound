@@ -149,14 +149,7 @@ namespace SilkBound.Network.Packets.Handlers
         [PacketHandler(typeof(PlayClipPacket))]
         public void OnPlayClipPacket(PlayClipPacket packet, NetworkConnection connection)
         {
-            if(packet.id.StartsWith("NETOBJ") && NetworkObjectManager.TryGet(packet.id, out NetworkEntity netent) && netent is EntityMirror mirror)
-            {
-                Logger.Msg("PLAYCLIP:", packet.id, packet.clipName);
-                mirror.PlayClip(packet);
-            } else
-            {
-                packet.Sender.Mirror?.PlayClip(packet);
-            }
+            packet.Sender.Mirror?.PlayClip(packet);
         }
 
         [PacketHandler(typeof(PlaySoundPacket))]

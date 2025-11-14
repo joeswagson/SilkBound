@@ -119,7 +119,7 @@ namespace SilkBound.Behaviours {
             }
         }
 
-        public void PlayClip(PlayClipPacket packet)
+        public void PlayClip(EntityPlayClipPacket packet)
         {
             using (new StackFlag<None>())
             {
