@@ -12,6 +12,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SilkBound.Utils {
@@ -68,19 +69,19 @@ namespace SilkBound.Utils {
         }
 
         #region Async Connectors
-        public static async Task<Weaver> ConnectPipeAsync(ConnectionRequest request, string host, string name)
+        public static async Task<Weaver> ConnectPipeAsync(CancellationTokenSource cts, ConnectionRequest request, string host, string name)
         {
-            return await ConnectAsync(new NamedPipeConnection(host), name, request);
+            return await ConnectAsync(cts, new NamedPipeConnection(host), name, request);
         }
-        public static async Task<Weaver> ConnectP2PAsync(ConnectionRequest request, ulong steamId, string name)
+        public static async Task<Weaver> ConnectP2PAsync(CancellationTokenSource cts, ConnectionRequest request, ulong steamId, string name)
         {
-            return await ConnectAsync(new SteamConnection(steamId.ToString()), name, request);
+            return await ConnectAsync(cts, new SteamConnection(steamId.ToString()), name, request);
         }
-        public static async Task<Weaver> ConnectTCPAsync(ConnectionRequest request, string host, string name, int? port = null)
+        public static async Task<Weaver> ConnectTCPAsync(CancellationTokenSource cts, ConnectionRequest request, string host, string name, int? port = null)
         {
-            return await ConnectAsync(new TCPConnection(host, port ?? Silkbound.Config.Port), name, request);
+            return await ConnectAsync(cts, new TCPConnection(host, port ?? Silkbound.Config.Port), name, request);
         }
-        public static async Task<Weaver> ConnectAsync(NetworkConnection connection, string name, ConnectionRequest? request = null)
+        public static async Task<Weaver> ConnectAsync(CancellationTokenSource cts, NetworkConnection connection, string name, ConnectionRequest? request = null)
         {
             Server.CurrentServer = new Server(LocalConnection);
             Server.CurrentServer.Connection = connection;
@@ -96,10 +97,17 @@ namespace SilkBound.Utils {
             Server.CurrentServer.Address = connection.Host!;
             Server.CurrentServer.Port = connection.Port ?? Silkbound.Config.Port;
 
-            await connection.Connect(
+            var connectTask = connection.Connect(
                 Server.CurrentServer.Address,
                 Server.CurrentServer.Port
             );
+
+            var cancelledTask = Task.Delay(SilkConstants.CONNECTION_TIMEOUT + 5000, cts.Token);
+
+            var winner = await Task.WhenAny(connectTask, cancelledTask);
+
+            if (winner == cancelledTask)
+                cts.Token.ThrowIfCancellationRequested();
 
             if (LocalConnection is not NetworkServer)
                 Handshake(request, LocalClient);

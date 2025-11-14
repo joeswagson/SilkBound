@@ -10,11 +10,18 @@ using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using _Server = SilkBound.Types.Server;
 
 namespace SilkBound.Managers {
-    public class ServerStart {
+    public class ServerStart(CancellationTokenSource cts) {
+        // control
+        public void Cancel()
+        {
+            cts.Cancel();
+        }
+
         // target
         public string? Address;
         public int? Port;
@@ -44,7 +51,13 @@ namespace SilkBound.Managers {
             Logger.Msg("Connection:", Connection);
         }
     }
-    public class ConnectionRequest {
+    public class ConnectionRequest(CancellationTokenSource cts) {
+        // control
+        public void Cancel()
+        {
+            cts.Cancel();
+        }
+
         // target
         public string? Address;
         public int? Port;
@@ -108,7 +121,7 @@ namespace SilkBound.Managers {
         public static class Client {
             public static readonly Error BANNED = new(200, "You are banned.");
             public static readonly Error WHITELIST = new(201, "You haven't been whitelisted.");
-            public static readonly Error AMBIDEXTROUS = new(201, "Client attemped a double handshake.");
+            public static readonly Error AMBIDEXTROUS = new(201, "Client attempted a double handshake.");
         }
 
         // 300-399 Server Codes
@@ -121,6 +134,8 @@ namespace SilkBound.Managers {
 
     public class ConnectionManager {
         public static ushort Port => Silkbound.Config.Port;
+        public static readonly List<ServerStart> HostRequests = [];
+        public static readonly List<ConnectionRequest> JoinRequests = [];
         internal static void UpdateMenuStatus(ConnectionStatus status)
         {
             Silkbound.ConnectionMenu?.SetStatus(status);
@@ -133,7 +148,7 @@ namespace SilkBound.Managers {
 
         #region Server
 
-        public static ServerStart PromiseStartup(NetworkingLayer networkingLayer, string? ip = null, int? port = null) => new() {
+        public static ServerStart PromiseStartup(NetworkingLayer networkingLayer, CancellationTokenSource cts, string? ip = null, int? port = null) => new(cts) {
             Address = ip,
             Port = port,
 
@@ -144,6 +159,7 @@ namespace SilkBound.Managers {
         };
         private static void StartupFailed(ServerStart request, Error error)
         {
+            HostRequests.Remove(request);
             request.Succeeded = false;
 
             UpdateMenuStatus(ConnectionStatus.Disconnected);
@@ -200,26 +216,29 @@ namespace SilkBound.Managers {
         {
             UpdateMenuStatus(ConnectionStatus.Connecting);
 
+            var cts = new CancellationTokenSource(SilkConstants.CONNECTION_TIMEOUT);
             networkingLayer ??= Silkbound.Config.NetworkLayer;
             ip ??= Silkbound.Config.HostIP;
             port ??= Silkbound.Config.Port;
             name ??= Silkbound.Config.Username;
 
-            ServerStart request = PromiseStartup(networkingLayer.Value, ip, port);
-            Logger.Msg("handling layer");
+            ServerStart request = PromiseStartup(networkingLayer.Value, cts, ip, port);
+            HostRequests.Add(request);
+
+            //Logger.Msg("handling layer");
             switch (networkingLayer.Value)
             {
                 case NetworkingLayer.TCP:
-                    await ProcessStartupTask(request, _Server.ConnectTCPAsync(ip!, name, port));
+                    await ProcessStartupTask(request, _Server.ConnectTCPAsync(cts, ip!, name, port));
                     break;
                 case NetworkingLayer.Steam:
-                    await ProcessStartupTask(request, _Server.ConnectP2PAsync(name));
+                    await ProcessStartupTask(request, _Server.ConnectP2PAsync(cts, name));
                     break;
                 case NetworkingLayer.NamedPipe:
-                    await ProcessStartupTask(request, _Server.ConnectPipeAsync(ip!, name));
+                    await ProcessStartupTask(request, _Server.ConnectPipeAsync(cts, ip!, name));
                     break;
             }
-            Logger.Msg("handled layer");
+            //Logger.Msg("handled layer");
 
             request.InProgress = false;
 
@@ -230,7 +249,7 @@ namespace SilkBound.Managers {
 
         #region Client
 
-        public static ConnectionRequest Promise(NetworkingLayer networkingLayer, string ip, int? port = null) => new() {
+        public static ConnectionRequest Promise(NetworkingLayer networkingLayer, CancellationTokenSource cts, string ip, int? port = null) => new(cts) {
             Address = ip,
             Port = port,
 
@@ -242,6 +261,8 @@ namespace SilkBound.Managers {
         };
         public static void ConnectionFailed(ConnectionRequest request, Error? error = null)
         {
+            JoinRequests.Remove(request);
+
             request.Succeeded = false;
             if (NetworkUtils.Connected)
                 NetworkUtils.Disconnect();
@@ -299,19 +320,22 @@ namespace SilkBound.Managers {
         {
             UpdateMenuStatus(ConnectionStatus.Connecting);
 
+            var cts = new CancellationTokenSource(SilkConstants.CONNECTION_TIMEOUT);
             name ??= Silkbound.Config.Username;
-            ConnectionRequest request = Promise(networkingLayer, ip, port);
+
+            ConnectionRequest request = Promise(networkingLayer, cts, ip, port);
+            JoinRequests.Add(request);
 
             switch (networkingLayer)
             {
                 case NetworkingLayer.TCP:
-                    await ProcessConnectionTask(request, NetworkUtils.ConnectTCPAsync(request, ip, name, port));
+                    await ProcessConnectionTask(request, NetworkUtils.ConnectTCPAsync(cts, request, ip, name, port));
                     break;
                 case NetworkingLayer.Steam:
-                    await ProcessConnectionTask(request, NetworkUtils.ConnectP2PAsync(request, ulong.Parse(ip), name));
+                    await ProcessConnectionTask(request, NetworkUtils.ConnectP2PAsync(cts, request, ulong.Parse(ip), name));
                     break;
                 case NetworkingLayer.NamedPipe:
-                    await ProcessConnectionTask(request, NetworkUtils.ConnectPipeAsync(request, ip, name));
+                    await ProcessConnectionTask(request, NetworkUtils.ConnectPipeAsync(cts, request, ip, name));
                     break;
             }
 

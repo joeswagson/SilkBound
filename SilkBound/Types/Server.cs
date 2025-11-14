@@ -1,17 +1,18 @@
-﻿using SilkBound.Network;
+﻿using SilkBound.Addons.AddonLoading;
+using SilkBound.Managers;
+using SilkBound.Network;
+using SilkBound.Network.Packets.Handlers;
+using SilkBound.Network.Packets.Impl.Steam;
 using SilkBound.Types.NetLayers;
 using SilkBound.Utils;
 using Steamworks;
 using System;
 using System.Collections.Generic;
-using SilkBound.Addons.AddonLoading;
-using SilkBound.Network.Packets.Impl.Steam;
-using SilkBound.Managers;
-using SilkBound.Network.Packets.Handlers;
-using UnityEngine.SceneManagement;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
 
 namespace SilkBound.Types {
     public class Server {
@@ -133,22 +134,22 @@ namespace SilkBound.Types {
 
         #region Async Connectors
 
-        public static async Task<Server> ConnectPipeAsync(string host, string name)
+        public static async Task<Server> ConnectPipeAsync(CancellationTokenSource cts, string host, string name)
         {
-            return await ConnectAsync(new NamedPipeServer(host), name);
+            return await ConnectAsync(cts, new NamedPipeServer(host), name);
         }
-        public static async Task<Server> ConnectP2PAsync(string name)
+        public static async Task<Server> ConnectP2PAsync(CancellationTokenSource cts, string name)
         {
-            return await ConnectAsync(new SteamServer(), name);
+            return await ConnectAsync(cts, new SteamServer(), name);
         }
-        public static async Task<Server> ConnectTCPAsync(string host, string name, int? port = null)
+        public static async Task<Server> ConnectTCPAsync(CancellationTokenSource cts, string host, string name, int? port = null)
         {
-            return await ConnectAsync(new TCPServer(host, new ServerPacketHandler(), port), name);
+            return await ConnectAsync(cts, new TCPServer(host, new ServerPacketHandler(), port), name);
         }
 
-        public static async Task<Server> ConnectAsync(NetworkServer connection, string name)
+        public static async Task<Server> ConnectAsync(CancellationTokenSource cts, NetworkServer connection, string name)
         {
-            Weaver host = await NetworkUtils.ConnectAsync(connection, name);
+            Weaver host = await NetworkUtils.ConnectAsync(cts, connection, name);
             NetworkUtils.LocalServer = connection;
             CurrentServer.Host = host;
             AddonManager.LoadAddons();
