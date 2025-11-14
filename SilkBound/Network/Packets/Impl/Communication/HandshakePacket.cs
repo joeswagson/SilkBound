@@ -36,13 +36,13 @@ namespace SilkBound.Network.Packets.Impl.Communication
         public override void Serialize(BinaryWriter writer)
         {
             TransactionManager.Promise(HandshakeId, this);
-
-            writer.Write(ClientId.ToByteArray());
-            writer.Write(ClientName.Substring(0, Math.Min(100, ClientName.Length)));
-            writer.Write(HandshakeId.ToByteArray());
-            writer.Write(HostGUID != null);
-            if (HostGUID != null)
-                writer.Write(HostGUID.Value.ToByteArray());
+            Write(ClientId);
+            Write(ClientName[..Math.Min(100, ClientName.Length)]);
+            Write(HandshakeId);
+            Write(HostGUID);
+            //Write(HostGUID != null);
+            //if (HostGUID != null)
+            //    Write(HostGUID.Value);
         }
     }
 }
