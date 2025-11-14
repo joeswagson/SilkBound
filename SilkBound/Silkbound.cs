@@ -68,18 +68,22 @@ namespace SilkBound {
         public void Awake()
 #endif
         {
+            // init fields/props
             ModThread = Thread.CurrentThread;
+            MainThreadId = Environment.CurrentManagedThreadId;
             Config.SaveToFile(clientNumber > 1 ? $"config{clientNumber}" : "config"); // ensure config exists
             Instance = this;
 
-            MainThreadId = Environment.CurrentManagedThreadId;
-            global::SilkBound.Utils.Logger.Debug("SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
+            // debug info
+            global::SilkBound.Utils.Logger.Debug(
+                "SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
                 "| Unity Thread ID:", MainThreadId);
             global::SilkBound.Utils.Logger.Debug("Current packet protocol hash:", PacketProtocol.Fingerprint);
 
             // populate packet registry
             PacketProtocol.PopulateRegistry();
 
+            // init skinlibrary
             Task.Run(async () => {
                 var sw = Stopwatch.StartNew();
                 int loaded = await SkinManager.LoadLibrary();
@@ -89,6 +93,8 @@ namespace SilkBound {
 
                 ConnectionMenuRenderer.ConnectReady();
             });
+
+            // init processors
 
             if (SilkConstants.DEBUG)
             {
@@ -188,7 +194,7 @@ namespace SilkBound {
                             return clients;
                         });
                 listRendererData["ObjectManager Cache"] =
-                    new UpdatingVariable<Dictionary<string, DisposableGameObject>>(
+                    new UpdatingVariable<Dictionary<Guid, DisposableGameObject>>(
                         ObjectManager.Cache,
                         c => c.Count.ToString());
 
@@ -401,50 +407,50 @@ namespace SilkBound {
 
             //if (Input.GetKeyDown(KeyCode.H))
             //{
-                //    //Server.ConnectPipe("sb_dbg", "host");
-                //    switch (Config.NetworkLayer)
-                //    {
-                //        case NetworkingLayer.TCP:
-                //            Server.ConnectTCP(HOST_IP, Config.Username);
-                //            break;
-                //        case NetworkingLayer.Steam:
-                //            Server.ConnectP2P(Config.Username);
-                //            break;
-                //        case NetworkingLayer.NamedPipe:
-                //            Server.ConnectPipe(HOST_IP, Config.Username);
-                //            break;
-                //    }
-                //    NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
-                //    //Server.ConnectP2P("joe");
-                //}
+            //    //Server.ConnectPipe("sb_dbg", "host");
+            //    switch (Config.NetworkLayer)
+            //    {
+            //        case NetworkingLayer.TCP:
+            //            Server.ConnectTCP(HOST_IP, Config.Username);
+            //            break;
+            //        case NetworkingLayer.Steam:
+            //            Server.ConnectP2P(Config.Username);
+            //            break;
+            //        case NetworkingLayer.NamedPipe:
+            //            Server.ConnectPipe(HOST_IP, Config.Username);
+            //            break;
+            //    }
+            //    NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("blue"));
+            //    //Server.ConnectP2P("joe");
+            //}
 
-                //if (Input.GetKeyDown(KeyCode.J))
-                //{
-                //    //NetworkUtils.ConnectPipe("sb_dbg", "client");
+            //if (Input.GetKeyDown(KeyCode.J))
+            //{
+            //    //NetworkUtils.ConnectPipe("sb_dbg", "client");
 
-                //    switch (Config.NetworkLayer)
-                //    {
-                //        case NetworkingLayer.TCP:
-                //            NetworkUtils.ConnectTCP(CONNECT_IP, Config.Username);
-                //            break;
-                //        case NetworkingLayer.Steam:
-                //            NetworkUtils.ConnectP2P(ulong.Parse(CONNECT_IP), Config.Username);
-                //            break;
-                //        case NetworkingLayer.NamedPipe:
-                //            NetworkUtils.ConnectPipe(CONNECT_IP, Config.Username);
-                //            break;
-                //    }
+            //    switch (Config.NetworkLayer)
+            //    {
+            //        case NetworkingLayer.TCP:
+            //            NetworkUtils.ConnectTCP(CONNECT_IP, Config.Username);
+            //            break;
+            //        case NetworkingLayer.Steam:
+            //            NetworkUtils.ConnectP2P(ulong.Parse(CONNECT_IP), Config.Username);
+            //            break;
+            //        case NetworkingLayer.NamedPipe:
+            //            NetworkUtils.ConnectPipe(CONNECT_IP, Config.Username);
+            //            break;
+            //    }
 
-                //    NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
-                //        NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("purple"));
-                //    };
+            //    NetworkUtils.ClientPacketHandler!.HandshakeFulfilled += () => {
+            //        NetworkUtils.LocalClient.ChangeSkin(SkinManager.GetOrDefault("purple"));
+            //    };
 
-                //}
+            //}
 
-                if (Input.GetKeyDown(KeyCode.K))
-                {
-                    NetworkUtils.Disconnect("Leaving.");
-                }
+            if (Input.GetKeyDown(KeyCode.K))
+            {
+                NetworkUtils.Disconnect("Leaving.");
+            }
             //}
         }
 

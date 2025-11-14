@@ -23,55 +23,59 @@ namespace SilkBound.Managers {
         #endregion
 
         #region Breakables
-        public List<string> BrokenObjects = [];
-        public bool RegisterBrokenObject(string path)
+        public List<Guid> BrokenObjects = [];
+        public bool RegisterBrokenObject(Guid id)
         {
-            Logger.Msg("registering broken object:", path.Split('\\').Last());
-            if (BrokenObjects.Contains(path))
+            Logger.Msg("registering broken object:", id);
+            if (BrokenObjects.Contains(id))
                 return false;
 
-            BrokenObjects.Add(path);
+            BrokenObjects.Add(id);
             return true;
         }
         #endregion
 
         #region FSM Event Queue
         public struct FSMEventData {
-            public string goPath;
-            public string fsmName;
+            //public string goPath;
+            //public string fsmName;
+            public Guid id;
             public string eventName;
             public bool dispatched;
         }
         public struct FSMStatusData {
-            public string goPath;
-            public string fsmName;
+            //public string goPath;
+            //public string fsmName;
+            public Guid id;
             public bool started;
         }
         public List<FSMEventData> QueuedEvents = [];
-        public Dictionary<string, FSMStatusData> StatusUpdates = [];
-        public void RegisterFSMEvent(string goPath, string fsmName, string eventName)
+        public Dictionary<Guid, FSMStatusData> StatusUpdates = [];
+        public void RegisterFSMEvent(Guid id, string eventName)
         {
             FSMEventData data = new() {
-                goPath = goPath,
-                fsmName = fsmName,
+                //goPath = goPath,
+                //fsmName = fsmName,
+                id=id,
                 eventName = eventName,
                 dispatched = false
             };
 
             QueuedEvents.Add(data);
         }
-        public void RegisterFSMStatus(string goPath, string fsmName, bool started)
+        public void RegisterFSMStatus(Guid id, bool started)
         {
             FSMStatusData data = new() {
-                goPath = goPath,
-                fsmName = fsmName,
+                //goPath = goPath,
+                //fsmName = fsmName,
+                id=id,
                 started = started
             };
 
-            if (StatusUpdates.ContainsKey(fsmName))
-                StatusUpdates[fsmName] = data;
+            if (StatusUpdates.ContainsKey(id))
+                StatusUpdates[id] = data;
             else
-                StatusUpdates.Add(fsmName, data);
+                StatusUpdates.Add(id, data);
         }
         #endregion
 
@@ -143,7 +147,7 @@ namespace SilkBound.Managers {
             #endregion
 
             #region Breakables
-            foreach (string path in BrokenObjects)
+            foreach (Guid path in BrokenObjects)
             {
                 GameObject? go = ObjectManager.Get(path)?.GameObject;
                 if (go == null)
@@ -161,7 +165,8 @@ namespace SilkBound.Managers {
             for (int i = 0; i < QueuedEvents.Count; i++)
             {
                 var eventData = QueuedEvents[i];
-                if (UnityObjectExtensions.FindComponents<PlayMakerFSM>(eventData.goPath)?.First(fsm => fsm.Fsm.name == eventData.fsmName)?.Fsm is var fsm && (fsm == null)) continue;
+                if (!FSMPacket.FindFSM(eventData.id, out Fsm? fsm))
+                    continue;
 
                 fsm.Event(eventData.eventName);
                 eventData.dispatched = true;
@@ -171,7 +176,7 @@ namespace SilkBound.Managers {
 
             foreach (var statusUpdate in StatusUpdates)
             {
-                if (FSMPacket.FindFSM(statusUpdate.Value.goPath, statusUpdate.Value.fsmName, out Fsm? fsm))
+                if (FSMPacket.FindFSM(statusUpdate.Value.id, out Fsm? fsm))
                 {
                     if (statusUpdate.Value.started && !fsm.Started)
                         fsm.Start();

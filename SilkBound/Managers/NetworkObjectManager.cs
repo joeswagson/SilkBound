@@ -4,6 +4,7 @@ using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using UnityEngine;
 
 namespace SilkBound.Managers
 {
@@ -32,23 +33,27 @@ namespace SilkBound.Managers
 
         //    NetworkObjects.RemoveAll(obj => !obj.Active);
         //}
-        public static NetworkObject? Get(string id)
+        public static NetworkObject? Get(Guid id)
         {
             return NetworkObjects.Find(o => o.NetworkId == id);
         }
-        public static T? Get<T>(string id) where T : NetworkObject
+        public static T? GetComponent<T>(Guid id) where T : Component
+        {
+            return Get(id)?.GetComponent<T>();
+        }
+        public static T? Get<T>(Guid id) where T : NetworkObject
         {
             return NetworkObjects.Find(o => o.NetworkId == id) as T;
         }
 
-        public static bool TryGet(string id, [NotNullWhen(true)] out NetworkObject netObj)
+        public static bool TryGet(Guid id, [NotNullWhen(true)] out NetworkObject netObj)
         {
             NetworkObject? found = NetworkObjects.Find(o => o.NetworkId == id);
             netObj = found;
             return found != null;
         }
 
-        public static bool TryGet<T>(string id, [NotNullWhen(true)] out T netObj) where T : NetworkObject
+        public static bool TryGet<T>(Guid id, [NotNullWhen(true)] out T netObj) where T : NetworkObject
         {
             bool found = TryGet(id, out NetworkObject intermediate);
             netObj = (T) intermediate; // considered using `as` here but if the cast fails i want it to throw instead of causing it to throw some random nullref somewhere else

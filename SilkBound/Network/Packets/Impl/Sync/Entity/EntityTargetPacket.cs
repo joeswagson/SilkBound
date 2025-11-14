@@ -8,15 +8,14 @@ using System.IO;
 using System.Text;
 
 namespace SilkBound.Network.Packets.Impl.Sync.Entity {
-    public class EntityTargetPacket(string networkId, Guid targetId) : Packet {
+    public class EntityTargetPacket(Guid networkId, Guid targetId) : Packet {
         public EntityMirror? Mirror => NetworkObjectManager.Get<EntityMirror>(networkId);
         public Weaver Target => NetworkUtils.GetWeaver(targetId) ?? NetworkUtils.LocalClient;
         public override Packet Deserialize(BinaryReader reader)
         {
-            string netId = ReadString();
-            Guid targetId = ReadGuid();
-
-            return new EntityTargetPacket(netId, targetId);
+            return new EntityTargetPacket(
+                Read<Guid>(), 
+                Read<Guid>());
         }
 
         public override void Serialize(BinaryWriter writer)

@@ -1,4 +1,5 @@
 ﻿using SilkBound.Managers;
+using SilkBound.Types.Language;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,6 +7,7 @@ using UnityEngine;
 
 namespace SilkBound.Behaviours {
     public class Tracker : MonoBehaviour {
+        public Guid? Id => self?.Id;
         private DisposableGameObject? self;
 
         Tracker()
@@ -22,7 +24,7 @@ namespace SilkBound.Behaviours {
         public static Tracker Track(GameObject obj)
         {
             using (new StackFlag<GameObject>(obj))
-            return obj.AddComponentIfNotPresent<Tracker>();
+                return obj.AddComponentIfNotPresent<Tracker>();
         }
     }
 }

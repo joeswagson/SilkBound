@@ -1,16 +1,19 @@
 ﻿using AsmResolver.PE.File.Headers;
 using HutongGames.PlayMaker;
 using SilkBound.Extensions;
+using SilkBound.Sync;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
 namespace SilkBound.Managers {
     public class DisposableGameObject(string path, GameObject? reference) {
         public bool IsDisposed => weakReference == null;
-        public string Path => path;
+        public readonly string Path = path;
+        public readonly Guid Id = NetworkObject.FromString(path);
         private GameObject? weakReference => reference;
         public GameObject? GameObject
         {
@@ -30,20 +33,38 @@ namespace SilkBound.Managers {
     }
     public class ObjectManager {
         private const int ENTRIES_BEFORE_FLUSH = 100;
-        internal static Dictionary<string, DisposableGameObject> Cache = [];
+        internal static Dictionary<Guid, DisposableGameObject> Cache = [];
 
         public static DisposableGameObject Register(GameObject target)
         {
             var path = target.transform.GetPath();
             var disp = new DisposableGameObject(path, target);
-            Cache[path] = disp;
+            Cache[disp.Id] = disp;
             return disp;
         }
         public static void Unregister(DisposableGameObject target)
         {
-            Cache.Remove(target.Path);
+            Cache.Remove(target.Id);
+        }
+        public static T? GetComponent<T>(Guid? path) where T : Component
+        {
+            return Get(path)?.GameObject?.GetComponent<T>();
         }
 
+        public static DisposableGameObject? Get(Guid? id)
+        {
+            if (id == null)
+                return null;
+
+            if (Cache.Count > ENTRIES_BEFORE_FLUSH)
+                Flush();
+
+
+            if (Cache.ContainsKey(id.Value))
+                return Cache[id.Value];
+
+            return null;
+        }
         public static DisposableGameObject? Get(string? path)
         {
             if (path == null)
@@ -52,11 +73,11 @@ namespace SilkBound.Managers {
             if (Cache.Count > ENTRIES_BEFORE_FLUSH)
                 Flush();
 
-            if(Cache.ContainsKey(path))
-                return Cache[path];
+            if(Cache.FirstOrDefault(go => go.Value?.Path == path) is var go && go.Value != null)
+                return go.Value;
 
-            if(UnityObjectExtensions.FindObjectFromFullName(path) is var go && go != null)
-                return Register(go);
+            if(UnityObjectExtensions.FindObjectFromFullName(path) is var go2 && go2 != null)
+                return Register(go2);
 
             return null;
         }

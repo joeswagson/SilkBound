@@ -23,14 +23,11 @@ namespace SilkBound.Extensions {
             return mirror != null;
         }
         public static bool IsActive([NotNullWhen(true)] this Fsm? target) => target?.FsmComponent?.Active ?? false;
-        public static FsmFingerprint? Identifier(this Fsm? target)
+        public static Guid? Identifier(this Fsm? target)
         {
-            if (!target.IsActive())
-                return null;
-
-            return new FsmFingerprint(target.FsmComponent.transform.GetPath(), target.Name);
+            return target?.FsmComponent?.GetComponent<Tracker>()?.Id;// new FsmFingerprint(target.FsmComponent.transform.GetPath(), target.Name);
         }
-        public static T? Construct<T>(this Fsm? target, Func<FsmFingerprint, T> factory) where T : FSMPacket
+        public static T? Construct<T>(this Fsm? target, Func<Guid, T> factory) where T : FSMPacket
         {
             var print = target.Identifier();
             if (print == null)
@@ -41,7 +38,7 @@ namespace SilkBound.Extensions {
 
             return factory.Invoke(print.Value);
         }
-        public static void Send<T>(this Fsm? target, Func<FsmFingerprint, T> factory) where T : FSMPacket
+        public static void Send<T>(this Fsm? target, Func<Guid, T> factory) where T : FSMPacket
         {
             var print = target.Identifier();
             if (print == null)

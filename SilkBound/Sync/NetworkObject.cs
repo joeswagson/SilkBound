@@ -4,6 +4,8 @@ using SilkBound.Network;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types;
 using SilkBound.Utils;
+using System;
+using System.Security.Cryptography;
 using System.Text;
 using UnityEngine;
 
@@ -11,8 +13,8 @@ namespace SilkBound.Sync {
     public abstract class NetworkObject : GenericSync {
         public virtual bool Active => NetworkUtils.IsNullPtr(gameObject) || gameObject.activeInHierarchy;
 
-        private string? _networkId = null;
-        public string NetworkId => _networkId ??= BuildIdentifier(gameObject);
+        private Guid? _networkId = null;
+        public Guid NetworkId => _networkId ??= BuildIdentifier(gameObject);
 
         private Weaver? _owner = null;
         public Weaver? Owner {
@@ -58,8 +60,13 @@ namespace SilkBound.Sync {
 
 
 
-        public static string BuildIdentifier(GameObject obj) {
-            return
+        public static Guid FromString(string input)
+        {
+            using var provider = MD5.Create();
+            return new Guid(provider.ComputeHash(Encoding.UTF8.GetBytes(input)));
+        }
+        public static Guid BuildIdentifier(GameObject obj) {
+            return FromString(
                 new StringBuilder()
                     .Append("NETOBJ|")
                     .Append(obj.tag)
@@ -71,7 +78,7 @@ namespace SilkBound.Sync {
                     .Append(obj.GetComponents<Component>().Length)
                     .Append(obj.layer)
                     .Append(obj.scene.buildIndex)
-                .ToString();
+                .ToString());
         }
     }
 }

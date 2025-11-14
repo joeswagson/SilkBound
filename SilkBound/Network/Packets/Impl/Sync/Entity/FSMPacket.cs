@@ -1,6 +1,7 @@
 ﻿using HutongGames.PlayMaker;
 using Mono.Mozilla;
 using SilkBound.Extensions;
+using SilkBound.Managers;
 using SilkBound.Types;
 using SilkBound.Utils;
 using System;
@@ -8,44 +9,53 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 
 // cant wait til someone abuses this and i have to make it lame and restricted to registered network objects under your name
 namespace SilkBound.Network.Packets.Impl.Sync.Entity {
-    public struct FsmFingerprint(string path, string name)
-    {
-        public string Path => path;
-        public string Name => name;
-    }
-    public abstract class FSMPacket(FsmFingerprint target) : Packet {
-        public FsmFingerprint Fingerprint = target;
-        public Fsm? FSM => FindFSM(target.Path, target.Name);
-        public static Fsm? FindFSM(string goPath, string fsmName)
+    //public struct FsmFingerprint
+    //{
+    //    public FsmFingerprint(string path, string name)
+    //    {
+    //        Path = path;
+    //        Name = name;
+    //    }
+
+    //    public Guid Id;
+    //    public string Path;
+    //    public string Name;
+    //}
+    public abstract class FSMPacket : Packet {
+        public Guid Id { get; private set; }
+
+        protected FSMPacket(Guid target)
         {
-            return UnityObjectExtensions.FindComponents<PlayMakerFSM>(goPath)?.First(fsm => fsm.Fsm.Name == fsmName)?.Fsm;
+            Id = target;
         }
-        public static bool FindFSM(string goPath, string fsmName, [NotNullWhen(true)] out Fsm? fsm)
+
+        public Fsm? FSM => FindFSM(Id);
+        public static Fsm? FindFSM(Guid target)
         {
-            fsm = UnityObjectExtensions.FindComponents<PlayMakerFSM>(goPath)?.First(fsm => fsm.Fsm.Name == fsmName)?.Fsm;
-            return fsm != null;
+            return ObjectManager.GetComponent<PlayMakerFSM>(target)?.Fsm;
+        }
+        public static bool FindFSM(Guid target, [NotNullWhen(true)] out Fsm? fsm)
+        {
+            return (fsm = FindFSM(target)) != null;
         }
         public override void Serialize(BinaryWriter writer)
         {
-            writer.Write(target.Path);
-            writer.Write(target.Name);
+            Logger.Debug("Writing id:", Id);
+            Write(Id);
         }
 
         public override Packet Deserialize(BinaryReader reader)
         {
-            string gameObjectPath = reader.ReadString();
-            string fsmName = reader.ReadString();
-
-            Fingerprint = new FsmFingerprint(gameObjectPath, fsmName);
+            Id = Read<Guid>();
+            Logger.Debug("Got id:", Id);
 
             return null!;
         }
     }
-    public class FSMEventPacket(FsmFingerprint print, string eventName) : FSMPacket(print) {
+    public class FSMEventPacket(Guid id, string eventName) : FSMPacket(id) {
         public string EventName { get; } = eventName;
 
         public override void Serialize(BinaryWriter writer)
@@ -60,7 +70,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
             string eventName = reader.ReadString();
 
             return new FSMEventPacket(
-                Fingerprint,
+                Id,
                 eventName
             );
         }
@@ -69,7 +79,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
         {
             //Logger.Msg("Firing:", Fingerprint.Path, Fingerprint.Name, EventName, "on fsm:", FSM);
             if (FSM == null)
-                Logger.Warn("Null FSM!", Fingerprint.Path, Fingerprint.Name, EventName);
+                Logger.Warn("Null FSM!", Id, EventName);
             FSM?.Event(EventName);
         }
 
@@ -79,7 +89,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
             NetworkUtils.LocalServer?.SendExcept(this, connection);
         }
     }
-    public class FSMStatusPacket(FsmFingerprint print, bool enabled) : FSMPacket(print) {
+    public class FSMStatusPacket(Guid id, bool enabled) : FSMPacket(id) {
         public bool Enabled { get; } = enabled;
 
         public override void Serialize(BinaryWriter writer)
@@ -94,16 +104,16 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
             bool enabled = reader.ReadBoolean();
 
             return new FSMStatusPacket(
-                Fingerprint,
+                id, 
                 enabled
             );
         }
 
         public override void ClientHandler(NetworkConnection connection)
         {
-            Logger.Msg("Starting:", Fingerprint.Path, Fingerprint.Name, "with", "on fsm:", FSM);
+            Logger.Msg("Starting:", id, "with", "on fsm:", FSM);
             if (FSM == null)
-                Logger.Warn("Null FSM!", Fingerprint.Path, Fingerprint.Name);
+                Logger.Warn("Null FSM!", id);
             if (Enabled)
                 FSM?.Start();
             else
@@ -125,7 +135,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
         SilentEnter,
         SilentExit,
     }
-    public class FSMStatePacket(FsmFingerprint print, FsmStateType state, string stateName) : FSMPacket(print) {
+    public class FSMStatePacket(Guid id, FsmStateType state, string stateName) : FSMPacket(id) {
         public FsmStateType StateType => state;
         public FsmState? State => FSM?.GetState(stateName);
         private static Dictionary<FsmStateType, Action<Fsm, FsmState>> Delegates = new() {
@@ -162,7 +172,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
             string stateName = reader.ReadString();
 
             return new FSMStatePacket(
-                Fingerprint,
+                Id,
                 stateType,
                 stateName
             );
@@ -176,7 +186,7 @@ namespace SilkBound.Network.Packets.Impl.Sync.Entity {
         public override void ServerHandler(NetworkConnection connection)
         {
             Trigger();
-            NetworkUtils.LocalServer?.SendExcept(this, connection);
+            Relay(connection);
         }
     }
 }
