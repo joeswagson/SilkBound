@@ -9,6 +9,6 @@ namespace SilkBound.Generated {
         internal const bool DEBUG = $([MSBuild]::ValueOrDefault($(Debug), false));
         internal const bool IMMORTAL = $([MSBuild]::ValueOrDefault($(Immortal), false));
         internal const bool POWERUPS = $([MSBuild]::ValueOrDefault($(Powerups), false));
-        internal const int MONITOR = $([MSBuild]::ValueOrDefault($(Monitor), false));
+        internal const int MONITOR = $([MSBuild]::ValueOrDefault($(Monitor), 1));
     }
 }
