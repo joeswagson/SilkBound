@@ -63,7 +63,9 @@ namespace SilkBound.Behaviours {
             EntityMirror mirror = root.AddComponent<EntityMirror>();
             _mirrors.Add(mirror);
 
-            mirror.HealthManager.hp = mirror.HealthManager.initHp * (NetworkUtils.Server.Connections.Count + 1);
+            //DontDestroyOnLoad(mirror); funny duping entities
+
+            mirror.HealthManager.hp = mirror.HealthManager.initHp * NetworkUtils.Server.Connections.Count;
 
             return mirror;
         }
