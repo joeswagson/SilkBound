@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types.NetLayers {
+namespace SilkBound.Network.NetworkLayers.Impl {
     public class SteamServer : NetworkServer {
         private readonly Dictionary<CSteamID, SteamConnection> _connections = [];
         private readonly object _connLock = new();
@@ -231,6 +231,22 @@ namespace SilkBound.Types.NetLayers {
             foreach (SteamConnection conn in targets.Cast<SteamConnection>())
             {
                 try { await conn.Send(data); } catch (Exception e) { Logger.Warn($"[SteamServer] Failed send to {conn.RemoteId}: {e}"); }
+            }
+        }
+
+        public override void HandleDisconnect(NetworkConnection connection)
+        {
+            lock (_connLock)
+            {
+                if (_connections.Remove(((SteamConnection) connection).RemoteId))
+                    return;
+
+                // connection wasnt found by remote id. attempt to remove it via object reference
+                KeyValuePair<CSteamID, SteamConnection>? conn = _connections.FirstOrDefault(c => c.Value == connection);
+                if (conn.HasValue)
+                    _connections.Remove(conn.Value.Key);
+                else
+                    Logger.Error("False connection was passed into HandleDisconnect.");
             }
         }
     }

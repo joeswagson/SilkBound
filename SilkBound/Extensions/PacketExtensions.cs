@@ -1,5 +1,5 @@
-﻿using SilkBound.Network.Packets;
-using SilkBound.Types;
+﻿using SilkBound.Network.NetworkLayers;
+using SilkBound.Network.Packets;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;

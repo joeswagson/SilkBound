@@ -1,5 +1,5 @@
-﻿using SilkBound.Network.Packets.Impl.Communication;
-using SilkBound.Types;
+﻿using SilkBound.Network.NetworkLayers;
+using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types.Transfers;
 using SilkBound.Utils;
 using System;

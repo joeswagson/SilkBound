@@ -1,6 +1,7 @@
 ﻿using SilkBound.Behaviours;
 using SilkBound.Extensions;
 using SilkBound.Managers;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Network.Packets.Impl.Steam;
@@ -69,8 +70,8 @@ namespace SilkBound.Network.Packets.Handlers
         {
             if (packet.TargetSteamId == SteamUser.GetSteamID().m_SteamID)
             {
-                Logger.Msg("Kicked from server:", packet.Reason);
-                NetworkUtils.LocalConnection?.Disconnect();
+                //Logger.Msg("Kicked from server:", packet.Reason);
+                NetworkUtils.Disconnect(packet.Reason);
             }
             else
             {

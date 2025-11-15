@@ -1,17 +1,19 @@
-﻿using SilkBound.Network.Packets;
+﻿using SilkBound.Managers;
+using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
+using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Utils;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using SilkBound.Network.Packets.Impl.Communication;
-using System.Runtime.CompilerServices;
-using SilkBound.Managers;
+using static SilkBound.Managers.Error;
+using static Tk2dGlobalEvents;
 
-namespace SilkBound.Types.NetLayers
+namespace SilkBound.Network.NetworkLayers.Impl
 {
     public class TCPConnection : NetworkConnection
     {
@@ -81,7 +83,16 @@ namespace SilkBound.Types.NetLayers
             {
                 while (!ct.IsCancellationRequested && _stream != null)
                 {
-                    int read = await _stream.ReadAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false);
+                    int read;
+
+                    try
+                    {
+                        read = await _stream.ReadAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false);
+                    } catch {
+                        Logger.Msg("Shutting down receive loop...");
+                        break;
+                    }
+
                     if (read <= 0) break;
 
                     // append new data
@@ -139,6 +150,7 @@ namespace SilkBound.Types.NetLayers
             catch (Exception ex)
             {
                 Logger.Warn($"[TCPConnection] Receive loop ended for {_remoteId}: {ex.Message}");
+                Logger.Warn(ex);
             }
             finally
             {

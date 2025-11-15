@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using SilkBound.Lib.DbgRender.Renderers;
 using SilkBound.Network;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Network.Packets.Impl.Communication;
@@ -118,14 +119,14 @@ namespace SilkBound.Managers {
         public static readonly Error SPOOFEDTOKEN = new(106, "Spoofed token.");
 
         // 200-299 Client Codes
-        public static class Client {
+        public static class CLIENT {
             public static readonly Error BANNED = new(200, "You are banned.");
             public static readonly Error WHITELIST = new(201, "You haven't been whitelisted.");
             public static readonly Error AMBIDEXTROUS = new(201, "Client attempted a double handshake.");
         }
 
         // 300-399 Server Codes
-        public static class Server {
+        public static class SERVER {
             public static readonly Error BINDFAIL = new(300, "Failed to bind to specified server host.");
             public static readonly Error PORTFAIL = new(301, "Server port is unavailable.");
         }
@@ -325,7 +326,7 @@ namespace SilkBound.Managers {
 
             ConnectionRequest request = Promise(networkingLayer, cts, ip, port);
             JoinRequests.Add(request);
-
+            Logger.Debug(1);
             switch (networkingLayer)
             {
                 case NetworkingLayer.TCP:
@@ -338,6 +339,7 @@ namespace SilkBound.Managers {
                     await ProcessConnectionTask(request, NetworkUtils.ConnectPipeAsync(cts, request, ip, name));
                     break;
             }
+            Logger.Debug(10);
 
             request.InProgress = false;
 

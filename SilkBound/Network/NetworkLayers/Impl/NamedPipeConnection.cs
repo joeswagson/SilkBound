@@ -7,7 +7,7 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types.NetLayers {
+namespace SilkBound.Network.NetworkLayers.Impl {
     public class NamedPipeConnection : NetworkConnection {
         public NamedPipeConnection(string host) : base(new ClientPacketHandler(), host)
         {

@@ -1,4 +1,5 @@
 ﻿using SilkBound.Network;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets;
 
 namespace SilkBound.Types.Language.FlagContexts

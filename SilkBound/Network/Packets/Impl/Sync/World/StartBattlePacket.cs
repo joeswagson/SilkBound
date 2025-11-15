@@ -1,5 +1,5 @@
 ﻿using SilkBound.Extensions;
-using SilkBound.Types;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Utils;
 using System.IO;
 using System.Net.Sockets;

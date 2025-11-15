@@ -17,6 +17,7 @@ using SilkBound.Network.Packets.Impl.Sync.Mirror;
 using SilkBound.Network.Packets.Impl.Sync.Entity;
 using static SilkBound.Patches.Simple.Attacks.ObjectPoolPatches;
 using System.Diagnostics;
+using SilkBound.Network.NetworkLayers;
 
 namespace SilkBound.Network.Packets.Handlers
 {

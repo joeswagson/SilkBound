@@ -4,7 +4,7 @@ using SilkBound.Utils;
 using System;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types
+namespace SilkBound.Network.NetworkLayers
 {
     public abstract class NetworkConnection {
         public NetworkStats Stats;
@@ -43,7 +43,7 @@ namespace SilkBound.Types
 
         public void Disconnect(string reason="Unspecified.")
         {
-            NetworkUtils.Disconnect(reason);
+            NetworkUtils.Disconnect(this, reason);
         }
 
         /// <summary>

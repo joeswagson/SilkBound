@@ -1,5 +1,6 @@
 ﻿using SilkBound.Behaviours;
 using SilkBound.Managers;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets.Impl.Mirror;
 using SilkBound.Types;
 using SilkBound.Utils;

@@ -35,6 +35,21 @@ namespace SilkBound.Managers {
         private const int ENTRIES_BEFORE_FLUSH = 100;
         internal static Dictionary<Guid, DisposableGameObject> Cache = [];
 
+        public static GameObject GlobalContainer => _sbContainer!;
+        private static GameObject? _sbContainer;
+        internal static void Initialize()
+        {
+            _sbContainer = new GameObject("SilkBound");
+            _sbContainer.tag = "SILKBOUND";
+        }
+
+        public static GameObject Empty(string name)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(GlobalContainer.transform);
+            return go;
+        }
+
         public static DisposableGameObject Register(GameObject target)
         {
             var path = target.transform.GetPath();

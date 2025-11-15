@@ -1,7 +1,7 @@
 ﻿using SilkBound.Behaviours;
 using SilkBound.Managers;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Sync;
-using SilkBound.Types;
 using System;
 using System.IO;
 

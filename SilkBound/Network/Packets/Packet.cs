@@ -1,6 +1,7 @@
 ﻿using HutongGames.PlayMaker;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Types;
 using SilkBound.Types.Data;
 using SilkBound.Types.Language;

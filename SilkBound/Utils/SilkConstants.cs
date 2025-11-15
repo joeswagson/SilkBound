@@ -29,7 +29,9 @@ namespace SilkBound.Utils
         public const ushort PORT = 30300;
         public const short PACKET_BUFFER = 512;
         public const int CONNECTION_TIMEOUT = 5000; // ms
-        public const short CHUNK_TRANSFER = PACKET_BUFFER - sizeof(ushort) - 16 - 1; 
+        public const short CHUNK_TRANSFER = PACKET_BUFFER - sizeof(ushort) - 16 - 1;
+
+        public const bool CLIENT_RECONNECT_PERSIST_ID = true;
 
         public class Server
         {

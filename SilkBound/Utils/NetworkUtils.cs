@@ -2,18 +2,20 @@
 using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network;
+using SilkBound.Network.NetworkLayers;
+using SilkBound.Network.NetworkLayers.Impl;
 using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types;
 using SilkBound.Types.Language;
-using SilkBound.Types.NetLayers;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using static SilkBound.Managers.Error;
 
 namespace SilkBound.Utils {
     public class NetworkUtils {
@@ -39,7 +41,7 @@ namespace SilkBound.Utils {
         {
             get
             {
-                return (LocalConnection?.IsConnected ?? false) || Server.CurrentServer != null;
+                return (LocalConnection?.IsConnected ?? false) || (Server.IsOnline && !Server.Disposed);
             }
         }
 
@@ -60,7 +62,7 @@ namespace SilkBound.Utils {
             if ((request?.HandshakeFulfilled ?? false) || client.Acknowledged)
             {
                 if (request != null)
-                    ConnectionManager.ConnectionFailed(request, Error.Client.AMBIDEXTROUS);
+                    ConnectionManager.ConnectionFailed(request, Error.CLIENT.AMBIDEXTROUS);
 
                 return;
             }
@@ -83,19 +85,25 @@ namespace SilkBound.Utils {
         }
         public static async Task<Weaver> ConnectAsync(CancellationTokenSource cts, NetworkConnection connection, string name, ConnectionRequest? request = null)
         {
-            Server.CurrentServer = new Server(LocalConnection);
-            Server.CurrentServer.Connection = connection;
+            Server.CurrentServer?.Dispose();
+            Server.CurrentServer = new(connection);
 
-            if (LocalConnection != null)
-                LocalConnection.Disconnect();
-
+            LocalConnection?.Dispose();
+            LocalConnection?.Disconnect();
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
-            LocalClient ??= new LocalWeaver(name, connection);
+            LocalClient = new LocalWeaver(
+                name,
+                connection,
+                SilkConstants.CLIENT_RECONNECT_PERSIST_ID
+                    ? LocalClient?.ClientID
+                    : null);
+
             Server.CurrentServer.Connections.Add(LocalClient);
 
             Server.CurrentServer.Address = connection.Host!;
             Server.CurrentServer.Port = connection.Port ?? Silkbound.Config.Port;
+
 
             var connectTask = connection.Connect(
                 Server.CurrentServer.Address,
@@ -131,24 +139,31 @@ namespace SilkBound.Utils {
         }
         public static Weaver Connect(NetworkConnection connection, string name)
         {
-            Server.CurrentServer = new Server(LocalConnection);
+            Server.CurrentServer?.Dispose();
+            Server.CurrentServer = new(LocalConnection) {
+                Connection = connection
+            };
 
-            if (LocalConnection != null)
-                LocalConnection.Disconnect();
+            LocalConnection?.Disconnect();
+
             LocalConnection = connection;
             LocalPacketHandler = connection.PacketHandler;
-            LocalClient ??= new LocalWeaver(name, connection);
+            LocalClient = new LocalWeaver(
+                name,
+                connection,
+                SilkConstants.CLIENT_RECONNECT_PERSIST_ID
+                    ? LocalClient?.ClientID
+                    : null);
+
             Server.CurrentServer.Connections.Add(LocalClient);
 
             Server.CurrentServer.Address = connection.Host!;
             Server.CurrentServer.Port = connection.Port ?? Silkbound.Config.Port;
 
-            Logger.Msg(MethodInfo.GetCurrentMethod().Name, "waiting");
             connection.Connect(
                 Server.CurrentServer.Address,
                 Server.CurrentServer.Port
             ).Await();
-            Logger.Msg(MethodInfo.GetCurrentMethod().Name, "waited");
 
             Handshake(null, LocalClient);
 
@@ -156,6 +171,11 @@ namespace SilkBound.Utils {
             return LocalClient;
         }
         #endregion
+        /// <summary>
+        /// Handles local and remote disconnections.
+        /// </summary>
+        /// <param name="reason">Reason for disconnection.</param>
+        /// <param name="target">If present, the client to disconnect; <see cref="LocalClient"/> otherwise.</param>
         public static void Disconnect(string reason = "Unspecified", Weaver? target = null)
         {
             if (LocalConnection == null) // sorry nix
@@ -163,35 +183,74 @@ namespace SilkBound.Utils {
 
             target ??= LocalClient;
 
-            if (Connected && target == LocalClient)
+            if (Connected && target == LocalClient && !IsServer)
                 SendPacket(new ClientDisconnectionPacket(reason));
 
-            HandleDisconnection(LocalConnection, reason);
+            if (target.Connection != null)
+                HandleDisconnection(target.Connection, reason);
+            else
+                Logger.Error("Couldn't disconnect", target.ClientName, target.ClientID, "because they do not have an associated network connection.");
         }
+        /// <summary>
+        /// Disconnects a networking layer NetworkConnection.
+        /// </summary>
         public static void Disconnect(NetworkConnection connection, string reason = "Unspecified")
         {
-            if (connection == LocalConnection)
+            if (connection == LocalConnection && !IsServer)
                 SendPacket(new ClientDisconnectionPacket(reason));
 
             HandleDisconnection(connection, reason);
         }
+
+        internal static void HandleLocalDisconnection(Weaver? client, NetworkConnection connection, string reason)
+        {
+            // clean up all the mirrors
+            foreach(var mirror in HornetMirror.Mirrors)
+                Object.Destroy(mirror.Value);
+
+            // reset server so we can reconnect under a new one without the old interfering with uis
+            Server.CurrentServer = null!;
+        }
+
+        /// <summary>
+        /// Internal finalizer for resources and connection closing.
+        /// </summary>
         internal static void HandleDisconnection(NetworkConnection connection, string reason = "Unspecified")
         {
-            Weaver? client = Server.CurrentServer?.GetWeaver(connection);
+            // attempt to get a client rep
+            Weaver? client = Server?.GetWeaver(connection);
+
+            // take ownership from the client
             if (client != null && IsServer)
                 NetworkObjectManager.RevokeOwnership(client);
 
+            // mirror destruction
             if (client?.Mirror != null)
                 Object.Destroy(client.Mirror);
 
-            if (connection is NetworkServer server && server == LocalConnection)
-                Server.CurrentServer!.Shutdown();
+            // reroute to local handler
+            if (connection == LocalConnection)
+                HandleLocalDisconnection(client, connection, reason);
 
+            // remove from connection list
+            if (Server != null && client != null)
+                Server.Connections.Remove(client);
+
+            // shutdown the server if we are trying to
+            if (connection is NetworkServer server && server == LocalConnection)
+                Server?.Shutdown();
+
+            // close network connection
             connection.Dispose();
 
             if (Silkbound.Config.HostSettings.LogPlayerDisconnections)
                 Logger.Msg($"{client?.ClientName ?? $"{connection.Host}{(connection.Port.HasValue ? ":" + connection.Port.Value : string.Empty)}"} disconnected: {reason}");
         }
+
+        /// <summary>
+        /// Checks the current callstack for signs of packet handling.
+        /// </summary>
+        /// <returns>Whether or not the current execution context was called from a packet handler.</returns>
         public static bool IsPacketThread()
         {
             StackTrace trace = new(true);
@@ -203,7 +262,7 @@ namespace SilkBound.Utils {
                 if (method?.DeclaringType == null) continue;
 
                 string fullName = $"{method.DeclaringType.FullName}.{method.Name}";
-                if (fullName.Contains("PacketHandler"))
+                if (fullName.Contains("PacketHandler") || typeof(Packet).IsAssignableFrom(method.DeclaringType))
                 {
                     //Logger.Msg("PacketHandler detected in stack trace:");
                     //foreach (var f in frames)
@@ -220,6 +279,9 @@ namespace SilkBound.Utils {
             }
             return false;
         }
+        /// <summary>
+        /// Dispatches a packet to be sent and immediately resumes without awaiting.
+        /// </summary>
         public static void SendPacket(Packet packet)
         {
             //Logger.Msg("send packet in nw utils");
@@ -232,6 +294,11 @@ namespace SilkBound.Utils {
             //Logger.Msg(MethodInfo.GetCurrentMethod().Name, "waited");
             LocalConnection.Send(packet).Void();
         }
+
+        /// <summary>
+        /// Asynchronously sends and awaits a call to send the packet.
+        /// </summary>
+        /// <returns>Result is <see langword="true"/> if the packet sent successfully.</returns>
         public static async Task<bool> SendPacketAsync(Packet packet)
         {
             //Logger.Msg("send packet in nw utils");
@@ -240,6 +307,10 @@ namespace SilkBound.Utils {
             await t;
             return t.IsCompletedSuccessfully;
         }
+        /// <summary>
+        /// Null checks a UnityObject using its native engine pointer and a managed null comparison.
+        /// </summary>
+        /// <returns><see langword="true"/> if the objects <see cref="Object.m_CachedPtr"/> is null, or the object reference itself was null.</returns>
         public static bool IsNullPtr([NotNullWhen(false)] UnityEngine.Object? obj) => obj == null || !Object.IsNativeObjectAlive(obj);
         public static Weaver? GetWeaver(Guid target) => Server.GetWeaver(target);
         public static Weaver? GetWeaver(NetworkConnection connection) => Server.GetWeaver(connection);

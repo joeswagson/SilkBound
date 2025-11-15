@@ -1,8 +1,8 @@
 ﻿using SilkBound.Addons.Events;
 using SilkBound.Addons.Events.Handlers;
 using SilkBound.Managers;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets.Handlers; // for UnityMainThreadDispatcher
-using SilkBound.Types;
 using SilkBound.Types.Language;
 using SilkBound.Types.Language.FlagContexts;
 using SilkBound.Utils;

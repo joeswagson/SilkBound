@@ -1,6 +1,6 @@
 ﻿using SilkBound.Extensions;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets;
-using SilkBound.Types;
 using System.IO;
 using System.Linq;
 

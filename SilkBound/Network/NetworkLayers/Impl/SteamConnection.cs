@@ -7,7 +7,7 @@ using System.Threading;
 using System.IO;
 using SilkBound.Network.Packets.Handlers;
 
-namespace SilkBound.Types.NetLayers {
+namespace SilkBound.Network.NetworkLayers.Impl {
     public class SteamConnection : NetworkConnection {
         internal CSteamID _remoteId;
         internal bool _isServerSide;

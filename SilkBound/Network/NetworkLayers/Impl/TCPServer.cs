@@ -9,7 +9,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types.NetLayers {
+namespace SilkBound.Network.NetworkLayers.Impl {
     public class TCPServer(string host, PacketHandler handler, int? port = null) : NetworkServer(handler, host, port) {
         private readonly Dictionary<string, TCPConnection> _connections = [];
         private readonly object _connLock = new();
@@ -36,7 +36,7 @@ namespace SilkBound.Types.NetLayers {
             });
 
             _cts = new CancellationTokenSource();
-            _acceptTask = Task.Run(()=>AcceptLoopAsync(_cts.Token));
+            _acceptTask = Task.Run(() => AcceptLoopAsync(_cts.Token));
 
             return;
         }
@@ -47,7 +47,16 @@ namespace SilkBound.Types.NetLayers {
             {
                 while (!ct.IsCancellationRequested && _listener != null)
                 {
-                    TcpClient client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
+                    TcpClient client;
+                    try
+                    {
+                        client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
+                    } catch (SocketException)
+                    {
+                        Logger.Msg("Shutting down accept receive loop...");
+                        break;
+                    }
+
                     string key = client.Client.RemoteEndPoint?.ToString() ?? Guid.NewGuid().ToString();
 
                     lock (_connLock)
@@ -124,10 +133,10 @@ namespace SilkBound.Types.NetLayers {
         public IEnumerable<TCPConnection> GetConnections()
         {
             lock (_connLock)
-			{
-				//Logger.Msg([.. _connections.Values.Where(c => c != NetworkUtils.LocalConnection).Select(c => c.GetType().Name)]);
-				return _connections.Values.Where(c => c != NetworkUtils.LocalConnection);
-			}
+            {
+                //Logger.Msg([.. _connections.Values.Where(c => c != NetworkUtils.LocalConnection).Select(c => c.GetType().Name)]);
+                return _connections.Values.Where(c => c != NetworkUtils.LocalConnection);
+            }
         }
 
         public override async Task SendIncluding(Packet packet, IEnumerable<NetworkConnection> include)
@@ -155,6 +164,22 @@ namespace SilkBound.Types.NetLayers {
             foreach (TCPConnection conn in targets)
             {
                 try { await conn.Send(data); } catch (Exception e) { Logger.Warn($"[TCPServer] Failed send to {conn.RemoteId}: {e}"); }
+            }
+        }
+
+        public override void HandleDisconnect(NetworkConnection connection)
+        {
+            lock (_connLock)
+            {
+                if (_connections.Remove(((TCPConnection) connection).RemoteId))
+                    return;
+
+                // connection wasnt found by remote id. attempt to remove it via object reference
+                KeyValuePair<string, TCPConnection>? conn = _connections.FirstOrDefault(c => c.Value == connection);
+                if (conn.HasValue)
+                    _connections.Remove(conn.Value.Key);
+                else
+                    Logger.Error("False connection was passed into HandleDisconnect.");
             }
         }
     }

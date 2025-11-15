@@ -5,6 +5,7 @@ using SilkBound.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace SilkBound.Lib.DbgRender.Renderers {
@@ -132,7 +133,13 @@ namespace SilkBound.Lib.DbgRender.Renderers {
                 if (connect.Contains(':') && ushort.TryParse(connect.Split(":")[1], out ushort ushort_port))
                     port = ushort_port;
 
-                ConnectionManager.Client(ip: connect, port: port).ContinueWith(t => t.Result.Dump());
+                Task<ConnectionRequest> t = ConnectionManager.Client(ip: connect, port: port);
+                t.ContinueWith(t => t.Result.Dump());
+                Task.Run(() => {
+                    t.Wait();
+                    if (t.IsFaulted)
+                        Logger.Error(t.Exception);
+                });
             }
 
             X(MARGIN);

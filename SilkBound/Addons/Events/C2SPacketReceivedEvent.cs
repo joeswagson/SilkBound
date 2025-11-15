@@ -1,6 +1,6 @@
 ﻿using SilkBound.Addons.Events.Abstract;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets;
-using SilkBound.Types;
 
 namespace SilkBound.Addons.Events;
 

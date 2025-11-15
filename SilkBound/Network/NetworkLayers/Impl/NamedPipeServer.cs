@@ -7,7 +7,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Threading.Tasks;
 
-namespace SilkBound.Types.NetLayers
+namespace SilkBound.Network.NetworkLayers.Impl
 {
     public class NamedPipeServer : NetworkServer
     {
@@ -110,6 +110,11 @@ namespace SilkBound.Types.NetLayers
         public override Task SendExcluding(Packet packet, IEnumerable<NetworkConnection> exclude)
         {
             return Task.CompletedTask;
+        }
+
+        public override void HandleDisconnect(NetworkConnection connection)
+        {
+            // :(
         }
     }
 }

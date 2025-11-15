@@ -55,7 +55,7 @@
     <UseUnityExplorerPatches>true</UseUnityExplorerPatches>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetConfiguration)' != 'Debug'">
-    <Compile Remove="Generated\Props.g.cs"/>
+    <Compile Remove="Generated\Props.g.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Types\NewFolder\**" />
@@ -130,12 +130,12 @@
     </PropertyGroup>
 
     <ExpandStringTask InputString="$(RawPropsContent)">
-      <Output TaskParameter="OutputString" PropertyName="ExpandedValue"/>
+      <Output TaskParameter="OutputString" PropertyName="ExpandedValue" />
     </ExpandStringTask>
     <WriteLinesToFile File="$(PropsOutput)" Lines="$(ExpandedValue)" Overwrite="true" />
 
     <ItemGroup Condition="'$(TargetConfiguration)' == 'Debug'">
-      <Compile Include="$(PropsOutput)"/>
+      <Compile Include="$(PropsOutput)" />
     </ItemGroup>
 
     <Exec Command="taskkill /F /IM &quot;Hollow Knight Silksong.exe&quot; /IM &quot;Hollow Knight Silksong.Client2.exe&quot; /IM &quot;Hollow Knight Silksong.Client3.exe&quot; /IM &quot;Hollow Knight Silksong.Client4.exe&quot; &gt;NUL 2&gt;&amp;1 || exit /b 0" />
@@ -148,14 +148,14 @@
 
   <UsingTask TaskName="ExpandStringTask" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
-      <InputString ParameterType="System.String" Required="true"/>
-      <OutputString ParameterType="System.String" Output="true"/>
+      <InputString ParameterType="System.String" Required="true" />
+      <OutputString ParameterType="System.String" Output="true" />
     </ParameterGroup>
     <Task>
-      <Reference Include="System.Xml"/>
-      <Reference Include="Microsoft.Build"/>
-      <Using Namespace="Microsoft.Build.Evaluation"/>
-      <Using Namespace="Microsoft.Build.Utilities"/>
+      <Reference Include="System.Xml" />
+      <Reference Include="Microsoft.Build" />
+      <Using Namespace="Microsoft.Build.Evaluation" />
+      <Using Namespace="Microsoft.Build.Utilities" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
         var properties = new Dictionary<string, string>

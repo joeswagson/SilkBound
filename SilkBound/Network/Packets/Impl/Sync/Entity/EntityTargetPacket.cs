@@ -1,6 +1,6 @@
 ﻿using SilkBound.Behaviours;
 using SilkBound.Managers;
-using SilkBound.Types;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Utils;
 using System;
 using System.Collections.Generic;

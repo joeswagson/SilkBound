@@ -1,9 +1,12 @@
-﻿using SilkBound.Addons.AddonLoading;
+﻿using PlayMaker.ConditionalExpression.Ast;
+using SilkBound.Addons.AddonLoading;
+using SilkBound.Extensions;
 using SilkBound.Managers;
 using SilkBound.Network;
+using SilkBound.Network.NetworkLayers;
+using SilkBound.Network.NetworkLayers.Impl;
 using SilkBound.Network.Packets.Handlers;
 using SilkBound.Network.Packets.Impl.Steam;
-using SilkBound.Types.NetLayers;
 using SilkBound.Utils;
 using Steamworks;
 using System;
@@ -15,7 +18,41 @@ using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 
 namespace SilkBound.Types {
-    public class Server {
+    public class Server : IDisposable {
+        public bool Disposed => _disposed;
+        private bool _disposed = false;
+        /// <summary>
+        /// Marks the server as disposed. Note that this does not dispose the underlying connection, it is simply a flag for null checks.
+        /// </summary>
+        public void Dispose()
+        {
+            Connections.Clear();
+            _disposed = true;
+
+            GC.SuppressFinalize(this);
+        }
+
+        //public override int GetHashCode() => base.GetHashCode();
+        //public override bool Equals(object obj) => obj is Server server && this == server;
+        //public static bool operator !=(Server? left, Server? right) => !(left == right);
+        //public static bool operator ==(Server? left, Server? right)
+        //{
+        //    if (ReferenceEquals(left, right))
+        //        return true;
+
+        //    if(left is null || right is null) 
+        //        return false;
+        //    //if (left is null)
+        //    //    return right?.Disposed ?? false;
+
+        //    //if (right is null)
+        //    //    return left.Disposed;
+
+        //    return left.Connection == right.Connection;
+        //}
+
+
+
         /// <summary>
         /// Create a server instance for a host connection.
         /// </summary>
@@ -23,6 +60,7 @@ namespace SilkBound.Types {
         public Server(NetworkServer connection)
         {
             Connection = connection;
+            Connections = [];
         }
 
         /// <summary>
@@ -32,6 +70,7 @@ namespace SilkBound.Types {
         public Server(NetworkConnection connection)
         {
             Connection = connection;
+            Connections = [];
         }
 
         /// <summary>
@@ -81,24 +120,7 @@ namespace SilkBound.Types {
             if (!NetworkUtils.IsServer)
                 return;
 
-            if (Connection is SteamServer server)
-            {
-                CSteamID weaverId = ((SteamConnection) weaver.Connection).RemoteId;
-
-                foreach (Weaver connection in Connections)
-                {
-                    if (weaver != NetworkUtils.LocalClient)
-                    {
-                        connection.Connection.Send(new SteamKickS2CPacket(weaverId.m_SteamID));
-                        break;
-                    }
-                }
-
-                Connections.Remove(weaver);
-            } else
-            {
-
-            }
+            throw new NotImplementedException("honestly id rather this method throw than leave that garbage there");
         }
 
         /// <summary>
@@ -118,7 +140,7 @@ namespace SilkBound.Types {
         public string Address { get; internal set; } = null!;
 
         /// <summary>
-        /// Wrapper for the backing connectsion <see cref="NetworkConnection.Port"/> property.
+        /// Wrapper for the backing connection <see cref="NetworkConnection.Port"/> property.
         /// </summary>
         public int? Port { get; internal set; }
 
@@ -130,6 +152,7 @@ namespace SilkBound.Types {
         public void Shutdown()
         {
             Logger.Msg("Shutting down server...");
+            Dispose();
         }
 
         #region Async Connectors
