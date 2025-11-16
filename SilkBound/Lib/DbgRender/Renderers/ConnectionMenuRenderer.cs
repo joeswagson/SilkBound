@@ -104,7 +104,7 @@ namespace SilkBound.Lib.DbgRender.Renderers {
             Silkbound.Config.HostIP = GUI.TextField(Scroll(ElementHeight), Silkbound.Config.HostIP, 15); // host textfield
 
             GUI.Label(Scroll(ElementHeight + MARGIN), ConnectHeader); // connect label
-            Silkbound.Config.ConnectIP = GUI.TextField(Scroll(ElementHeight), Silkbound.Config.ConnectIP, 15); // connect textfield
+            Silkbound.Config.ConnectIP = GUI.TextField(Scroll(ElementHeight), Silkbound.Config.ConnectIP, 20); // connect textfield
 
             ElementBuffer((WIDTH - 3 * MARGIN) / 2);
             if (GUI.Button(Scroll(ElementHeight + MARGIN), IsReady ? "Host" : "Not Ready") && IsReady && !connecting)
