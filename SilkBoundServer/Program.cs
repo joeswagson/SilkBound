@@ -2,7 +2,7 @@
 using System.Runtime.Loader;
 using SilkBound.Managers;
 using SilkBound.Types;
-using SilkBound.Types.NetLayers;
+using SilkBound.Types.NetworkLayers;
 using SilkBound.Utils;
 
 namespace SilkBoundServer;

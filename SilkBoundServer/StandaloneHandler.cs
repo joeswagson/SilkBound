@@ -1,5 +1,6 @@
 ﻿using SilkBound.Managers;
 using SilkBound.Network;
+using SilkBound.Network.NetworkLayers;
 using SilkBound.Network.Packets;
 using SilkBound.Network.Packets.Impl.Communication;
 using SilkBound.Types;
