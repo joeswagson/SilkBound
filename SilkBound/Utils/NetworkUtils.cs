@@ -206,7 +206,7 @@ namespace SilkBound.Utils {
         {
             // clean up all the mirrors
             foreach(var mirror in HornetMirror.Mirrors)
-                Object.Destroy(mirror.Value);
+                Object.Destroy(mirror.Value.gameObject);
 
             // reset server so we can reconnect under a new one without the old interfering with uis
             Server.CurrentServer = null!;
