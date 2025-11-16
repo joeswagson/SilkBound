@@ -60,6 +60,15 @@ namespace SilkBound.Managers
             return found;
         }
 
+        /// <summary>
+        /// Only call this when shutting down the connection. Clears all networked objects of their networked properties.
+        /// </summary>
+        internal static void Reset()
+        {
+            foreach (var obj in NetworkObjects)
+                Object.Destroy(obj);
+        }
+
         public static void RevokeOwnership(Weaver target)
         {
             // all roads lead to rome my friend
@@ -67,7 +76,8 @@ namespace SilkBound.Managers
             //    throw new InvalidOperationException("Only the server can manage network ownership.");
 
             foreach (var obj in NetworkObjects)
-                obj.TransferOwnership(NetworkUtils.LocalClient);
+                if(obj.Owner == target)
+                    obj.TransferOwnership(NetworkUtils.LocalClient);
         }
     }
 }
