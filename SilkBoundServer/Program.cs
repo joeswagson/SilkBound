@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
 using SilkBound.Managers;
+using SilkBound.Network.NetworkLayers.Impl;
 using SilkBound.Types;
-using SilkBound.Types.NetworkLayers;
 using SilkBound.Utils;
 
 namespace SilkBoundServer;
