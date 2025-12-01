@@ -41,8 +41,8 @@ namespace SilkBound {
 #if MELON
     public partial class Silkbound : MelonMod
 #elif BEPIN
+    //[BepInProcess("Hollow Knight Silksong.exe")]
     [BepInAutoPlugin("io.github.joeswagson", "SilkBound", "1.0.0")]
-    [BepInProcess("Hollow Knight Silksong.exe")]
     public partial class Silkbound : BaseUnityPlugin
 #endif
     {
