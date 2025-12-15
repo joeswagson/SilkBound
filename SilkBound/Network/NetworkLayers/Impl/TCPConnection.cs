@@ -27,7 +27,7 @@ namespace SilkBound.Network.NetworkLayers.Impl
 
         public bool HasConnection { get; private set; }
 
-        public override bool IsConnected => _client != null && _client.Connected;
+        public override bool IsConnected => _client != null;// && _client.Connected;
 
         public TCPConnection(string host, int? port = null) : base(new ClientPacketHandler(), host, port)
         {
