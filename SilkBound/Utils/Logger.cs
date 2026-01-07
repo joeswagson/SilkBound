@@ -22,7 +22,7 @@ namespace SilkBound.Utils
             private static ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
             private static ILogger logger = factory.CreateLogger("SilkBound");
 #elif BEPIN
-        private static ManualLogSource _log = new("SilkBound");
+        private static readonly ManualLogSource _log = BepInEx.Logging.Logger.CreateLogSource("SilkBound");
 #endif
 
 
