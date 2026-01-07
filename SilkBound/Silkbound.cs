@@ -75,10 +75,10 @@ namespace SilkBound {
             Instance = this;
 
             // debug info
-            global::SilkBound.Utils.Logger.Debug(
+            Utils.Logger.Debug(
                 "SilkBound is in Debug mode. Client Number:", SilkDebug.GetClientNumber(),
                 "| Unity Thread ID:", MainThreadId);
-            global::SilkBound.Utils.Logger.Debug("Current packet protocol hash:", PacketProtocol.Fingerprint);
+            Utils.Logger.Debug("Current packet protocol hash:", PacketProtocol.Fingerprint);
 
             // populate packet registry
             PacketProtocol.PopulateRegistry();
@@ -352,8 +352,6 @@ namespace SilkBound {
 #endif
         {
             TickManager.Update();
-
-
 
             //Logger.Msg("Clients:", (Server.CurrentServer?.Connection as TCPServer)?.GetPlayerList().Count);
 
