@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using SilkBound.Behaviours;
+using SilkBound.Network;
 
 
 
@@ -68,6 +69,7 @@ namespace SilkBound {
         public void Awake()
 #endif
         {
+
             // init fields/props
             ModThread = Thread.CurrentThread;
             MainThreadId = Environment.CurrentManagedThreadId;
@@ -172,10 +174,28 @@ namespace SilkBound {
                 int clientCount = 0;
                 var clients = "";
                 listRendererData["Connected"] =
+                    new UpdatingVariable<bool>(
+                        NetworkUtils.Connected,
+                        (c) => c.ToString());
+                listRendererData["LocalClient"] =
+                    new UpdatingHostVariable<LocalWeaver>(
+                        NetworkUtils.LocalClient,
+                        () => NetworkUtils.LocalClient,
+                        (c) => {
+                            if (c == null)
+                                return "no client";
+
+                            return $"{c.ClientName} ({c.ClientID})";
+                        });
+                listRendererData["Server"] =
                     new UpdatingHostVariable<Server>(
                         Server.CurrentServer,
                         () => Server.CurrentServer,
-                        c => c?.Connections?.Count.ToString() ?? "no server");
+                        c => {
+                            if (c == null)
+                                return "no server";
+                            return $"{c.Address}:{c.Port?.ToString() ?? "null"} ({c?.Connections?.Count.ToString() ?? "no server"})";
+                        });
                 listRendererData["Clients"] =
                     new UpdatingHostVariable<Server>(
                         Server.CurrentServer,
@@ -227,8 +247,8 @@ namespace SilkBound {
 #if DEBUG
 #if MELON
             MelonCoroutines.Start(DelayedWindowPosition());
-#elif BEPIN
-            StartCoroutine(DelayedWindowPosition());
+//#elif BEPIN
+//            StartCoroutine(DelayedWindowPosition());
 #endif
 #endif
         }
