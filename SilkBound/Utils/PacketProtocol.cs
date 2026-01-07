@@ -16,7 +16,7 @@ namespace SilkBound.Utils {
         /// <summary>
         /// Search site for packets (recursive).
         /// </summary>
-        static string[] ValidRoots =
+        private static readonly List<string> ValidRoots =
         [
             "SilkBound.Network.Packets.Impl"
         ];
@@ -39,9 +39,9 @@ namespace SilkBound.Utils {
         }
         public static readonly int Fingerprint = GenerateHash(GetPacketTypes());
 
-        private static Dictionary<Type, bool> Compression = [];
-        private static Dictionary<Type, ushort> HashCache = [];
-        private static Dictionary<ushort, Type> Lookup = [];
+        private static readonly Dictionary<Type, bool> Compression = [];
+        private static readonly Dictionary<Type, ushort> HashCache = [];
+        private static readonly Dictionary<ushort, Type> Lookup = [];
 
         public static Type GetPacketType(ushort packetId) => Lookup[packetId];
         public static ushort HashPacket(Type packetType) => HashCache[packetType];
@@ -122,15 +122,52 @@ namespace SilkBound.Utils {
                 Array.Copy(inner, 0, framed, sizeof(int), inner.Length);
 
                 return framed;
-            } catch(Exception ex)
+            } catch (Exception ex)
             {
                 Logger.Error(ex);
                 throw ex;
             }
         }
-
-
+        public static bool PacketsCached => CachedPacketTypes != null;
         private static Type[]? CachedPacketTypes;
+
+
+        /// <summary>
+        /// Registers a namespace to be recursively searched for Packet classes during cache population.
+        /// </summary>
+        public static void RegisterPacketNamespace(string @namespace)
+        {
+            ValidRoots.Add(@namespace);
+        }
+
+        /// <summary>
+        /// Clears the packets cache, but does not repopulate it.
+        /// </summary>
+        /// <remarks>This will cause any incoming packets to be dropped.</remarks>
+        public static void Invalidate() => CachedPacketTypes = null;
+
+        /// <summary>
+        /// Populates the packet cache according to <see cref="ValidRoots"/>.
+        /// </summary>
+        /// <remarks>Will not perform any actions if the cache is currently populated.</remarks>
+        /// <returns>Whether the cache was successfully populated or not.</returns>
+        public static bool Repopulate()
+        {
+            if (PacketsCached)
+                return false;
+
+            CachedPacketTypes = GetPacketTypes();
+            return true;
+        }
+
+        /// <summary>
+        /// Immediately invalidates the cache, then repopulates it with the current <see cref="ValidRoots"/>.
+        /// </summary>
+        public static void ReloadCache()
+        {
+            Invalidate();
+            Repopulate();
+        }
 
         /// <summary>
         /// Searches the entire current assembly's types for any deriving from <see cref="Packet"/>.
@@ -163,8 +200,7 @@ namespace SilkBound.Utils {
                     t.Name,
                     packetName,
                     StringComparison.Ordinal
-                )
-            );
+                ));
         }
 
         /// <summary>
